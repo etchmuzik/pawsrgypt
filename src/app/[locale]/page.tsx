@@ -1,8 +1,10 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/website/Navbar";
 import { Footer } from "@/components/website/Footer";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
+import { MascotVideoSection } from "@/components/website/MascotVideoSection";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -108,28 +110,42 @@ function HeroSection() {
           </div>
         </div>
 
-        {/* Hero mascots */}
+        {/* Hero mascots — real images */}
         <div className="hidden lg:flex justify-center items-end relative">
           {/* Glow ring */}
           <div className="absolute w-80 h-80 bg-white/10 rounded-full blur-2xl animate-pulse" />
 
           {/* Cairo - the dog */}
           <div className="relative z-10 animate-float">
-            <div className="w-52 h-52 bg-white/15 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm border border-white/20">
-              <span className="text-[100px] select-none">🐶</span>
+            <div className="w-56 h-56 rounded-full overflow-hidden shadow-2xl border-4 border-white/30 bg-white/10 backdrop-blur-sm">
+              <Image
+                src="/mascots/cairo.png"
+                alt="Cairo — PAWS Egypt dog mascot"
+                width={224}
+                height={224}
+                className="w-full h-full object-cover scale-125 object-top"
+                priority
+              />
             </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1 text-white text-sm font-bold whitespace-nowrap">
-              Cairo 🧡
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1.5 text-white text-sm font-bold whitespace-nowrap shadow-lg">
+              Cairo
             </div>
           </div>
 
           {/* Luna - the cat */}
           <div className="relative z-10 -ms-8 mb-4 animate-float-delay">
-            <div className="w-44 h-44 bg-white/15 rounded-full flex items-center justify-center shadow-2xl backdrop-blur-sm border border-white/20">
-              <span className="text-[80px] select-none">🐱</span>
+            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-white/30 bg-white/10 backdrop-blur-sm">
+              <Image
+                src="/mascots/luna.png"
+                alt="Luna — PAWS Egypt cat mascot"
+                width={192}
+                height={192}
+                className="w-full h-full object-cover scale-125 object-top"
+                priority
+              />
             </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1 text-white text-sm font-bold whitespace-nowrap">
-              Luna 💚
+            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1.5 text-white text-sm font-bold whitespace-nowrap shadow-lg">
+              Luna
             </div>
           </div>
 
@@ -260,8 +276,14 @@ function MascotIntro() {
           <ScrollReveal delay={100}>
             <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 group text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-paws-orange to-paws-orange-light" />
-              <div className="w-32 h-32 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="text-7xl animate-float">🐶</span>
+              <div className="w-36 h-36 mx-auto rounded-full overflow-hidden bg-orange-50 mb-6 group-hover:scale-110 transition-transform">
+                <Image
+                  src="/mascots/cairo.png"
+                  alt="Cairo the dog"
+                  width={144}
+                  height={144}
+                  className="w-full h-full object-cover scale-125 object-top"
+                />
               </div>
               <h3 className="text-2xl font-extrabold text-paws-brown-dark mb-2">Cairo</h3>
               <p className="text-paws-orange font-semibold text-sm mb-3">Loyal & Energetic</p>
@@ -279,8 +301,14 @@ function MascotIntro() {
           <ScrollReveal delay={250}>
             <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 group text-center relative overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-300" />
-              <div className="w-32 h-32 mx-auto bg-emerald-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <span className="text-7xl animate-float-delay">🐱</span>
+              <div className="w-36 h-36 mx-auto rounded-full overflow-hidden bg-emerald-50 mb-6 group-hover:scale-110 transition-transform">
+                <Image
+                  src="/mascots/luna.png"
+                  alt="Luna the cat"
+                  width={144}
+                  height={144}
+                  className="w-full h-full object-cover scale-125 object-top"
+                />
               </div>
               <h3 className="text-2xl font-extrabold text-paws-brown-dark mb-2">Luna</h3>
               <p className="text-emerald-500 font-semibold text-sm mb-3">Smart & Calm</p>
@@ -468,9 +496,13 @@ function CTABanner() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="relative bg-gradient-to-br from-paws-orange via-paws-orange-light to-amber-400 rounded-3xl p-8 md:p-14 text-white overflow-hidden">
-            {/* Decorative elements */}
-            <div className="absolute top-6 right-8 text-6xl opacity-20 animate-float">🐶</div>
-            <div className="absolute bottom-6 right-24 text-5xl opacity-20 animate-float-delay">🐱</div>
+            {/* Decorative mascot images */}
+            <div className="absolute top-4 right-4 md:right-8 w-28 h-28 md:w-40 md:h-40 opacity-20 animate-float">
+              <Image src="/mascots/cairo.png" alt="" width={160} height={160} className="w-full h-full object-contain" />
+            </div>
+            <div className="absolute bottom-4 right-20 md:right-32 w-24 h-24 md:w-32 md:h-32 opacity-20 animate-float-delay">
+              <Image src="/mascots/luna.png" alt="" width={128} height={128} className="w-full h-full object-contain" />
+            </div>
             <div className="absolute top-1/2 right-16 text-3xl opacity-10 animate-wiggle">🐾</div>
 
             <div className="relative z-10 max-w-2xl">
@@ -520,6 +552,7 @@ export default function HomePage() {
         <TrustBar />
         <CategoriesSection />
         <MascotIntro />
+        <MascotVideoSection />
         <FeaturedProducts />
         <WhyPaws />
         <CTABanner />
