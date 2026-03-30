@@ -1,5 +1,5 @@
 import { Card } from "@/components/ui/card";
-import { Users, Building2, Shield, Bell } from "lucide-react";
+import { Users, Building2, Shield, Bell, Settings } from "lucide-react";
 import Link from "next/link";
 
 const SETTINGS_MODULES = [
@@ -7,6 +7,7 @@ const SETTINGS_MODULES = [
   { icon: Shield, title: "Roles & Permissions", desc: "Configure role-based access control", href: "/settings/roles", color: "text-purple-600", bg: "bg-purple-50" },
   { icon: Building2, title: "Branches", desc: "Manage store locations", href: "/settings/branches", color: "text-green-600", bg: "bg-green-50" },
   { icon: Bell, title: "Notifications", desc: "SMS and email notification settings", href: "/settings/notifications", color: "text-paws-orange", bg: "bg-orange-50" },
+  { icon: Settings, title: "System Settings", desc: "Configure tax, invoicing, and app defaults", href: "/settings/system", color: "text-gray-600", bg: "bg-gray-50" },
 ];
 
 export default function SettingsPage() {

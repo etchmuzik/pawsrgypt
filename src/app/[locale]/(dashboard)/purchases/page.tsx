@@ -1,10 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 
-export default async function PurchasesPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function PurchasesPage({ params }: PageProps) {
+  const { locale } = await params;
   const supabase = await createClient();
-  type PurchaseOrderRow = { id: string; created_at: string; total: number; status: string; suppliers?: { name: string } | null };
+
+  type PurchaseOrderRow = {
+    id: string;
+    created_at: string;
+    total: number;
+    status: string;
+    suppliers?: { name: string } | null;
+  };
+
   const { data: rawOrders } = await supabase
     .from("purchase_orders")
     .select("*, suppliers(name)")
@@ -16,9 +30,11 @@ export default async function PurchasesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-paws-brown-dark">Purchases</h1>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> New Purchase Order
-        </Button>
+        <Link href={`/${locale}/purchases/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> New Purchase Order
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">
@@ -43,7 +59,7 @@ export default async function PurchasesPage() {
               orders.map((order) => (
                 <tr key={order.id} className="border-b border-paws-sand/50 hover:bg-paws-cream/30">
                   <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8)}</td>
-                  <td className="px-4 py-3">{order.suppliers?.name ?? "—"}</td>
+                  <td className="px-4 py-3">{order.suppliers?.name ?? "---"}</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>

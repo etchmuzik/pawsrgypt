@@ -4,6 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Download, Upload } from "lucide-react";
 import type { Product } from "@/lib/supabase/types";
+import Link from "next/link";
+
+interface ProductsPageProps {
+  params: Promise<{ locale: string }>;
+}
 
 async function getProducts(): Promise<Product[]> {
   const supabase = await createClient();
@@ -15,7 +20,8 @@ async function getProducts(): Promise<Product[]> {
   return (data as Product[]) ?? [];
 }
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ params }: ProductsPageProps) {
+  const { locale } = await params;
   const products = await getProducts();
 
   return (
@@ -29,9 +35,11 @@ export default async function ProductsPage() {
           <Button variant="outline" size="sm" className="gap-1.5 border-paws-sand">
             <Download className="w-4 h-4" /> Export
           </Button>
-          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> Add Product
-          </Button>
+          <Link href={`/${locale}/products/new`}>
+            <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+              <Plus className="w-4 h-4" /> Add Product
+            </Button>
+          </Link>
         </div>
       </div>
 

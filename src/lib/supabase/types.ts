@@ -336,3 +336,4 @@ export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type Employee = Database["public"]["Tables"]["employees"]["Row"];
 export type GroomingBooking = Database["public"]["Tables"]["grooming_bookings"]["Row"];
 export type WebsiteOrder = Database["public"]["Tables"]["website_orders"]["Row"];
+export type SystemSettings = Database["public"]["Tables"]["system_settings"]["Row"];

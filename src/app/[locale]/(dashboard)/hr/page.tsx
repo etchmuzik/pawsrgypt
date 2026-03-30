@@ -2,8 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Employee } from "@/lib/supabase/types";
+import Link from "next/link";
 
-export default async function HRPage() {
+interface HRPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function HRPage({ params }: HRPageProps) {
+  const { locale } = await params;
   const supabase = await createClient();
   const { data: employees } = await supabase
     .from("employees")
@@ -15,9 +21,11 @@ export default async function HRPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-paws-brown-dark">Human Resources</h1>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> Add Employee
-        </Button>
+        <Link href={`/${locale}/hr/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> Add Employee
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">

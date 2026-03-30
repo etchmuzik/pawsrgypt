@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
+import Link from "next/link";
 import type { Invoice } from "@/lib/supabase/types";
 
 async function getInvoices(): Promise<Invoice[]> {
@@ -23,16 +23,23 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: "bg-red-100 text-red-700",
 };
 
-export default async function SalesPage() {
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function SalesPage({ params }: PageProps) {
+  const { locale } = await params;
   const invoices = await getInvoices();
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-paws-brown-dark">Sales</h1>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> New Invoice
-        </Button>
+        <Link href={`/${locale}/sales/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> New Invoice
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">
@@ -59,7 +66,7 @@ export default async function SalesPage() {
               invoices.map((inv) => (
                 <tr key={inv.id} className="border-b border-paws-sand/50 hover:bg-paws-cream/30">
                   <td className="px-4 py-3 font-mono text-xs">{inv.invoice_number}</td>
-                  <td className="px-4 py-3">—</td>
+                  <td className="px-4 py-3">---</td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(inv.created_at).toLocaleDateString()}
                   </td>
@@ -71,7 +78,9 @@ export default async function SalesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
+                    <Link href={`/${locale}/sales/${inv.id}`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
+                    </Link>
                   </td>
                 </tr>
               ))

@@ -37,13 +37,20 @@
     "specifications": "Specifications",
     "reviews": "Reviews",
     "add_to_cart": "Add to Cart",
+    "added_to_cart": "Added to cart!",
     "buy_now": "Buy Now",
     "share": "Share",
     "in_stock": "In Stock",
     "out_of_stock": "Out of Stock",
     "quantity": "Quantity",
     "size": "Size",
-    "color": "Color"
+    "color": "Color",
+    "back_to_shop": "Back to Shop",
+    "not_found": "Product Not Found",
+    "not_found_desc": "The product you're looking for doesn't exist or has been removed.",
+    "related_products": "You May Also Like",
+    "category": "Category",
+    "price": "Price"
   },
   "grooming": {
     "title": "Grooming Services",
@@ -72,11 +79,16 @@
   "cart": {
     "title": "Your Cart",
     "empty": "Your cart is empty",
+    "empty_desc": "Looks like you haven't added anything to your cart yet.",
     "continue_shopping": "Continue Shopping",
     "subtotal": "Subtotal",
+    "vat": "VAT (14%)",
+    "total": "Total",
     "checkout": "Proceed to Checkout",
     "remove": "Remove",
-    "quantity": "Qty"
+    "quantity": "Qty",
+    "clear_cart": "Clear Cart",
+    "items": "items"
   },
   "footer": {
     "tagline": "Better care for your pet",

@@ -56,10 +56,32 @@ export default function GroomingPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
-    // TODO: Connect to Supabase grooming_bookings table
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-    setSubmitted(true);
+
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      const { error } = await supabase.from("grooming_bookings").insert({
+        customer_name: formData.get("customer_name") as string,
+        phone: formData.get("phone") as string,
+        pet_name: formData.get("pet_name") as string,
+        pet_type: formData.get("pet_type") as string,
+        service: formData.get("service") as string,
+        preferred_date: formData.get("preferred_date") as string,
+        notes: (formData.get("notes") as string) || null,
+        status: "pending",
+      } as never);
+
+      if (error) throw error;
+      setSubmitted(true);
+    } catch {
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -123,27 +145,27 @@ export default function GroomingPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{t("name")}</Label>
-                    <Input required placeholder="John Smith" />
+                    <Input name="customer_name" required placeholder="John Smith" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("phone")}</Label>
-                    <Input required placeholder="+20 100 000 0000" type="tel" />
+                    <Input name="phone" required placeholder="+20 100 000 0000" type="tel" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{t("pet_name")}</Label>
-                    <Input required placeholder="Buddy" />
+                    <Input name="pet_name" required placeholder="Buddy" />
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("pet_type")}</Label>
-                    <Input required placeholder="Dog / Cat" />
+                    <Input name="pet_type" required placeholder="Dog / Cat" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{t("service")}</Label>
-                    <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring">
+                    <select name="service" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring">
                       {SERVICES.map((s) => (
                         <option key={s.name} value={s.name}>
                           {locale === "ar" ? s.nameAr : s.name}
@@ -153,12 +175,12 @@ export default function GroomingPage() {
                   </div>
                   <div className="space-y-1.5">
                     <Label>{t("date")}</Label>
-                    <Input required type="date" min={new Date().toISOString().split("T")[0]} />
+                    <Input name="preferred_date" required type="date" min={new Date().toISOString().split("T")[0]} />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label>{t("notes")}</Label>
-                  <Textarea placeholder="Any special requirements..." rows={3} />
+                  <Textarea name="notes" placeholder="Any special requirements..." rows={3} />
                 </div>
                 <Button
                   type="submit"

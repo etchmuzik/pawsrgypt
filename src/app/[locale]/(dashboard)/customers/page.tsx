@@ -3,8 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Search } from "lucide-react";
 import type { Customer } from "@/lib/supabase/types";
+import Link from "next/link";
 
-export default async function CustomersPage() {
+interface CustomersPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function CustomersPage({ params }: CustomersPageProps) {
+  const { locale } = await params;
   const supabase = await createClient();
   const { data: customers } = await supabase
     .from("customers")
@@ -17,9 +23,11 @@ export default async function CustomersPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-paws-brown-dark">Customers</h1>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> Add Customer
-        </Button>
+        <Link href={`/${locale}/customers/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> Add Customer
+          </Button>
+        </Link>
       </div>
 
       <div className="relative mb-4">
