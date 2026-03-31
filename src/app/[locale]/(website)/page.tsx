@@ -116,10 +116,10 @@ function FeaturedProducts() {
   const locale = useLocale();
 
   const products = [
-    { id: "1", name: "Premium Dog Food", nameAr: "طعام كلاب فاخر", price: 250, icon: UtensilsCrossed, badge: "Best Seller", badgeColor: "bg-paws-orange" },
-    { id: "2", name: "Cat Grooming Kit", nameAr: "طقم تجميل للقطط", price: 180, icon: Scissors, badge: "New", badgeColor: "bg-emerald-500" },
-    { id: "3", name: "Pet Collar Leather", nameAr: "طوق جلد للحيوانات", price: 120, icon: Gem, badge: null, badgeColor: "" },
-    { id: "4", name: "Interactive Toy Set", nameAr: "مجموعة ألعاب تفاعلية", price: 95, icon: Gamepad2, badge: "Sale", badgeColor: "bg-red-500" },
+    { id: "1", name: "Royal Canin Maxi Adult 15kg", nameAr: "رويال كانين ماكسي بالغ 15 كيلو", price: 5000, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/3352/image_1920", badge: "Best Seller", badgeColor: "bg-paws-orange" },
+    { id: "5", name: "Bravecto Chewable For Large Dogs", nameAr: "برافيكتو أقراص للكلاب الكبيرة", price: 2335, brand: "Bravecto", image: "https://petsegypt.com/web/image/product.product/9135/image_1920", badge: "Sale", badgeColor: "bg-red-500" },
+    { id: "2", name: "Bewi Cat Delicaties Rich in Chicken", nameAr: "بيوي كات ديليكاتيز غني بالدجاج", price: 5200, brand: "Bewi Cat", image: "https://petsegypt.com/web/image/product.product/10058/image_1920", badge: "Premium", badgeColor: "bg-emerald-500" },
+    { id: "8", name: "2-in-1 Auto Feeder with Fountain", nameAr: "وعاء طعام آلي 2 في 1 مع نافورة مياه", price: 1250, brand: "Generic", image: "https://petsegypt.com/web/image/product.product/11893/image_1920", badge: "Popular", badgeColor: "bg-blue-500" },
   ];
 
   return (
@@ -150,8 +150,14 @@ function FeaturedProducts() {
                 href={`/${locale}/shop/${product.id}`}
                 className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 group hover:-translate-y-1 block"
               >
-                <div className="bg-neutral-50 h-52 flex items-center justify-center relative overflow-hidden">
-                  <product.icon className="w-16 h-16 text-neutral-300 group-hover:text-paws-orange/40 group-hover:scale-110 transition-all duration-500" />
+                <div className="bg-neutral-50 aspect-square flex items-center justify-center relative overflow-hidden">
+                  <Image
+                    src={product.image}
+                    alt={locale === "ar" ? product.nameAr : product.name}
+                    width={400}
+                    height={400}
+                    className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                  />
                   {product.badge && (
                     <span className={`absolute top-3 left-3 ${product.badgeColor} text-white text-xs px-3 py-1 rounded-full font-bold`}>
                       {product.badge}
@@ -159,12 +165,13 @@ function FeaturedProducts() {
                   )}
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-neutral-800 group-hover:text-paws-orange transition-colors text-base">
+                  <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
+                  <h3 className="font-bold text-neutral-800 group-hover:text-paws-orange transition-colors text-base line-clamp-2">
                     {locale === "ar" ? product.nameAr : product.name}
                   </h3>
                   <div className="flex items-center justify-between mt-3">
                     <p className="text-paws-orange font-extrabold text-lg">
-                      {product.price} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                      {product.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
                     </p>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, j) => (
