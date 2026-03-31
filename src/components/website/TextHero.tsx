@@ -60,11 +60,18 @@ export function TextHero({
             {/* Minimal social proof */}
             <div className="mt-12 flex items-center gap-3 justify-center lg:justify-start text-sm text-neutral-400">
               <div className="flex -space-x-2">
-                {[1, 2, 3, 4].map((i) => (
+                {[
+                  { initials: "SA", bg: "bg-paws-orange" },
+                  { initials: "MK", bg: "bg-emerald-500" },
+                  { initials: "NR", bg: "bg-sky-500" },
+                  { initials: "LE", bg: "bg-purple-500" },
+                ].map((avatar) => (
                   <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-neutral-100 border-2 border-white"
-                  />
+                    key={avatar.initials}
+                    className={`w-8 h-8 rounded-full ${avatar.bg} border-2 border-white flex items-center justify-center text-[10px] font-bold text-white`}
+                  >
+                    {avatar.initials}
+                  </div>
                 ))}
               </div>
               <span>

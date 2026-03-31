@@ -33,6 +33,7 @@ export function Navbar() {
     { href: `/${locale}/shop`, label: t("shop") },
     { href: `/${locale}/grooming`, label: t("grooming") },
     { href: `/${locale}/about`, label: t("about") },
+    { href: `/${locale}/blog`, label: t("blog") },
     { href: `/${locale}/dashboard`, label: t("dashboard") },
   ];
 

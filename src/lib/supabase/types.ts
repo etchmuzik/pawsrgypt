@@ -300,6 +300,26 @@ export interface Database {
         Insert: Omit<Database["public"]["Tables"]["website_orders"]["Row"], "id" | "order_number" | "created_at" | "updated_at">;
         Update: Partial<Database["public"]["Tables"]["website_orders"]["Insert"]>;
       };
+      blog_posts: {
+        Row: {
+          id: string;
+          slug: string;
+          title_en: string;
+          title_ar: string | null;
+          excerpt_en: string | null;
+          excerpt_ar: string | null;
+          content_en: string;
+          content_ar: string | null;
+          featured_image: string | null;
+          author: string;
+          is_published: boolean;
+          published_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["blog_posts"]["Row"], "id" | "created_at" | "updated_at">;
+        Update: Partial<Database["public"]["Tables"]["blog_posts"]["Insert"]>;
+      };
       system_settings: {
         Row: {
           id: string;
@@ -336,4 +356,5 @@ export type Payment = Database["public"]["Tables"]["payments"]["Row"];
 export type Employee = Database["public"]["Tables"]["employees"]["Row"];
 export type GroomingBooking = Database["public"]["Tables"]["grooming_bookings"]["Row"];
 export type WebsiteOrder = Database["public"]["Tables"]["website_orders"]["Row"];
+export type BlogPost = Database["public"]["Tables"]["blog_posts"]["Row"];
 export type SystemSettings = Database["public"]["Tables"]["system_settings"]["Row"];

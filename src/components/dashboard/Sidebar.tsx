@@ -17,6 +17,7 @@ import {
   LogOut,
   ChevronRight,
   Monitor,
+  FileText,
   Menu,
   X,
 } from "lucide-react";
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { icon: LayoutDashboard, label: "Dashboard", labelAr: "لوحة التحكم", href: "/dashboard" },
   { icon: Monitor, label: "POS", labelAr: "نقطة البيع", href: "/pos" },
   { icon: Package, label: "Products", labelAr: "المنتجات", href: "/products" },
+  { icon: FileText, label: "Blog", labelAr: "المدونة", href: "/dashboard/blog" },
   { icon: Warehouse, label: "Inventory", labelAr: "المخزون", href: "/inventory" },
   { icon: ShoppingBag, label: "Purchases", labelAr: "المشتريات", href: "/purchases" },
   { icon: ShoppingCart, label: "Sales", labelAr: "المبيعات", href: "/sales" },

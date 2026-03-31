@@ -5,6 +5,7 @@
     "grooming": "Grooming",
     "about": "About",
     "cart": "Cart",
+    "blog": "Blog",
     "dashboard": "Dashboard",
     "login": "Login",
     "logout": "Logout"
@@ -160,6 +161,26 @@
     "users": "Users",
     "roles": "Roles",
     "branches": "Branches"
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Stories, tips, and news from PAWS Egypt",
+    "read_more": "Read More",
+    "back_to_blog": "Back to Blog",
+    "no_posts": "No blog posts yet. Stay tuned!",
+    "published": "Published",
+    "draft": "Draft",
+    "add": "Add Post",
+    "edit": "Edit Post",
+    "create": "Create Post",
+    "save": "Save Changes",
+    "slug": "Slug",
+    "excerpt": "Excerpt",
+    "content": "Content",
+    "featured_image": "Featured Image URL",
+    "author": "Author",
+    "publish": "Publish",
+    "min_read": "min read"
   },
   "common": {
     "save": "Save",

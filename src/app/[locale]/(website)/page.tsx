@@ -201,12 +201,15 @@ function CTABanner() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
         <ScrollReveal>
           <div className="relative bg-neutral-900 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 md:p-16 text-white overflow-hidden">
-            {/* Decorative mascot images */}
-            <div className="absolute top-6 right-6 md:right-12 w-32 h-32 md:w-48 md:h-48 opacity-10">
-              <Image src="/mascots/cairo.png" alt="" width={192} height={192} className="w-full h-full object-contain" />
-            </div>
-            <div className="absolute bottom-6 right-28 md:right-40 w-28 h-28 md:w-40 md:h-40 opacity-10">
-              <Image src="/mascots/luna.png" alt="" width={160} height={160} className="w-full h-full object-contain" />
+            {/* Decorative mascot image — combined Cairo & Luna */}
+            <div className="absolute bottom-0 right-0 md:right-8 w-64 h-40 md:w-96 md:h-56 opacity-30 md:opacity-40">
+              <Image
+                src="/mascots/cairo-luna.jpeg"
+                alt=""
+                width={1376}
+                height={768}
+                className="w-full h-full object-contain object-bottom"
+              />
             </div>
 
             <div className="relative z-10 max-w-2xl">
