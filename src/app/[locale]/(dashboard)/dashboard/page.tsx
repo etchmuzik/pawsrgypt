@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TrendingUp, ShoppingCart, Package, Users, FileText, PlusCircle, Monitor, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { useLocale } from "next-intl";
+import { getLocale } from "next-intl/server";
 
 async function getStats() {
   const supabase = await createClient();
@@ -29,7 +29,7 @@ async function getStats() {
 
 export default async function DashboardPage() {
   const stats = await getStats();
-  const locale = useLocale();
+  const locale = await getLocale();
 
   const cards = [
     {
