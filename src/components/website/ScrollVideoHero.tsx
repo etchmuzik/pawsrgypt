@@ -7,9 +7,7 @@ interface ScrollVideoHeroProps {
   name: string;
   subtitle: string;
   description: string;
-  /** Which side the text appears on desktop */
   textPosition?: "left" | "right";
-  /** Accent color for the name */
   accentColor?: string;
 }
 
@@ -26,6 +24,7 @@ export function ScrollVideoHero({
   const textRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const cachedRect = useRef({ top: 0, height: 0 });
+  const currentTimeRef = useRef(0);
 
   const cacheRect = useCallback(() => {
     const container = containerRef.current;
@@ -44,6 +43,9 @@ export function ScrollVideoHero({
 
     cacheRect();
 
+    // Smooth interpolation — lerp toward target time instead of jumping
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
     const scrub = () => {
       const { top, height } = cachedRect.current;
       const viewportH = window.innerHeight;
@@ -53,10 +55,14 @@ export function ScrollVideoHero({
       const scrolled = window.scrollY - top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
 
+      // Smooth video scrubbing with lerp
       if (video.duration && isFinite(video.duration)) {
-        video.currentTime = progress * video.duration;
+        const targetTime = progress * video.duration;
+        currentTimeRef.current = lerp(currentTimeRef.current, targetTime, 0.15);
+        video.currentTime = currentTimeRef.current;
       }
 
+      // Smooth text fade
       if (text) {
         const textOpacity =
           progress < 0.05
@@ -64,9 +70,17 @@ export function ScrollVideoHero({
             : progress > 0.85
               ? (1 - progress) / 0.15
               : 1;
-        const textY = (1 - Math.min(1, progress / 0.1)) * 40;
+        const textY = (1 - Math.min(1, progress / 0.1)) * 30;
         text.style.opacity = String(Math.max(0, Math.min(1, textOpacity)));
-        text.style.transform = `translateY(${textY}px)`;
+        text.style.transform = `translate3d(0,${textY}px,0)`;
+      }
+
+      // Keep animating if we haven't converged
+      if (video.duration && isFinite(video.duration)) {
+        const targetTime = progress * video.duration;
+        if (Math.abs(currentTimeRef.current - targetTime) > 0.01) {
+          rafRef.current = requestAnimationFrame(scrub);
+        }
       }
     };
 
@@ -85,6 +99,7 @@ export function ScrollVideoHero({
 
     const onMeta = () => {
       cacheRect();
+      currentTimeRef.current = 0;
       scrub();
     };
     video.addEventListener("loadedmetadata", onMeta);
@@ -104,22 +119,29 @@ export function ScrollVideoHero({
     <div
       ref={containerRef}
       className="h-[200vh] md:h-[300vh] relative"
+      style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
-      {/* Sticky viewport — video fills entire screen */}
-      <div className="sticky top-0 min-h-[100dvh] overflow-hidden bg-white">
-        {/* Video — absolute, fills entire viewport */}
+      {/* Sticky viewport — video fills entire screen, no gaps */}
+      <div className="sticky top-0 h-[100dvh] overflow-hidden">
+        {/* Video — absolute, overflows slightly to kill any seam lines */}
         <video
           ref={videoRef}
           src={src}
           muted
           playsInline
           preload="auto"
-          className={`absolute inset-0 w-full h-full object-cover will-change-transform ${
+          className={`absolute w-full h-full object-cover will-change-transform ${
             isLeft ? "object-right" : "object-left"
           }`}
+          style={{
+            top: "-4px",
+            left: "-4px",
+            width: "calc(100% + 8px)",
+            height: "calc(100% + 8px)",
+          }}
         />
 
-        {/* Text overlay — positioned on one side with bg fade for readability */}
+        {/* Text overlay */}
         <div
           className={`absolute inset-0 flex items-center ${
             isLeft ? "justify-start" : "justify-end"
@@ -130,15 +152,16 @@ export function ScrollVideoHero({
             className={`relative z-10 w-full lg:w-1/2 px-8 md:px-16 lg:px-20 ${
               isLeft ? "text-left" : "text-right"
             }`}
-            style={{ opacity: 0, transform: "translateY(40px)" }}
+            style={{ opacity: 0, transform: "translate3d(0,30px,0)" }}
           >
-            {/* Soft background wash behind text for readability */}
+            {/* Soft background wash behind text */}
             <div
-              className={`absolute inset-0 -mx-8 -my-12 ${
+              className={`absolute inset-0 -mx-8 -my-16 ${
                 isLeft
-                  ? "bg-gradient-to-r from-white via-white/90 to-transparent"
-                  : "bg-gradient-to-l from-white via-white/90 to-transparent"
+                  ? "bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+                  : "bg-gradient-to-l from-white/95 via-white/80 to-transparent"
               }`}
+              style={{ backdropFilter: "blur(2px)" }}
             />
 
             <div className="relative">
