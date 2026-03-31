@@ -53,12 +53,10 @@ export function ScrollVideoHero({
       const scrolled = window.scrollY - top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
 
-      // Scrub video
       if (video.duration && isFinite(video.duration)) {
         video.currentTime = progress * video.duration;
       }
 
-      // Fade text: visible between 5%–85% progress
       if (text) {
         const textOpacity =
           progress < 0.05
@@ -85,7 +83,6 @@ export function ScrollVideoHero({
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
-    // Initial scrub once video metadata loads
     const onMeta = () => {
       cacheRect();
       scrub();
@@ -108,33 +105,43 @@ export function ScrollVideoHero({
       ref={containerRef}
       className="h-[200vh] md:h-[300vh] relative"
     >
-      {/* Top gradient: white → video bg color */}
-      <div className="sticky top-0 h-0 z-10">
-        <div
-          className="h-32 pointer-events-none"
-          style={{
-            background: "linear-gradient(to bottom, #ffffff 0%, #e2e3e1 100%)",
-          }}
+      {/* Sticky viewport — video fills entire screen */}
+      <div className="sticky top-0 min-h-[100dvh] overflow-hidden bg-white">
+        {/* Video — absolute, fills entire viewport */}
+        <video
+          ref={videoRef}
+          src={src}
+          muted
+          playsInline
+          preload="auto"
+          className={`absolute inset-0 w-full h-full object-cover will-change-transform ${
+            isLeft ? "object-right" : "object-left"
+          }`}
         />
-      </div>
 
-      {/* Sticky viewport-filling container — matches video bg */}
-      <div
-        className="sticky top-0 min-h-[100dvh] overflow-hidden flex items-center"
-        style={{ backgroundColor: "#e2e3e1" }}
-      >
-        <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12">
+        {/* Text overlay — positioned on one side with bg fade for readability */}
+        <div
+          className={`absolute inset-0 flex items-center ${
+            isLeft ? "justify-start" : "justify-end"
+          }`}
+        >
           <div
-            className={`grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-4 items-center ${
-              isLeft ? "" : "lg:[direction:rtl]"
+            ref={textRef}
+            className={`relative z-10 w-full lg:w-1/2 px-8 md:px-16 lg:px-20 ${
+              isLeft ? "text-left" : "text-right"
             }`}
+            style={{ opacity: 0, transform: "translateY(40px)" }}
           >
-            {/* Text side */}
+            {/* Soft background wash behind text for readability */}
             <div
-              ref={textRef}
-              className="will-change-transform transition-none lg:[direction:ltr] text-center lg:text-left"
-              style={{ opacity: 0, transform: "translateY(40px)" }}
-            >
+              className={`absolute inset-0 -mx-8 -my-12 ${
+                isLeft
+                  ? "bg-gradient-to-r from-white via-white/90 to-transparent"
+                  : "bg-gradient-to-l from-white via-white/90 to-transparent"
+              }`}
+            />
+
+            <div className="relative">
               <p
                 className={`text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-4`}
               >
@@ -143,33 +150,13 @@ export function ScrollVideoHero({
               <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-6">
                 {name}
               </h2>
-              <p className="text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[50ch] mx-auto lg:mx-0">
+              <p className="text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[45ch]">
                 {description}
               </p>
-            </div>
-
-            {/* Video side — no blend mode needed, bg matches */}
-            <div className="flex items-center justify-center">
-              <video
-                ref={videoRef}
-                src={src}
-                muted
-                playsInline
-                preload="auto"
-                className="w-full max-w-[500px] md:max-w-none aspect-square object-contain will-change-transform scale-110 lg:scale-125"
-              />
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom gradient: video bg color → white */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10"
-        style={{
-          background: "linear-gradient(to bottom, #e2e3e1 0%, #ffffff 100%)",
-        }}
-      />
     </div>
   );
 }
