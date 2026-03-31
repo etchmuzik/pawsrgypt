@@ -58,7 +58,7 @@ export function ScrollVideoHero({
       // Smooth video scrubbing with lerp
       if (video.duration && isFinite(video.duration)) {
         const targetTime = progress * video.duration;
-        currentTimeRef.current = lerp(currentTimeRef.current, targetTime, 0.15);
+        currentTimeRef.current = lerp(currentTimeRef.current, targetTime, 0.35);
         video.currentTime = currentTimeRef.current;
       }
 
@@ -118,7 +118,7 @@ export function ScrollVideoHero({
   return (
     <div
       ref={containerRef}
-      className="h-[200vh] md:h-[300vh] relative"
+      className="h-[150vh] md:h-[200vh] relative"
       style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
       {/* Sticky viewport — video fills entire screen, no gaps */}
