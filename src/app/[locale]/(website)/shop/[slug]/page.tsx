@@ -1,4 +1,4 @@
-import { useTranslations, useLocale } from "next-intl";
+import { getTranslations, getLocale } from "next-intl/server";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, Star, Truck, Shield, Heart, Package } from "lucide-react";
@@ -40,9 +40,9 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const t = useTranslations("product");
-  const tc = useTranslations("common");
-  const locale = useLocale();
+  const t = await getTranslations("product");
+  const tc = await getTranslations("common");
+  const locale = await getLocale();
 
   // Try Supabase first
   const supabase = await createClient();
