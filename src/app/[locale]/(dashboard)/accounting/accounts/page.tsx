@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, BookOpen } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 
 type Account = {
   id: string;
@@ -49,6 +50,7 @@ function groupByType(accounts: Account[]): Record<string, Account[]> {
 }
 
 export default async function ChartOfAccountsPage() {
+  const locale = await getLocale();
   const accounts = await getAccounts();
   const grouped = groupByType(accounts);
   const typeOrder = ["asset", "liability", "equity", "income", "expense"];
@@ -146,7 +148,7 @@ export default async function ChartOfAccountsPage() {
 
       <div className="mt-4">
         <Link
-          href="/accounting"
+          href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
           &larr; Back to Accounting

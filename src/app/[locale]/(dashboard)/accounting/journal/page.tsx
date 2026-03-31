@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 
 type JournalEntry = {
   id: string;
@@ -66,6 +67,7 @@ function formatAmount(amount: number): string {
 }
 
 export default async function JournalEntriesPage() {
+  const locale = await getLocale();
   const entries = await getJournalEntries();
 
   return (
@@ -170,7 +172,7 @@ export default async function JournalEntriesPage() {
 
       <div className="mt-4">
         <Link
-          href="/accounting"
+          href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
           &larr; Back to Accounting

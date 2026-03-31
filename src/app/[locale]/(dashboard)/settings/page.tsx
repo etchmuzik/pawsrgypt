@@ -1,29 +1,32 @@
 import { Card } from "@/components/ui/card";
 import { Users, Building2, Shield, Bell, Settings } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 
-const SETTINGS_MODULES = [
-  { icon: Users, title: "Users", desc: "Manage team members and access", href: "/settings/users", color: "text-blue-600", bg: "bg-blue-50" },
-  { icon: Shield, title: "Roles & Permissions", desc: "Configure role-based access control", href: "/settings/roles", color: "text-purple-600", bg: "bg-purple-50" },
-  { icon: Building2, title: "Branches", desc: "Manage store locations", href: "/settings/branches", color: "text-green-600", bg: "bg-green-50" },
-  { icon: Bell, title: "Notifications", desc: "SMS and email notification settings", href: "/settings/notifications", color: "text-paws-orange", bg: "bg-orange-50" },
-  { icon: Settings, title: "System Settings", desc: "Configure tax, invoicing, and app defaults", href: "/settings/system", color: "text-gray-600", bg: "bg-gray-50" },
-];
+export default async function SettingsPage() {
+  const locale = await getLocale();
 
-export default function SettingsPage() {
+  const modules = [
+    { icon: Users, title: "Users", desc: "Manage team members and access", href: `/${locale}/settings/users`, color: "text-blue-600", bg: "bg-blue-50" },
+    { icon: Shield, title: "Roles & Permissions", desc: "Configure role-based access control", href: `/${locale}/settings/roles`, color: "text-purple-600", bg: "bg-purple-50" },
+    { icon: Building2, title: "Branches", desc: "Manage store locations", href: `/${locale}/settings/branches`, color: "text-green-600", bg: "bg-green-50" },
+    { icon: Bell, title: "Notifications", desc: "SMS and email notification settings", href: `/${locale}/settings/notifications`, color: "text-paws-orange", bg: "bg-orange-50" },
+    { icon: Settings, title: "System Settings", desc: "Configure tax, invoicing, and app defaults", href: `/${locale}/settings/system`, color: "text-gray-600", bg: "bg-gray-50" },
+  ];
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-paws-brown-dark mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold text-neutral-900 mb-6">Settings</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        {SETTINGS_MODULES.map((mod) => (
+        {modules.map((mod) => (
           <Link key={mod.title} href={mod.href}>
-            <Card className="p-6 border-paws-sand hover:border-paws-orange hover:shadow-md transition-all cursor-pointer">
+            <Card className="p-6 border-neutral-200 hover:border-paws-orange hover:shadow-md transition-all cursor-pointer">
               <div className="flex items-start gap-4">
                 <div className={`w-12 h-12 ${mod.bg} rounded-xl flex items-center justify-center shrink-0`}>
                   <mod.icon className={`w-6 h-6 ${mod.color}`} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-paws-brown-dark">{mod.title}</h3>
+                  <h3 className="font-bold text-neutral-900">{mod.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{mod.desc}</p>
                 </div>
               </div>

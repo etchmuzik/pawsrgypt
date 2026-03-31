@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Landmark, Banknote, Building2 } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 
 type TreasuryAccount = {
   id: string;
@@ -38,6 +39,7 @@ function formatCurrency(amount: number, currency = "EGP"): string {
 }
 
 export default async function TreasuryPage() {
+  const locale = await getLocale();
   const accounts = await getTreasuryAccounts();
   const totalBalance = accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0);
   const cashAccounts = accounts.filter((a) => a.type === "cash");
@@ -166,7 +168,7 @@ export default async function TreasuryPage() {
 
       <div className="mt-6">
         <Link
-          href="/accounting"
+          href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
           &larr; Back to Accounting

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Users, ArrowLeft, Filter } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import type { Profile, Branch } from "@/lib/supabase/types";
 
 const ROLE_STYLES: Record<Profile["role"], { bg: string; text: string }> = {
@@ -49,6 +50,7 @@ interface UsersPageProps {
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const params = await searchParams;
+  const locale = await getLocale();
   const roleFilter = params.role ?? "all";
 
   const [profiles, branches] = await Promise.all([
@@ -72,7 +74,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/settings">
+        <Link href={`/${locale}/settings`}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -93,7 +95,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         <Filter className="w-4 h-4 text-muted-foreground" />
         <div className="flex gap-1.5 flex-wrap">
           {roles.map((r) => (
-            <Link key={r.value} href={`/settings/users${r.value === "all" ? "" : `?role=${r.value}`}`}>
+            <Link key={r.value} href={`/${locale}/settings/users${r.value === "all" ? "" : `?role=${r.value}`}`}>
               <Button
                 variant={roleFilter === r.value ? "default" : "outline"}
                 size="sm"

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus, Building2, ArrowLeft, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import type { Branch } from "@/lib/supabase/types";
 
 async function getBranches(): Promise<Branch[]> {
@@ -16,13 +17,14 @@ async function getBranches(): Promise<Branch[]> {
 }
 
 export default async function BranchesPage() {
+  const locale = await getLocale();
   const branches = await getBranches();
 
   return (
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/settings">
+        <Link href={`/${locale}/settings`}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <ArrowLeft className="w-4 h-4" />
           </Button>
