@@ -42,3 +42,12 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+
+# Source media files in project root (not meant to be served)
+/cairo.mp4
+/luna.mp4
+/cairo.png
+/luna.png
+/cairo&luna.jpeg
+/hero.mp4
+/lunagreenchroma.mp4

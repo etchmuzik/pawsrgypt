@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, Clock, Scissors, Droplets, Sparkles, Star } from "lucide-react";
+import { CheckCircle, Clock, Scissors, Droplets, Sparkles, Star, ScissorsLineDashed } from "lucide-react";
 
 const SERVICES = [
   {
@@ -52,6 +52,7 @@ export default function GroomingPage() {
   const locale = useLocale();
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -78,7 +79,7 @@ export default function GroomingPage() {
       if (error) throw error;
       setSubmitted(true);
     } catch {
-      alert("Something went wrong. Please try again.");
+      setErrorMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -88,26 +89,26 @@ export default function GroomingPage() {
     <div>
       {/* Header */}
       <div className="bg-gradient-to-br from-paws-orange to-paws-orange-light text-white py-16 text-center">
-        <div className="text-5xl mb-4">✂️</div>
+        <ScissorsLineDashed className="w-12 h-12 text-white/90 mx-auto mb-4" />
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{t("title")}</h1>
         <p className="text-white/90 text-lg max-w-xl mx-auto">{t("subtitle")}</p>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Services */}
-        <h2 className="text-2xl font-bold text-paws-brown-dark mb-6 text-center">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
           {t("services_title")}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
           {SERVICES.map((service) => (
             <div
               key={service.name}
-              className="bg-white border border-paws-sand rounded-2xl p-6 hover:border-paws-orange hover:shadow-md transition-all"
+              className="bg-white border border-neutral-200 rounded-2xl p-6 hover:border-paws-orange hover:shadow-md transition-all"
             >
               <div className="w-12 h-12 bg-paws-orange/10 rounded-xl flex items-center justify-center mb-4">
                 <service.icon className="w-6 h-6 text-paws-orange" />
               </div>
-              <h3 className="font-bold text-paws-brown-dark mb-1">
+              <h3 className="font-bold text-neutral-900 mb-1">
                 {locale === "ar" ? service.nameAr : service.name}
               </h3>
               <p className="text-sm text-muted-foreground mb-3">
@@ -128,20 +129,25 @@ export default function GroomingPage() {
 
         {/* Booking Form */}
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white border border-paws-sand rounded-3xl p-8">
-            <h2 className="text-2xl font-bold text-paws-brown-dark mb-6 text-center">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-8">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
               {t("book_appointment")}
             </h2>
 
             {submitted ? (
               <div className="text-center py-8">
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <p className="text-lg font-semibold text-paws-brown-dark">
+                <p className="text-lg font-semibold text-neutral-900">
                   {t("success")}
                 </p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
+                {errorMessage && (
+                  <div className="flex items-center gap-2 bg-destructive/10 text-destructive text-sm rounded-lg px-3 py-2">
+                    <span>{errorMessage}</span>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label>{t("name")}</Label>

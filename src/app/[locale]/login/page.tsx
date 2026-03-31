@@ -39,14 +39,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-paws-cream to-paws-sand flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-white to-neutral-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl shadow-lg w-full max-w-md p-8">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-paws-orange rounded-2xl flex items-center justify-center mx-auto mb-3">
             <span className="text-white font-bold text-2xl">P</span>
           </div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">PAWS Egypt</h1>
+          <h1 className="text-2xl font-bold text-neutral-900">PAWS Egypt</h1>
           <p className="text-muted-foreground text-sm mt-1">Management System</p>
         </div>
 

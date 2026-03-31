@@ -1,7 +1,7 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Heart, MapPin, Phone, Mail, Star, Award, Users } from "lucide-react";
+import { Heart, MapPin, Phone, Mail, Star, Award, Users, PawPrint } from "lucide-react";
 
 export default function AboutPage() {
   const t = useTranslations("about");
@@ -24,16 +24,16 @@ export default function AboutPage() {
   return (
     <div>
       {/* Header */}
-      <div className="bg-gradient-to-br from-paws-brown-dark to-paws-brown text-white py-16 text-center">
+      <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 text-white py-16 text-center">
         <h1 className="text-3xl md:text-4xl font-bold mb-3">{t("title")}</h1>
-        <p className="text-paws-sand text-lg">Cairo&apos;s Premium Pet Lifestyle Brand</p>
+        <p className="text-neutral-400 text-lg">Cairo&apos;s Premium Pet Lifestyle Brand</p>
       </div>
 
       {/* Mission */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-paws-brown-dark mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-4">
               {t("mission_title")}
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
@@ -48,17 +48,17 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="flex justify-center">
-            <div className="w-64 h-64 bg-paws-cream rounded-full flex items-center justify-center text-9xl">
-              🐾
+            <div className="w-64 h-64 bg-neutral-50 rounded-full flex items-center justify-center">
+              <PawPrint className="w-32 h-32 text-paws-orange" />
             </div>
           </div>
         </div>
       </section>
 
       {/* Values */}
-      <section className="py-16 bg-paws-cream">
+      <section className="py-16 bg-neutral-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-paws-brown-dark mb-10 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-10 text-center">
             {t("values_title")}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -67,7 +67,7 @@ export default function AboutPage() {
                 <div className="w-12 h-12 bg-paws-orange/10 rounded-xl flex items-center justify-center mx-auto mb-4">
                   <v.icon className="w-6 h-6 text-paws-orange" />
                 </div>
-                <h3 className="font-bold text-paws-brown-dark mb-2">
+                <h3 className="font-bold text-neutral-900 mb-2">
                   {locale === "ar" ? v.titleAr : v.title}
                 </h3>
                 <p className="text-sm text-muted-foreground">{v.desc}</p>
@@ -80,17 +80,17 @@ export default function AboutPage() {
       {/* Branches */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-paws-brown-dark mb-10 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-neutral-900 mb-10 text-center">
             Our Locations
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {branches.map((branch) => (
               <div
                 key={branch.name}
-                className="border border-paws-sand rounded-2xl p-5 hover:border-paws-orange transition-colors"
+                className="border border-neutral-200 rounded-2xl p-5 hover:border-paws-orange transition-colors"
               >
                 <MapPin className="w-6 h-6 text-paws-orange mb-3" />
-                <h3 className="font-bold text-paws-brown-dark">
+                <h3 className="font-bold text-neutral-900">
                   {locale === "ar" ? branch.nameAr : branch.name}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-1">{branch.address}</p>
@@ -101,15 +101,15 @@ export default function AboutPage() {
       </section>
 
       {/* Contact */}
-      <section className="py-16 bg-paws-cream">
+      <section className="py-16 bg-neutral-50">
         <div className="max-w-md mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-paws-brown-dark mb-6">{t("contact_title")}</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-6">{t("contact_title")}</h2>
           <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2 text-paws-brown">
+            <div className="flex items-center justify-center gap-2 text-neutral-600">
               <Phone className="w-5 h-5 text-paws-orange" />
               <span>+20 100 000 0000</span>
             </div>
-            <div className="flex items-center justify-center gap-2 text-paws-brown">
+            <div className="flex items-center justify-center gap-2 text-neutral-600">
               <Mail className="w-5 h-5 text-paws-orange" />
               <span>hello@pawsegypt.com</span>
             </div>
