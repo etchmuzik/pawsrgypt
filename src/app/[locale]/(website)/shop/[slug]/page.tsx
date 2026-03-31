@@ -1,29 +1,38 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Package, Star, Truck } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, ArrowRight, Star, Truck, Shield, Heart, Package } from "lucide-react";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { AddToCartButton } from "@/components/website/AddToCartButton";
+import { createClient } from "@/lib/supabase/server";
 
-// Placeholder products — same data as shop page, replace with Supabase query once DB is connected
-const PLACEHOLDER_PRODUCTS = [
-  { id: "1", name: "Premium Dry Dog Food 3kg", nameAr: "طعام كلاب جاف 3 كيلو", price: 250, category: "food", emoji: "🍖", badge: "Best Seller", description: "High-quality dry dog food made with real chicken and wholesome grains. Provides complete and balanced nutrition for adult dogs of all breeds.", descriptionAr: "طعام كلاب جاف عالي الجودة مصنوع من دجاج حقيقي وحبوب كاملة. يوفر تغذية كاملة ومتوازنة للكلاب البالغة من جميع السلالات." },
-  { id: "2", name: "Royal Canin Cat Food 2kg", nameAr: "طعام رويال كانين للقطط 2 كيلو", price: 320, category: "food", emoji: "🐱", badge: null, description: "Premium cat food formulated to support your cat's health, vitality, and natural beauty. With essential vitamins and minerals.", descriptionAr: "طعام قطط متميز مصمم لدعم صحة قطتك وحيويتها وجمالها الطبيعي. يحتوي على فيتامينات ومعادن أساسية." },
-  { id: "3", name: "Dog Grooming Kit", nameAr: "طقم تجميل الكلاب", price: 180, category: "grooming", emoji: "✂️", badge: "New", description: "Complete grooming kit including brush, comb, nail clipper, and shampoo. Everything you need for at-home grooming sessions.", descriptionAr: "طقم تجميل كامل يشمل فرشاة ومشط وقصاصة أظافر وشامبو. كل ما تحتاجه لجلسات العناية في المنزل." },
-  { id: "4", name: "Leather Pet Collar", nameAr: "طوق جلدي للحيوانات", price: 120, category: "accessories", emoji: "🎀", badge: null, description: "Handcrafted genuine leather collar with adjustable buckle. Durable and comfortable for daily wear.", descriptionAr: "طوق جلدي أصلي مصنوع يدوياً مع إبزيم قابل للتعديل. متين ومريح للارتداء اليومي." },
-  { id: "5", name: "Interactive Ball Toy", nameAr: "كرة لعب تفاعلية", price: 75, category: "toys", emoji: "🎾", badge: "Sale", description: "Durable rubber ball that bounces unpredictably to keep your pet entertained for hours. Non-toxic and safe for chewing.", descriptionAr: "كرة مطاطية متينة ترتد بشكل غير متوقع لتسلية حيوانك الأليف لساعات. غير سامة وآمنة للمضغ." },
-  { id: "6", name: "Orthopedic Pet Bed", nameAr: "سرير حيوانات مريح", price: 450, category: "beds", emoji: "🛏️", badge: null, description: "Memory foam pet bed with removable, washable cover. Provides superior joint support for pets of all ages.", descriptionAr: "سرير حيوانات أليفة بفوم ذاكرة مع غطاء قابل للإزالة والغسل. يوفر دعماً فائقاً للمفاصل لجميع الأعمار." },
-  { id: "7", name: "Vitamin Supplements", nameAr: "مكملات غذائية", price: 95, category: "health", emoji: "💊", badge: null, description: "Daily multivitamin supplement for dogs and cats. Supports immune system, coat health, and overall vitality.", descriptionAr: "مكمل فيتامينات يومي للكلاب والقطط. يدعم جهاز المناعة وصحة الفراء والحيوية العامة." },
-  { id: "8", name: "Stainless Steel Bowl Set", nameAr: "طقم أطباق ستانلس ستيل", price: 85, category: "accessories", emoji: "🥣", badge: null, description: "Set of 2 non-slip stainless steel bowls. Rust-resistant and dishwasher safe. Perfect for food and water.", descriptionAr: "طقم من 2 أطباق ستانلس ستيل غير قابلة للانزلاق. مقاومة للصدأ وآمنة لغسالة الأطباق." },
-];
-
-const CATEGORY_LABELS: Record<string, { en: string; ar: string }> = {
-  food: { en: "Food & Treats", ar: "أطعمة" },
-  accessories: { en: "Accessories", ar: "إكسسوارات" },
-  grooming: { en: "Grooming", ar: "العناية" },
-  toys: { en: "Toys", ar: "ألعاب" },
-  health: { en: "Health", ar: "الصحة" },
-  beds: { en: "Beds", ar: "الفراش" },
+type ProductDetail = {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  description_en: string | null;
+  description_ar: string | null;
+  brand: string | null;
+  images: string[];
+  is_featured: boolean;
+  categories: { name_en: string; name_ar: string } | null;
+  product_variants: { id: string; price: number; size: string | null; weight: number | null }[];
 };
+
+const FALLBACK_PRODUCTS = [
+  { id: "1", name_en: "Royal Canin Maxi Adult 15kg", name_ar: "رويال كانين ماكسي بالغ 15 كيلو", price: 5000, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/3352/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Complete and balanced nutrition for large breed adult dogs. Supports joint health and optimal weight with high-quality proteins.", description_ar: "تغذية كاملة ومتوازنة للكلاب البالغة من السلالات الكبيرة. يدعم صحة المفاصل والوزن المثالي ببروتينات عالية الجودة." },
+  { id: "2", name_en: "Bewi Cat Delicaties Rich in Chicken", name_ar: "بيوي كات ديليكاتيز غني بالدجاج", price: 5200, brand: "Bewi Cat", image: "https://petsegypt.com/web/image/product.product/10058/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Premium cat food rich in chicken. Irresistible taste with premium quality ingredients for discerning cats.", description_ar: "طعام قطط متميز غني بالدجاج. طعم لا يقاوم بمكونات عالية الجودة للقطط المميزة." },
+  { id: "3", name_en: "OZZO Premium Dog Food with Chicken 15kg", name_ar: "أوزو طعام كلاب بالدجاج 15 كيلو", price: 1800, brand: "OZZO", image: "https://petsegypt.com/web/image/product.product/9201/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Made with fresh chicken for superior taste. High premium formula with essential vitamins and minerals for adult dogs.", description_ar: "مصنوع من الدجاج الطازج لمذاق فائق. تركيبة عالية الجودة مع فيتامينات ومعادن أساسية للكلاب البالغة." },
+  { id: "4", name_en: "Royal Canin Indoor 27 Cat Food 400g", name_ar: "رويال كانين إندور 27 طعام قطط 400 جرام", price: 450, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/11178/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Specially formulated for indoor cats. Helps reduce stool odour and maintains ideal weight with controlled calories.", description_ar: "مصمم خصيصاً للقطط المنزلية. يساعد في تقليل رائحة البراز والحفاظ على الوزن المثالي مع سعرات حرارية محسوبة." },
+  { id: "5", name_en: "Bravecto Chewable For Large Dogs 20-40kg", name_ar: "برافيكتو أقراص للكلاب الكبيرة 20-40 كيلو", price: 2335, brand: "Bravecto", image: "https://petsegypt.com/web/image/product.product/9135/image_1920", category_en: "Dog Pharmacy", category_ar: "صيدلية كلاب", description_en: "Long-lasting flea and tick protection. One chewable tablet provides up to 12 weeks of protection for large dogs.", description_ar: "حماية طويلة المدى من البراغيث والقراد. قرص واحد يوفر حماية تصل إلى 12 أسبوعاً للكلاب الكبيرة." },
+  { id: "6", name_en: "Sanicat Clumping White Duo 10L", name_ar: "سانيكات كلامبينغ وايت 10 لتر", price: 425, brand: "Sanicat", image: "https://petsegypt.com/web/image/product.product/9862/image_1920", category_en: "Cat Litter", category_ar: "رمل قطط", description_en: "Premium clumping cat litter with vanilla and mandarin scent. Superior odour control and easy cleanup.", description_ar: "رمل قطط متكتل ممتاز برائحة الفانيلا والماندرين. تحكم فائق في الرائحة وتنظيف سهل." },
+  { id: "7", name_en: "Vita Day Active Dog Food 20kg", name_ar: "فيتا داي طعام كلاب نشطة 20 كيلو", price: 2900, brand: "Vita Day", image: "https://petsegypt.com/web/image/product.product/6377/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "High energy formula for active dogs. Balanced nutrition to fuel daily activities and maintain muscle mass.", description_ar: "تركيبة عالية الطاقة للكلاب النشطة. تغذية متوازنة لتعزيز الأنشطة اليومية والحفاظ على كتلة العضلات." },
+  { id: "8", name_en: "2-in-1 Auto Feeder with Water Fountain 1.5L", name_ar: "وعاء طعام آلي 2 في 1 مع نافورة مياه", price: 1250, brand: "Generic", image: "https://petsegypt.com/web/image/product.product/11893/image_1920", category_en: "Cat Accessories", category_ar: "إكسسوارات قطط", description_en: "Automatic food and water dispenser. Keeps food fresh and water flowing 24/7 for your pet.", description_ar: "موزع طعام ومياه آلي. يحافظ على الطعام طازجاً والمياه متدفقة على مدار الساعة لحيوانك الأليف." },
+  { id: "9", name_en: "ALPHA Adult Dogs Dry Food 20kg", name_ar: "ألفا طعام كلاب بالغة 20 كيلو", price: 1485, brand: "ALPHA", image: "https://petsegypt.com/web/image/product.product/7272/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Premium quality dry food for adult dogs of all breeds. Rich in protein and essential nutrients.", description_ar: "طعام جاف عالي الجودة للكلاب البالغة من جميع السلالات. غني بالبروتين والعناصر الغذائية الأساسية." },
+  { id: "10", name_en: "Purina Cat Chow Adult Salmon 1.5kg", name_ar: "بيورينا كات تشاو سلمون 1.5 كيلو", price: 575, brand: "Purina", image: "https://petsegypt.com/web/image/product.product/9156/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Balanced nutrition with real salmon. Supports healthy digestion and strong immunity for adult cats.", description_ar: "تغذية متوازنة مع السلمون الحقيقي. يدعم الهضم الصحي والمناعة القوية للقطط البالغة." },
+  { id: "11", name_en: "Cat's Way Clumping Baby Powder 10L", name_ar: "كاتس واي رمل بودرة أطفال 10 لتر", price: 260, brand: "Cat's Way", image: "https://petsegypt.com/web/image/product.product/11374/image_1920", category_en: "Cat Litter", category_ar: "رمل قطط", description_en: "Baby powder scented clumping litter. Excellent absorption and easy cleanup for everyday use.", description_ar: "رمل متكتل برائحة بودرة الأطفال. امتصاص ممتاز وتنظيف سهل للاستخدام اليومي." },
+  { id: "12", name_en: "Cat House Multi-Level Cat Tree Tower", name_ar: "برج قطط متعدد المستويات", price: 2950, brand: "Cat House", image: "https://petsegypt.com/web/image/product.product/11790/image_1920", category_en: "Cat Accessories", category_ar: "إكسسوارات قطط", description_en: "Multi-level cat tree with scratching posts, platforms, and cozy hideaway. Perfect for active cats.", description_ar: "برج قطط متعدد المستويات مع أعمدة خدش ومنصات ومخبأ مريح. مثالي للقطط النشطة." },
+];
 
 export default async function ProductDetailPage({
   params,
@@ -35,22 +44,36 @@ export default async function ProductDetailPage({
   const tc = useTranslations("common");
   const locale = useLocale();
 
-  const product = PLACEHOLDER_PRODUCTS.find((p) => p.id === slug);
+  // Try Supabase first
+  const supabase = await createClient();
+  const { data: dbProduct } = await supabase
+    .from("products")
+    .select("id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight)")
+    .eq("id", slug)
+    .eq("is_active", true)
+    .single();
 
-  if (!product) {
+  const product = dbProduct as ProductDetail | null;
+
+  // Fallback to static data
+  const fallback = !product ? FALLBACK_PRODUCTS.find((p) => p.id === slug) : null;
+
+  if (!product && !fallback) {
     return (
-      <div className="min-h-screen bg-paws-cream/30 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center px-4">
-          <div className="text-7xl mb-6">🐾</div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark mb-3">
+          <div className="w-20 h-20 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-6">
+            <Package className="w-8 h-8 text-neutral-300" />
+          </div>
+          <h1 className="text-2xl font-bold text-neutral-900 mb-3">
             {t("not_found")}
           </h1>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          <p className="text-neutral-500 mb-6 max-w-md mx-auto">
             {t("not_found_desc")}
           </p>
           <Link
             href={`/${locale}/shop`}
-            className="inline-flex items-center gap-2 bg-paws-orange text-white px-6 py-3 rounded-full hover:bg-paws-orange/90 transition-colors font-medium"
+            className="inline-flex items-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-full hover:bg-neutral-800 transition-colors font-medium"
           >
             {locale === "ar" ? (
               <>
@@ -69,29 +92,36 @@ export default async function ProductDetailPage({
     );
   }
 
-  const relatedProducts = PLACEHOLDER_PRODUCTS.filter(
-    (p) => p.category === product.category && p.id !== product.id
-  ).slice(0, 4);
+  // Normalize data
+  const name = product
+    ? (locale === "ar" ? product.name_ar : product.name_en)
+    : (locale === "ar" ? fallback!.name_ar : fallback!.name_en);
+  const description = product
+    ? (locale === "ar" ? product.description_ar : product.description_en)
+    : (locale === "ar" ? fallback!.description_ar : fallback!.description_en);
+  const brand = product?.brand ?? fallback?.brand ?? null;
+  const price = product?.product_variants?.[0]?.price ?? fallback?.price ?? 0;
+  const imageUrl = product?.images?.[0] ?? fallback?.image ?? null;
+  const categoryName = product
+    ? (locale === "ar" ? product.categories?.name_ar : product.categories?.name_en)
+    : (locale === "ar" ? fallback?.category_ar : fallback?.category_en);
+  const productId = product?.id ?? fallback!.id;
+  const nameEn = product?.name_en ?? fallback!.name_en;
+  const nameAr = product?.name_ar ?? fallback!.name_ar;
 
-  const fillerProducts =
-    relatedProducts.length < 4
-      ? PLACEHOLDER_PRODUCTS.filter(
-          (p) => p.id !== product.id && !relatedProducts.find((r) => r.id === p.id)
-        ).slice(0, 4 - relatedProducts.length)
-      : [];
+  // Related products from fallback
+  const relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.id !== slug).slice(0, 4);
 
-  const displayRelated = [...relatedProducts, ...fillerProducts];
-  const categoryLabel = CATEGORY_LABELS[product.category];
   const BackArrow = locale === "ar" ? ArrowRight : ArrowLeft;
 
   return (
-    <div className="min-h-screen bg-paws-cream/30">
+    <div className="min-h-screen bg-white">
       {/* Breadcrumb */}
-      <div className="bg-white border-b border-paws-sand">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div className="border-b border-neutral-100">
+        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-3">
           <Link
             href={`/${locale}/shop`}
-            className="inline-flex items-center gap-2 text-sm text-paws-brown hover:text-paws-orange transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-paws-orange transition-colors"
           >
             <BackArrow className="w-4 h-4" />
             {t("back_to_shop")}
@@ -100,95 +130,118 @@ export default async function ProductDetailPage({
       </div>
 
       {/* Product Detail */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Product Image Area */}
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8 md:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
+          {/* Product Image */}
           <ScrollReveal>
-            <div className="bg-white rounded-3xl border border-paws-sand overflow-hidden">
-              <div className="bg-paws-sand/20 aspect-square flex items-center justify-center">
-                <span className="text-[120px] md:text-[160px]">
-                  {product.emoji}
-                </span>
+            <div className="bg-neutral-50 rounded-3xl overflow-hidden border border-neutral-100">
+              <div className="aspect-square flex items-center justify-center p-8">
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt={name}
+                    width={600}
+                    height={600}
+                    className="w-full h-full object-contain"
+                    priority
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-2xl bg-neutral-100 flex items-center justify-center">
+                    <Package className="w-10 h-10 text-neutral-300" />
+                  </div>
+                )}
               </div>
             </div>
           </ScrollReveal>
 
           {/* Product Info */}
           <ScrollReveal delay={100}>
-            <div className="flex flex-col gap-6">
-              {/* Badge */}
-              {product.badge && (
-                <span className="inline-block self-start bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-medium">
-                  {product.badge}
-                </span>
+            <div className="flex flex-col gap-5">
+              {/* Brand */}
+              {brand && (
+                <p className="text-sm font-semibold uppercase tracking-[0.15em] text-paws-orange">
+                  {brand}
+                </p>
               )}
 
               {/* Name */}
-              <h1 className="text-2xl md:text-3xl font-bold text-paws-brown-dark leading-tight">
-                {locale === "ar" ? product.nameAr : product.name}
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-900 leading-tight">
+                {name}
               </h1>
 
               {/* Category */}
-              {categoryLabel && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              {categoryName && (
+                <div className="flex items-center gap-2 text-sm text-neutral-400">
                   <Package className="w-4 h-4" />
-                  <span>
-                    {t("category")}:{" "}
-                    {locale === "ar" ? categoryLabel.ar : categoryLabel.en}
-                  </span>
+                  <span>{categoryName}</span>
                 </div>
               )}
 
+              {/* Rating */}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-0.5">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
+                </div>
+                <span className="text-sm text-neutral-400">(4.8)</span>
+              </div>
+
               {/* Price */}
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold text-paws-orange">
-                  {product.price}
+                <span className="text-4xl font-extrabold text-neutral-900">
+                  {price.toLocaleString()}
                 </span>
-                <span className="text-lg text-paws-orange font-medium">
+                <span className="text-lg text-neutral-400 font-medium">
                   {tc("egp")}
                 </span>
               </div>
 
               {/* Stock Status */}
-              <div className="flex items-center gap-2 text-green-600">
-                <div className="w-2 h-2 bg-green-500 rounded-full" />
+              <div className="flex items-center gap-2 text-emerald-600">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full" />
                 <span className="text-sm font-medium">{t("in_stock")}</span>
               </div>
 
               {/* Description */}
-              <div>
-                <h2 className="text-lg font-semibold text-paws-brown-dark mb-2">
-                  {t("description")}
-                </h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {locale === "ar" ? product.descriptionAr : product.description}
-                </p>
-              </div>
+              {description && (
+                <div className="pt-2">
+                  <p className="text-neutral-500 leading-relaxed">
+                    {description}
+                  </p>
+                </div>
+              )}
 
               {/* Features */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex items-center gap-2 bg-white border border-paws-sand rounded-xl p-3 text-sm">
-                  <Truck className="w-4 h-4 text-paws-orange" />
-                  <span className="text-paws-brown-dark">
+              <div className="grid grid-cols-3 gap-3 pt-2">
+                <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                  <Truck className="w-5 h-5 text-paws-orange" />
+                  <span className="text-xs font-medium text-neutral-600">
                     {locale === "ar" ? "توصيل سريع" : "Fast Delivery"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 bg-white border border-paws-sand rounded-xl p-3 text-sm">
-                  <Star className="w-4 h-4 text-paws-orange" />
-                  <span className="text-paws-brown-dark">
-                    {locale === "ar" ? "جودة مضمونة" : "Quality Guaranteed"}
+                <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                  <Shield className="w-5 h-5 text-paws-orange" />
+                  <span className="text-xs font-medium text-neutral-600">
+                    {locale === "ar" ? "أصلي 100%" : "100% Genuine"}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                  <Heart className="w-5 h-5 text-paws-orange" />
+                  <span className="text-xs font-medium text-neutral-600">
+                    {locale === "ar" ? "جودة مضمونة" : "Quality First"}
                   </span>
                 </div>
               </div>
 
               {/* Add to Cart */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-4">
                 <AddToCartButton
-                  id={product.id}
-                  name={product.name}
-                  nameAr={product.nameAr}
-                  price={product.price}
-                  emoji={product.emoji}
+                  id={productId}
+                  name={nameEn}
+                  nameAr={nameAr}
+                  price={price}
+                  image={imageUrl ?? ""}
                   size="lg"
                   className="flex-1"
                 />
@@ -199,36 +252,38 @@ export default async function ProductDetailPage({
       </div>
 
       {/* Related Products */}
-      {displayRelated.length > 0 && (
-        <div className="bg-white border-t border-paws-sand">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {relatedProducts.length > 0 && (
+        <div className="border-t border-neutral-100">
+          <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-16">
             <ScrollReveal>
-              <h2 className="text-2xl font-bold text-paws-brown-dark mb-6 text-center">
+              <h2 className="text-2xl font-extrabold text-neutral-900 mb-8">
                 {t("related_products")}
               </h2>
             </ScrollReveal>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {displayRelated.map((related, index) => (
+              {relatedProducts.map((related, index) => (
                 <ScrollReveal key={related.id} delay={index * 80}>
                   <Link
                     href={`/${locale}/shop/${related.id}`}
-                    className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group border border-paws-sand"
+                    className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
                   >
-                    <div className="bg-paws-sand/20 h-44 flex items-center justify-center text-5xl">
-                      {related.emoji}
+                    <div className="bg-neutral-50 aspect-square flex items-center justify-center overflow-hidden">
+                      <Image
+                        src={related.image}
+                        alt={locale === "ar" ? related.name_ar : related.name_en}
+                        width={300}
+                        height={300}
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                      />
                     </div>
                     <div className="p-3">
-                      {related.badge && (
-                        <span className="inline-block bg-paws-orange text-white text-xs px-2 py-0.5 rounded-full mb-1.5">
-                          {related.badge}
-                        </span>
-                      )}
-                      <h3 className="text-sm font-semibold text-paws-brown-dark leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
-                        {locale === "ar" ? related.nameAr : related.name}
+                      <p className="text-xs text-neutral-400 font-medium mb-0.5">{related.brand}</p>
+                      <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
+                        {locale === "ar" ? related.name_ar : related.name_en}
                       </h3>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className="text-paws-orange font-bold text-sm">
-                          {related.price} {tc("egp")}
+                      <div className="mt-2">
+                        <span className="text-paws-orange font-extrabold">
+                          {related.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
                         </span>
                       </div>
                     </div>

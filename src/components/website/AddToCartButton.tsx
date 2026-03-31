@@ -11,7 +11,7 @@ interface AddToCartButtonProps {
   name: string;
   nameAr: string;
   price: number;
-  emoji: string;
+  image: string;
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "outline";
   className?: string;
@@ -22,7 +22,7 @@ export function AddToCartButton({
   name,
   nameAr,
   price,
-  emoji,
+  image,
   size = "lg",
   variant = "default",
   className = "",
@@ -37,7 +37,7 @@ export function AddToCartButton({
       productId: id,
       variantId: null,
       name: locale === "ar" ? nameAr : name,
-      image: emoji,
+      image,
       price,
     });
 
@@ -54,7 +54,7 @@ export function AddToCartButton({
       variant={variant}
       className={`gap-2 ${
         variant === "default"
-          ? "bg-paws-orange hover:bg-paws-orange/90 text-white"
+          ? "bg-paws-orange hover:bg-paws-orange/90 text-white shadow-[0_8px_30px_rgba(244,124,44,0.25)] hover:shadow-[0_12px_40px_rgba(244,124,44,0.35)] transition-all hover:scale-[1.02]"
           : "border-paws-orange text-paws-orange hover:bg-paws-orange hover:text-white"
       } ${className}`}
     >
