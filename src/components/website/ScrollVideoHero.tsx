@@ -22,7 +22,6 @@ export function ScrollVideoHero({
   accentColor = "text-paws-orange",
 }: ScrollVideoHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const stickyRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
@@ -109,10 +108,20 @@ export function ScrollVideoHero({
       ref={containerRef}
       className="h-[200vh] md:h-[300vh] relative"
     >
-      {/* Sticky viewport-filling container */}
+      {/* Top gradient: white → video bg color */}
+      <div className="sticky top-0 h-0 z-10">
+        <div
+          className="h-32 pointer-events-none"
+          style={{
+            background: "linear-gradient(to bottom, #ffffff 0%, #e2e3e1 100%)",
+          }}
+        />
+      </div>
+
+      {/* Sticky viewport-filling container — matches video bg */}
       <div
-        ref={stickyRef}
-        className="sticky top-0 min-h-[100dvh] overflow-hidden flex items-center bg-white"
+        className="sticky top-0 min-h-[100dvh] overflow-hidden flex items-center"
+        style={{ backgroundColor: "#e2e3e1" }}
       >
         <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12">
           <div
@@ -123,9 +132,7 @@ export function ScrollVideoHero({
             {/* Text side */}
             <div
               ref={textRef}
-              className={`will-change-transform transition-none ${
-                isLeft ? "lg:[direction:ltr]" : "lg:[direction:ltr]"
-              } text-center lg:text-left`}
+              className="will-change-transform transition-none lg:[direction:ltr] text-center lg:text-left"
               style={{ opacity: 0, transform: "translateY(40px)" }}
             >
               <p
@@ -141,7 +148,7 @@ export function ScrollVideoHero({
               </p>
             </div>
 
-            {/* Video side */}
+            {/* Video side — no blend mode needed, bg matches */}
             <div className="flex items-center justify-center">
               <video
                 ref={videoRef}
@@ -149,12 +156,20 @@ export function ScrollVideoHero({
                 muted
                 playsInline
                 preload="auto"
-                className="w-full max-w-[500px] md:max-w-none aspect-square object-contain will-change-transform mix-blend-multiply scale-110 lg:scale-125"
+                className="w-full max-w-[500px] md:max-w-none aspect-square object-contain will-change-transform scale-110 lg:scale-125"
               />
             </div>
           </div>
         </div>
       </div>
+
+      {/* Bottom gradient: video bg color → white */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-32 pointer-events-none z-10"
+        style={{
+          background: "linear-gradient(to bottom, #e2e3e1 0%, #ffffff 100%)",
+        }}
+      />
     </div>
   );
 }
