@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
-import { ShoppingCart, Menu, X, Globe } from "lucide-react";
+import { ShoppingCart, Menu, X, Globe, LayoutDashboard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart";
@@ -33,6 +33,7 @@ export function Navbar() {
     { href: `/${locale}/shop`, label: t("shop") },
     { href: `/${locale}/grooming`, label: t("grooming") },
     { href: `/${locale}/about`, label: t("about") },
+    { href: `/${locale}/dashboard`, label: t("dashboard") },
   ];
 
   return (
