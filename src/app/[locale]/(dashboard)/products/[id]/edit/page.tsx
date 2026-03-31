@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,52 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Loader2, Barcode, X } from "lucide-react";
+import { ImageUploader } from "@/components/dashboard/ImageUploader";
+import { ArrowLeft, Loader2, Barcode } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { ImageUploader } from "@/components/dashboard/ImageUploader";
+import type { Product, ProductVariant } from "@/lib/supabase/types";
 
 interface CategoryOption {
   id: string;
   name_en: string;
   name_ar: string;
 }
-
-interface ProductForm {
-  sku: string;
-  name_en: string;
-  name_ar: string;
-  description_en: string;
-  description_ar: string;
-  category_id: string;
-  brand: string;
-  unit_type: string;
-  barcode: string;
-  price: string;
-  cost_price: string;
-  is_active: boolean;
-  is_featured: boolean;
-  images: string[];
-  tags: string[];
-}
-
-const INITIAL_FORM: ProductForm = {
-  sku: "",
-  name_en: "",
-  name_ar: "",
-  description_en: "",
-  description_ar: "",
-  category_id: "",
-  brand: "",
-  unit_type: "piece",
-  barcode: "",
-  price: "",
-  cost_price: "",
-  is_active: true,
-  is_featured: false,
-  images: [],
-  tags: [],
-};
 
 function generateBarcode(): string {
   const prefix = "628";
@@ -70,36 +35,102 @@ function generateBarcode(): string {
   return raw + checkDigit;
 }
 
-export default function NewProductPage() {
+export default function EditProductPage() {
   const router = useRouter();
+  const params = useParams();
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
 
+  const productId = params.id as string;
+
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState<ProductForm>(INITIAL_FORM);
-  const [tagInput, setTagInput] = useState("");
+  const [fetching, setFetching] = useState(true);
+
+  const [form, setForm] = useState({
+    sku: "",
+    name_en: "",
+    name_ar: "",
+    description_en: "",
+    description_ar: "",
+    category_id: "",
+    brand: "",
+    unit_type: "piece",
+    barcode: "",
+    price: "",
+    cost_price: "",
+    is_active: true,
+    is_featured: false,
+    images: [] as string[],
+    tags: "",
+  });
 
   useEffect(() => {
-    async function loadCategories() {
-      const { data } = await supabase
+    async function loadData() {
+      const categoriesRes = await supabase
         .from("categories")
         .select("id, name_en, name_ar")
         .eq("is_active", true)
         .order("sort_order");
-      if (data) {
-        setCategories(data);
-      }
-    }
-    loadCategories();
-  }, [supabase]);
 
-  function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
-    setForm((prev) => ({ ...prev, [key]: value }));
+      const { data: productData, error: productError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", productId)
+        .single();
+
+      const { data: variantData } = await supabase
+        .from("product_variants")
+        .select("*")
+        .eq("product_id", productId)
+        .limit(1)
+        .single();
+
+      if (categoriesRes.data) {
+        setCategories(categoriesRes.data);
+      }
+
+      if (productError || !productData) {
+        toast.error("Product not found");
+        router.push(`/${locale}/products`);
+        return;
+      }
+
+      const product = productData as Product;
+      const variant = variantData as ProductVariant | null;
+
+      setForm({
+        sku: product.sku ?? "",
+        name_en: product.name_en ?? "",
+        name_ar: product.name_ar ?? "",
+        description_en: product.description_en ?? "",
+        description_ar: product.description_ar ?? "",
+        category_id: product.category_id ?? "",
+        brand: product.brand ?? "",
+        unit_type: product.unit_type ?? "piece",
+        barcode: product.barcode ?? "",
+        price: variant?.price?.toString() ?? "",
+        cost_price: variant?.cost_price?.toString() ?? "",
+        is_active: product.is_active ?? true,
+        is_featured: product.is_featured ?? false,
+        images: product.images ?? [],
+        tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
+      });
+
+      setFetching(false);
+    }
+
+    loadData();
+  }, [supabase, productId, locale, router]);
+
+  function updateField(name: string, value: unknown) {
+    setForm((prev) => ({ ...prev, [name]: value }));
   }
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -107,21 +138,6 @@ export default function NewProductPage() {
 
   function handleGenerateBarcode() {
     setForm((prev) => ({ ...prev, barcode: generateBarcode() }));
-  }
-
-  function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      const tag = tagInput.trim().toLowerCase();
-      if (tag && !form.tags.includes(tag)) {
-        updateField("tags", [...form.tags, tag]);
-      }
-      setTagInput("");
-    }
-  }
-
-  function handleRemoveTag(tagToRemove: string) {
-    updateField("tags", form.tags.filter((t) => t !== tagToRemove));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -136,7 +152,7 @@ export default function NewProductPage() {
     const costPrice = parseFloat(form.cost_price);
 
     if (isNaN(price) || price < 0) {
-      toast.error("Please enter a valid selling price.");
+      toast.error("Please enter a valid price.");
       return;
     }
 
@@ -145,11 +161,16 @@ export default function NewProductPage() {
       return;
     }
 
+    const tags = form.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
     setLoading(true);
 
-    const { data: product, error: productError } = await supabase
+    const { error: productError } = await supabase
       .from("products")
-      .insert({
+      .update({
         sku: form.sku.trim(),
         name_en: form.name_en.trim(),
         name_ar: form.name_ar.trim(),
@@ -160,55 +181,63 @@ export default function NewProductPage() {
         unit_type: form.unit_type,
         barcode: form.barcode.trim() || null,
         images: form.images,
-        tags: form.tags,
+        tags,
         is_active: form.is_active,
         is_featured: form.is_featured,
       } as never)
-      .select("id")
-      .single();
+      .eq("id", productId);
 
-    if (productError || !product) {
+    if (productError) {
       setLoading(false);
-      toast.error(productError?.message ?? "Failed to create product");
+      toast.error(productError.message ?? "Failed to update product");
       return;
     }
 
-    const productId = (product as { id: string }).id;
-
     const { error: variantError } = await supabase
       .from("product_variants")
-      .insert({
-        product_id: productId,
-        size: null,
-        color: null,
-        weight: null,
+      .update({
         price,
         cost_price: costPrice,
         barcode: form.barcode.trim() || null,
         is_active: form.is_active,
-      } as never);
+      } as never)
+      .eq("product_id", productId);
 
     setLoading(false);
 
     if (variantError) {
-      toast.error(`Product created but variant failed: ${variantError.message}`);
+      toast.error(
+        `Product updated but variant failed: ${variantError.message}`
+      );
       return;
     }
 
-    toast.success("Product created successfully!");
+    toast.success("Product updated successfully!");
     router.push(`/${locale}/products`);
+  }
+
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-paws-orange" />
+      </div>
+    );
   }
 
   return (
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/${locale}/products`}>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-paws-brown">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-paws-brown"
+          >
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
         </Link>
         <h1 className="text-2xl font-bold text-paws-brown-dark">
-          Add New Product
+          Edit Product
         </h1>
       </div>
 
@@ -281,7 +310,7 @@ export default function NewProductPage() {
                 value={form.description_en}
                 onChange={handleChange}
                 placeholder="Product description in English"
-                className="bg-white border-paws-sand min-h-[120px]"
+                className="bg-white border-paws-sand"
               />
             </div>
 
@@ -293,28 +322,11 @@ export default function NewProductPage() {
                 value={form.description_ar}
                 onChange={handleChange}
                 placeholder="وصف المنتج بالعربية"
-                className="bg-white border-paws-sand min-h-[120px]"
+                className="bg-white border-paws-sand"
                 dir="rtl"
               />
             </div>
           </div>
-        </div>
-
-        {/* Product Images */}
-        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Product Images
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Upload up to 5 images. The first image will be the main product image.
-          </p>
-          <ImageUploader
-            bucket="product-images"
-            folder="products"
-            images={form.images}
-            onChange={(urls) => updateField("images", urls)}
-            maxImages={5}
-          />
         </div>
 
         {/* Classification */}
@@ -383,39 +395,6 @@ export default function NewProductPage() {
               </Button>
             </div>
           </div>
-
-          {/* Tags */}
-          <div className="space-y-1.5">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {form.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 bg-paws-cream text-paws-brown px-2.5 py-1 rounded-full text-xs font-medium"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="hover:text-red-500 transition-colors"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <Input
-              id="tags"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-              placeholder="Type a tag and press Enter..."
-              className="bg-white border-paws-sand"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Press Enter or comma to add a tag
-            </p>
-          </div>
         </div>
 
         {/* Pricing */}
@@ -457,31 +436,41 @@ export default function NewProductPage() {
               />
             </div>
           </div>
+        </div>
 
-          {form.price && form.cost_price && (
-            <div className="bg-paws-cream/50 rounded-xl p-3">
-              <p className="text-sm text-paws-brown">
-                Profit margin:{" "}
-                <span className="font-semibold text-paws-brown-dark">
-                  {(
-                    ((parseFloat(form.price) - parseFloat(form.cost_price)) /
-                      parseFloat(form.price)) *
-                    100
-                  ).toFixed(1)}
-                  %
-                </span>{" "}
-                ({(parseFloat(form.price) - parseFloat(form.cost_price)).toLocaleString()} EGP)
-              </p>
-            </div>
-          )}
+        {/* Images */}
+        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
+          <h2 className="font-semibold text-paws-brown-dark text-lg">
+            Images
+          </h2>
+
+          <ImageUploader
+            bucket="product-images"
+            folder={productId}
+            images={form.images}
+            onChange={(urls) => updateField("images", urls)}
+          />
+        </div>
+
+        {/* Tags */}
+        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
+          <h2 className="font-semibold text-paws-brown-dark text-lg">Tags</h2>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <Input
+              id="tags"
+              name="tags"
+              value={form.tags}
+              onChange={handleChange}
+              placeholder="e.g. dog, food, premium"
+              className="bg-white border-paws-sand"
+            />
+          </div>
         </div>
 
         {/* Status */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Status & Visibility
-          </h2>
-
           <div className="flex items-center justify-between">
             <div>
               <Label>Active Status</Label>
@@ -499,9 +488,9 @@ export default function NewProductPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Featured Product</Label>
+              <Label>Featured</Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Show this product in featured sections on the website
+                Show this product in featured sections
               </p>
             </div>
             <Switch
@@ -513,7 +502,6 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        {/* Submit */}
         <div className="flex gap-3 justify-end">
           <Link href={`/${locale}/products`}>
             <Button type="button" variant="outline" className="border-paws-sand">
@@ -526,7 +514,7 @@ export default function NewProductPage() {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Creating..." : "Create Product"}
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </form>
