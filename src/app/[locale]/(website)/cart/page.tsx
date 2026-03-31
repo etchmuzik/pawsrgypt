@@ -195,12 +195,14 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Button
-                  size="lg"
-                  className="w-full mt-6 bg-paws-orange hover:bg-paws-orange/90 text-white gap-2 shadow-[0_8px_30px_rgba(244,124,44,0.25)]"
-                >
-                  {t("checkout")}
-                </Button>
+                <Link href={`/${locale}/checkout`}>
+                  <Button
+                    size="lg"
+                    className="w-full mt-6 bg-paws-orange hover:bg-paws-orange/90 text-white gap-2 shadow-[0_8px_30px_rgba(244,124,44,0.25)]"
+                  >
+                    {t("checkout")}
+                  </Button>
+                </Link>
 
                 <Link
                   href={`/${locale}/shop`}

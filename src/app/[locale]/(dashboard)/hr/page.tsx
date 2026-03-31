@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import type { Employee } from "@/lib/supabase/types";
 import Link from "next/link";
 
@@ -56,7 +56,11 @@ export default async function HRPage({ params }: HRPageProps) {
                   <td className="px-4 py-3 text-muted-foreground">{emp.hire_date}</td>
                   <td className="px-4 py-3 font-bold">{emp.salary_base} EGP</td>
                   <td className="px-4 py-3">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">Edit</Button>
+                    <Link href={`/${locale}/hr/${emp.id}/edit`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-paws-orange hover:text-paws-orange/80">
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                      </Button>
+                    </Link>
                   </td>
                 </tr>
               ))

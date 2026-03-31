@@ -18,10 +18,10 @@ export function Footer() {
             </div>
             <p className="text-neutral-400 text-sm mb-4">{t("tagline")}</p>
             <div className="flex gap-3">
-              <a href="#" className="text-neutral-400 hover:text-paws-orange transition-colors text-sm flex items-center gap-1">
+              <a href="https://facebook.com/pawsegypt" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-paws-orange transition-colors text-sm flex items-center gap-1">
                 <ExternalLink className="w-4 h-4" /> Facebook
               </a>
-              <a href="#" className="text-neutral-400 hover:text-paws-orange transition-colors text-sm flex items-center gap-1">
+              <a href="https://instagram.com/pawsegypt" target="_blank" rel="noopener noreferrer" className="text-neutral-400 hover:text-paws-orange transition-colors text-sm flex items-center gap-1">
                 <ExternalLink className="w-4 h-4" /> Instagram
               </a>
             </div>

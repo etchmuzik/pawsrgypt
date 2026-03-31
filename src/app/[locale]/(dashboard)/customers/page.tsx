@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import type { Customer } from "@/lib/supabase/types";
 import Link from "next/link";
 
@@ -61,7 +61,11 @@ export default async function CustomersPage({ params }: CustomersPageProps) {
                   <td className="px-4 py-3">{c.balance} EGP</td>
                   <td className="px-4 py-3">{c.credit_limit} EGP</td>
                   <td className="px-4 py-3">
-                    <Button variant="ghost" size="sm" className="h-7 text-xs">View</Button>
+                    <Link href={`/${locale}/customers/${c.id}/edit`}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-paws-orange hover:text-paws-orange/80">
+                        <Pencil className="w-3.5 h-3.5" /> Edit
+                      </Button>
+                    </Link>
                   </td>
                 </tr>
               ))
