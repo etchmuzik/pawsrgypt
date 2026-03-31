@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" fill="none">
+  <!-- Paw pad - main -->
+  <ellipse cx="52" cy="72" rx="30" ry="26" fill="#F47C2C"/>
+  <!-- Paw toes -->
+  <ellipse cx="28" cy="38" rx="11" ry="13" fill="#F47C2C"/>
+  <ellipse cx="52" cy="28" rx="10" ry="12" fill="#F47C2C"/>
+  <ellipse cx="76" cy="34" rx="11" ry="13" fill="#F47C2C"/>
+  <ellipse cx="90" cy="56" rx="9" ry="11" fill="#F47C2C"/>
+  <!-- PAWS text -->
+  <text x="120" y="62" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="52" fill="#F47C2C" letter-spacing="-1">PAWS</text>
+  <!-- Egypt text -->
+  <text x="120" y="100" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-weight="700" font-size="40" fill="#D4933A" letter-spacing="0">Egypt</text>
+</svg>

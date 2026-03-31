@@ -7,6 +7,7 @@ import { ShoppingCart, Menu, X, Globe } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart";
+import { PawLogo } from "@/components/website/PawLogo";
 
 export function Navbar() {
   const t = useTranslations("nav");
@@ -39,13 +40,8 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-paws-orange rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">P</span>
-            </div>
-            <span className="font-bold text-lg text-neutral-900">
-              PAWS Egypt
-            </span>
+          <Link href={`/${locale}`} className="flex items-center">
+            <PawLogo />
           </Link>
 
           {/* Desktop Nav */}

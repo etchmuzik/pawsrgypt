@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { Phone, Mail, MapPin, ExternalLink } from "lucide-react";
+import { PawLogo } from "@/components/website/PawLogo";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -12,11 +13,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-paws-orange rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
-              </div>
-              <span className="font-bold text-lg text-white">PAWS Egypt</span>
+            <div className="mb-4">
+              <PawLogo />
             </div>
             <p className="text-neutral-400 text-sm mb-4">{t("tagline")}</p>
             <div className="flex gap-3">
