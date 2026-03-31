@@ -1,8 +1,6 @@
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { Navbar } from "@/components/website/Navbar";
-import { Footer } from "@/components/website/Footer";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { ScrollVideoHero } from "@/components/website/ScrollVideoHero";
 import { TextHero } from "@/components/website/TextHero";
@@ -248,9 +246,7 @@ export default function HomePage() {
   const locale = useLocale();
 
   return (
-    <>
-      <Navbar />
-      <main className="bg-white">
+    <div className="bg-white">
         {/* 1. Text hero with mascot images */}
         <TextHero
           locale={locale}
@@ -285,8 +281,6 @@ export default function HomePage() {
         <CategoriesSection />
         <FeaturedProducts />
         <CTABanner />
-      </main>
-      <Footer />
-    </>
+    </div>
   );
 }

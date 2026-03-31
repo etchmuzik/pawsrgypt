@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { TrendingUp, ShoppingCart, Package, Users } from "lucide-react";
+import { TrendingUp, ShoppingCart, Package, Users, FileText, PlusCircle, Monitor, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
+import { useLocale } from "next-intl";
 
 async function getStats() {
   const supabase = await createClient();
@@ -27,6 +29,7 @@ async function getStats() {
 
 export default async function DashboardPage() {
   const stats = await getStats();
+  const locale = useLocale();
 
   const cards = [
     {
@@ -82,19 +85,21 @@ export default async function DashboardPage() {
       <h2 className="text-lg font-semibold text-paws-brown-dark mb-4">Quick Actions</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "New Invoice", href: "/sales/new", emoji: "🧾" },
-          { label: "Add Product", href: "/products/new", emoji: "📦" },
-          { label: "Open POS", href: "/pos", emoji: "🖥️" },
-          { label: "View Reports", href: "/accounting/reports", emoji: "📊" },
+          { label: "New Invoice", href: `/${locale}/sales/new`, icon: FileText, color: "text-blue-600 bg-blue-50" },
+          { label: "Add Product", href: `/${locale}/products/new`, icon: PlusCircle, color: "text-green-600 bg-green-50" },
+          { label: "Open POS", href: `/${locale}/pos`, icon: Monitor, color: "text-purple-600 bg-purple-50" },
+          { label: "View Reports", href: `/${locale}/accounting`, icon: BarChart3, color: "text-orange-600 bg-orange-50" },
         ].map((action) => (
-          <a
+          <Link
             key={action.label}
             href={action.href}
-            className="bg-white border border-paws-sand rounded-2xl p-4 text-center hover:border-paws-orange hover:shadow-sm transition-all"
+            className="bg-white border border-neutral-200 rounded-2xl p-4 text-center hover:border-paws-orange hover:shadow-sm transition-all"
           >
-            <div className="text-3xl mb-2">{action.emoji}</div>
-            <p className="text-sm font-medium text-paws-brown-dark">{action.label}</p>
-          </a>
+            <div className={`w-12 h-12 mx-auto rounded-xl flex items-center justify-center mb-2 ${action.color}`}>
+              <action.icon className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-medium text-neutral-800">{action.label}</p>
+          </Link>
         ))}
       </div>
     </div>
