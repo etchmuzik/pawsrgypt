@@ -4,7 +4,8 @@ import Image from "next/image";
 import { Navbar } from "@/components/website/Navbar";
 import { Footer } from "@/components/website/Footer";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
-import { MascotVideoSection } from "@/components/website/MascotVideoSection";
+import { ScrollVideoHero } from "@/components/website/ScrollVideoHero";
+import { TextHero } from "@/components/website/TextHero";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -13,181 +14,37 @@ import {
   Shield,
   Heart,
   Sparkles,
-  Clock,
-  Award,
+  UtensilsCrossed,
+  Gem,
+  Scissors,
+  Gamepad2,
+  HeartPulse,
+  BedDouble,
   Phone,
 } from "lucide-react";
 
 /* ================================================
-   HERO — Gradient background with mascots & CTAs
-   ================================================ */
-function HeroSection() {
-  const t = useTranslations("home");
-  const locale = useLocale();
-
-  return (
-    <section className="relative overflow-hidden min-h-[90vh] flex items-center">
-      {/* Multi-layered gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-paws-orange via-paws-orange-light to-amber-400" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
-
-      {/* Animated floating paw prints */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute text-white/10 select-none animate-float-slow"
-            style={{
-              left: `${(i * 19 + 5) % 100}%`,
-              top: `${(i * 13 + 3) % 90}%`,
-              fontSize: `${20 + (i % 4) * 12}px`,
-              animationDelay: `${i * 0.3}s`,
-              animationDuration: `${3 + (i % 3)}s`,
-            }}
-          >
-            🐾
-          </div>
-        ))}
-      </div>
-
-      {/* Decorative circles */}
-      <div className="absolute top-20 right-10 w-64 h-64 bg-white/5 rounded-full blur-xl" />
-      <div className="absolute bottom-10 left-10 w-48 h-48 bg-white/5 rounded-full blur-xl" />
-
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 grid lg:grid-cols-2 gap-12 items-center">
-        {/* Text content */}
-        <div className="text-white">
-          <div className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 text-sm font-medium mb-6 animate-fade-in-up">
-            <Star className="w-4 h-4 fill-yellow-300 text-yellow-300" />
-            <span>Cairo&apos;s #1 Pet Lifestyle Brand</span>
-            <Sparkles className="w-4 h-4 text-yellow-300" />
-          </div>
-
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-[1.1] mb-6 animate-slide-in-left">
-            {t("hero_title")}
-          </h1>
-
-          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-lg animate-slide-in-left stagger-2" style={{ animationDelay: "0.2s" }}>
-            {t("hero_subtitle")}
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 animate-slide-up stagger-3" style={{ animationDelay: "0.4s" }}>
-            <Link href={`/${locale}/shop`}>
-              <Button
-                size="lg"
-                className="bg-white text-paws-orange hover:bg-paws-cream font-bold px-8 shadow-lg hover:shadow-xl transition-all hover:scale-105 animate-pulse-glow"
-              >
-                {t("hero_cta")}
-                <ArrowRight className="w-5 h-5 ms-2" />
-              </Button>
-            </Link>
-            <Link href={`/${locale}/grooming`}>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white text-white hover:bg-white/20 font-bold px-8 transition-all hover:scale-105"
-              >
-                {t("hero_cta_secondary")}
-              </Button>
-            </Link>
-          </div>
-
-          {/* Social proof */}
-          <div className="flex items-center gap-6 mt-10 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
-            <div className="flex -space-x-2">
-              {["😊", "😄", "🥰", "😍"].map((emoji, i) => (
-                <div
-                  key={i}
-                  className="w-9 h-9 rounded-full bg-white/20 border-2 border-white flex items-center justify-center text-sm"
-                >
-                  {emoji}
-                </div>
-              ))}
-            </div>
-            <div className="text-sm text-white/90">
-              <span className="font-bold text-white">2,000+</span> happy pet parents
-            </div>
-          </div>
-        </div>
-
-        {/* Hero mascots — real images */}
-        <div className="hidden lg:flex justify-center items-end relative">
-          {/* Glow ring */}
-          <div className="absolute w-80 h-80 bg-white/10 rounded-full blur-2xl animate-pulse" />
-
-          {/* Cairo - the dog */}
-          <div className="relative z-10 animate-float">
-            <div className="w-56 h-56 rounded-full overflow-hidden shadow-2xl border-4 border-white/30 bg-white/10 backdrop-blur-sm">
-              <Image
-                src="/mascots/cairo.png"
-                alt="Cairo — PAWS Egypt dog mascot"
-                width={224}
-                height={224}
-                className="w-full h-full object-cover scale-125 object-top"
-                priority
-              />
-            </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1.5 text-white text-sm font-bold whitespace-nowrap shadow-lg">
-              Cairo
-            </div>
-          </div>
-
-          {/* Luna - the cat */}
-          <div className="relative z-10 -ms-8 mb-4 animate-float-delay">
-            <div className="w-48 h-48 rounded-full overflow-hidden shadow-2xl border-4 border-white/30 bg-white/10 backdrop-blur-sm">
-              <Image
-                src="/mascots/luna.png"
-                alt="Luna — PAWS Egypt cat mascot"
-                width={192}
-                height={192}
-                className="w-full h-full object-cover scale-125 object-top"
-                priority
-              />
-            </div>
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 glass rounded-full px-4 py-1.5 text-white text-sm font-bold whitespace-nowrap shadow-lg">
-              Luna
-            </div>
-          </div>
-
-          {/* Floating decorations */}
-          <div className="absolute top-4 right-8 text-3xl animate-wiggle">🦴</div>
-          <div className="absolute top-16 left-4 text-2xl animate-float-slow" style={{ animationDelay: "1s" }}>🎾</div>
-          <div className="absolute bottom-20 right-4 text-2xl animate-wiggle" style={{ animationDelay: "0.5s" }}>🐟</div>
-        </div>
-      </div>
-
-      {/* Wave divider */}
-      <div className="absolute bottom-0 left-0 right-0">
-        <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-          <path d="M0 40L48 36C96 32 192 24 288 28C384 32 480 48 576 52C672 56 768 48 864 40C960 32 1056 24 1152 28C1248 32 1344 48 1392 56L1440 64V80H1392C1344 80 1248 80 1152 80C1056 80 960 80 864 80C768 80 672 80 576 80C480 80 384 80 288 80C192 80 96 80 48 80H0V40Z" fill="white" />
-        </svg>
-      </div>
-    </section>
-  );
-}
-
-/* ================================================
-   TRUST BAR — Animated feature icons
+   TRUST BAR — Minimal icons on white
    ================================================ */
 function TrustBar() {
   const features = [
-    { icon: Truck, text: "Free Cairo Delivery", color: "text-blue-500" },
-    { icon: Shield, text: "Premium Quality", color: "text-green-500" },
-    { icon: Heart, text: "Pet-First Care", color: "text-red-400" },
-    { icon: Star, text: "5-Star Grooming", color: "text-yellow-500" },
+    { icon: Truck, text: "Free Cairo Delivery" },
+    { icon: Shield, text: "Premium Quality" },
+    { icon: Heart, text: "Pet-First Care" },
+    { icon: Sparkles, text: "5-Star Grooming" },
   ];
 
   return (
-    <section className="bg-white py-8 -mt-1">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {features.map(({ icon: Icon, text, color }, i) => (
-            <ScrollReveal key={text} delay={i * 100}>
+    <section className="bg-white py-12 border-b border-neutral-100">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {features.map(({ icon: Icon, text }, i) => (
+            <ScrollReveal key={text} delay={i * 80}>
               <div className="flex items-center justify-center gap-3 group cursor-default">
-                <div className={`w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center group-hover:scale-110 transition-transform ${color}`}>
+                <div className="w-10 h-10 rounded-xl bg-neutral-50 flex items-center justify-center text-neutral-400 group-hover:text-paws-orange group-hover:scale-110 transition-all">
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-sm font-semibold text-paws-brown-dark">
+                <span className="text-sm font-semibold text-neutral-700">
                   {text}
                 </span>
               </div>
@@ -200,31 +57,32 @@ function TrustBar() {
 }
 
 /* ================================================
-   CATEGORIES — Animated grid cards
+   CATEGORIES — Lucide icons, clean white cards
    ================================================ */
 function CategoriesSection() {
   const t = useTranslations("home");
   const locale = useLocale();
 
   const categories = [
-    { name: "Food & Treats", nameAr: "أطعمة ومكافآت", emoji: "🍖", gradient: "from-orange-100 to-orange-50", hover: "hover:from-orange-200 hover:to-orange-100" },
-    { name: "Accessories", nameAr: "إكسسوارات", emoji: "🎀", gradient: "from-pink-100 to-pink-50", hover: "hover:from-pink-200 hover:to-pink-100" },
-    { name: "Grooming", nameAr: "العناية", emoji: "✂️", gradient: "from-sky-100 to-sky-50", hover: "hover:from-sky-200 hover:to-sky-100" },
-    { name: "Toys", nameAr: "ألعاب", emoji: "🎾", gradient: "from-green-100 to-green-50", hover: "hover:from-green-200 hover:to-green-100" },
-    { name: "Health", nameAr: "الصحة", emoji: "💊", gradient: "from-purple-100 to-purple-50", hover: "hover:from-purple-200 hover:to-purple-100" },
-    { name: "Beds", nameAr: "الفراش", emoji: "🛏️", gradient: "from-amber-100 to-amber-50", hover: "hover:from-amber-200 hover:to-amber-100" },
+    { name: "Food & Treats", nameAr: "أطعمة ومكافآت", icon: UtensilsCrossed, color: "text-orange-500 bg-orange-50 group-hover:bg-orange-100" },
+    { name: "Accessories", nameAr: "إكسسوارات", icon: Gem, color: "text-pink-500 bg-pink-50 group-hover:bg-pink-100" },
+    { name: "Grooming", nameAr: "العناية", icon: Scissors, color: "text-sky-500 bg-sky-50 group-hover:bg-sky-100" },
+    { name: "Toys", nameAr: "ألعاب", icon: Gamepad2, color: "text-green-500 bg-green-50 group-hover:bg-green-100" },
+    { name: "Health", nameAr: "الصحة", icon: HeartPulse, color: "text-purple-500 bg-purple-50 group-hover:bg-purple-100" },
+    { name: "Beds", nameAr: "الفراش", icon: BedDouble, color: "text-amber-500 bg-amber-50 group-hover:bg-amber-100" },
   ];
 
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 bg-white">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <ScrollReveal>
-          <div className="text-center mb-12">
-            <span className="text-paws-orange font-semibold text-sm uppercase tracking-wider">Browse Our Collection</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-paws-brown-dark mt-2">
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
+              Browse Our Collection
+            </p>
+            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
               {t("categories_title")}
             </h2>
-            <div className="w-16 h-1 bg-paws-orange rounded-full mx-auto mt-4" />
           </div>
         </ScrollReveal>
 
@@ -233,12 +91,12 @@ function CategoriesSection() {
             <ScrollReveal key={cat.name} delay={i * 80}>
               <Link
                 href={`/${locale}/shop?category=${cat.name.toLowerCase()}`}
-                className={`bg-gradient-to-br ${cat.gradient} ${cat.hover} rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-lg hover:-translate-y-1 block`}
+                className="bg-white border border-neutral-100 rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 block"
               >
-                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform group-hover:animate-wiggle">
-                  {cat.emoji}
+                <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4 transition-all ${cat.color}`}>
+                  <cat.icon className="w-6 h-6" />
                 </div>
-                <p className="text-sm font-bold text-paws-brown-dark group-hover:text-paws-orange transition-colors">
+                <p className="text-sm font-bold text-neutral-700 group-hover:text-paws-orange transition-colors">
                   {locale === "ar" ? cat.nameAr : cat.name}
                 </p>
               </Link>
@@ -251,109 +109,34 @@ function CategoriesSection() {
 }
 
 /* ================================================
-   MASCOT INTRO — Meet Cairo & Luna
-   ================================================ */
-function MascotIntro() {
-  return (
-    <section className="py-20 bg-gradient-to-br from-paws-cream to-white relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-10 left-10 text-6xl opacity-10 animate-float-slow">🐾</div>
-      <div className="absolute bottom-10 right-10 text-6xl opacity-10 animate-float" style={{ animationDelay: "1s" }}>🐾</div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="text-center mb-12">
-            <span className="text-paws-orange font-semibold text-sm uppercase tracking-wider">Our Mascots</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-paws-brown-dark mt-2">
-              Meet Cairo & Luna
-            </h2>
-            <div className="w-16 h-1 bg-paws-orange rounded-full mx-auto mt-4" />
-          </div>
-        </ScrollReveal>
-
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {/* Cairo */}
-          <ScrollReveal delay={100}>
-            <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 group text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-paws-orange to-paws-orange-light" />
-              <div className="w-36 h-36 mx-auto rounded-full overflow-hidden bg-orange-50 mb-6 group-hover:scale-110 transition-transform">
-                <Image
-                  src="/mascots/cairo.png"
-                  alt="Cairo the dog"
-                  width={144}
-                  height={144}
-                  className="w-full h-full object-cover scale-125 object-top"
-                />
-              </div>
-              <h3 className="text-2xl font-extrabold text-paws-brown-dark mb-2">Cairo</h3>
-              <p className="text-paws-orange font-semibold text-sm mb-3">Loyal & Energetic</p>
-              <p className="text-paws-brown text-sm leading-relaxed">
-                Our playful golden pup who loves exploring Cairo&apos;s pet shops! He&apos;s always excited to help you find the best products for your furry friends.
-              </p>
-              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-paws-brown/60">
-                <span className="bg-orange-50 px-3 py-1 rounded-full">🦴 Treats lover</span>
-                <span className="bg-orange-50 px-3 py-1 rounded-full">🎾 Playful</span>
-              </div>
-            </div>
-          </ScrollReveal>
-
-          {/* Luna */}
-          <ScrollReveal delay={250}>
-            <div className="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 group text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-300" />
-              <div className="w-36 h-36 mx-auto rounded-full overflow-hidden bg-emerald-50 mb-6 group-hover:scale-110 transition-transform">
-                <Image
-                  src="/mascots/luna.png"
-                  alt="Luna the cat"
-                  width={144}
-                  height={144}
-                  className="w-full h-full object-cover scale-125 object-top"
-                />
-              </div>
-              <h3 className="text-2xl font-extrabold text-paws-brown-dark mb-2">Luna</h3>
-              <p className="text-emerald-500 font-semibold text-sm mb-3">Smart & Calm</p>
-              <p className="text-paws-brown text-sm leading-relaxed">
-                Our wise tabby who knows everything about pet care! She guides you through grooming tips and picks only the finest quality products.
-              </p>
-              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-paws-brown/60">
-                <span className="bg-emerald-50 px-3 py-1 rounded-full">📚 Smart</span>
-                <span className="bg-emerald-50 px-3 py-1 rounded-full">✨ Elegant</span>
-              </div>
-            </div>
-          </ScrollReveal>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ================================================
-   FEATURED PRODUCTS — Card grid with hover effects
+   FEATURED PRODUCTS — Clean cards, no emojis
    ================================================ */
 function FeaturedProducts() {
   const t = useTranslations("home");
   const locale = useLocale();
 
   const products = [
-    { id: "1", name: "Premium Dog Food", nameAr: "طعام كلاب فاخر", price: 250, emoji: "🐕", badge: "Best Seller", badgeColor: "bg-paws-orange" },
-    { id: "2", name: "Cat Grooming Kit", nameAr: "طقم تجميل للقطط", price: 180, emoji: "🐱", badge: "New", badgeColor: "bg-emerald-500" },
-    { id: "3", name: "Pet Collar Leather", nameAr: "طوق جلد للحيوانات", price: 120, emoji: "🎀", badge: null, badgeColor: "" },
-    { id: "4", name: "Interactive Toy Set", nameAr: "مجموعة ألعاب تفاعلية", price: 95, emoji: "🎾", badge: "Sale", badgeColor: "bg-red-500" },
+    { id: "1", name: "Premium Dog Food", nameAr: "طعام كلاب فاخر", price: 250, icon: UtensilsCrossed, badge: "Best Seller", badgeColor: "bg-paws-orange" },
+    { id: "2", name: "Cat Grooming Kit", nameAr: "طقم تجميل للقطط", price: 180, icon: Scissors, badge: "New", badgeColor: "bg-emerald-500" },
+    { id: "3", name: "Pet Collar Leather", nameAr: "طوق جلد للحيوانات", price: 120, icon: Gem, badge: null, badgeColor: "" },
+    { id: "4", name: "Interactive Toy Set", nameAr: "مجموعة ألعاب تفاعلية", price: 95, icon: Gamepad2, badge: "Sale", badgeColor: "bg-red-500" },
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 bg-neutral-50/50">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <ScrollReveal>
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-end justify-between mb-14">
             <div>
-              <span className="text-paws-orange font-semibold text-sm uppercase tracking-wider">Handpicked for Your Pet</span>
-              <h2 className="text-3xl md:text-4xl font-extrabold text-paws-brown-dark mt-2">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
+                Handpicked for Your Pet
+              </p>
+              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
                 {t("featured_title")}
               </h2>
             </div>
             <Link href={`/${locale}/shop`}>
-              <Button variant="ghost" className="text-paws-orange hover:text-paws-orange/80 gap-1 font-bold">
+              <Button variant="ghost" className="text-neutral-500 hover:text-paws-orange gap-1 font-semibold">
                 View All <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -365,31 +148,23 @@ function FeaturedProducts() {
             <ScrollReveal key={product.id} delay={i * 100}>
               <Link
                 href={`/${locale}/shop/${product.id}`}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group hover:-translate-y-2 block"
+                className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 group hover:-translate-y-1 block"
               >
-                <div className="bg-gradient-to-br from-paws-sand/20 to-paws-cream/30 h-52 flex items-center justify-center relative overflow-hidden">
-                  <span className="text-7xl group-hover:scale-125 transition-transform duration-500">
-                    {product.emoji}
-                  </span>
+                <div className="bg-neutral-50 h-52 flex items-center justify-center relative overflow-hidden">
+                  <product.icon className="w-16 h-16 text-neutral-300 group-hover:text-paws-orange/40 group-hover:scale-110 transition-all duration-500" />
                   {product.badge && (
-                    <span className={`absolute top-3 left-3 ${product.badgeColor} text-white text-xs px-3 py-1 rounded-full font-bold shadow-sm`}>
+                    <span className={`absolute top-3 left-3 ${product.badgeColor} text-white text-xs px-3 py-1 rounded-full font-bold`}>
                       {product.badge}
                     </span>
                   )}
-                  {/* Quick action overlay */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-end justify-center pb-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="bg-white/90 backdrop-blur-sm text-paws-orange text-xs font-bold px-4 py-2 rounded-full shadow-sm">
-                      View Details →
-                    </span>
-                  </div>
                 </div>
                 <div className="p-5">
-                  <h3 className="font-bold text-paws-brown-dark group-hover:text-paws-orange transition-colors text-base">
+                  <h3 className="font-bold text-neutral-800 group-hover:text-paws-orange transition-colors text-base">
                     {locale === "ar" ? product.nameAr : product.name}
                   </h3>
                   <div className="flex items-center justify-between mt-3">
                     <p className="text-paws-orange font-extrabold text-lg">
-                      {product.price} <span className="text-xs font-normal text-paws-brown/60">EGP</span>
+                      {product.price} <span className="text-xs font-normal text-neutral-400">EGP</span>
                     </p>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, j) => (
@@ -408,115 +183,40 @@ function FeaturedProducts() {
 }
 
 /* ================================================
-   WHY PAWS — Value propositions with icons
-   ================================================ */
-function WhyPaws() {
-  const t = useTranslations("home");
-  const locale = useLocale();
-
-  const values = [
-    {
-      icon: Award,
-      title: "Premium Quality",
-      titleAr: "جودة فائقة",
-      desc: "Only the finest products sourced from trusted brands worldwide.",
-      descAr: "فقط أجود المنتجات من أفضل العلامات التجارية العالمية.",
-      color: "bg-orange-50 text-paws-orange",
-    },
-    {
-      icon: Truck,
-      title: "Fast Delivery",
-      titleAr: "توصيل سريع",
-      desc: "Same-day delivery across Cairo. Your pet shouldn't wait!",
-      descAr: "توصيل في نفس اليوم في جميع أنحاء القاهرة.",
-      color: "bg-blue-50 text-blue-500",
-    },
-    {
-      icon: Sparkles,
-      title: "Expert Grooming",
-      titleAr: "عناية متخصصة",
-      desc: "Professional grooming services by certified pet care specialists.",
-      descAr: "خدمات عناية احترافية من متخصصين معتمدين.",
-      color: "bg-purple-50 text-purple-500",
-    },
-    {
-      icon: Clock,
-      title: "24/7 Support",
-      titleAr: "دعم على مدار الساعة",
-      desc: "Our pet care team is always ready to help with advice.",
-      descAr: "فريق رعاية الحيوانات الأليفة لدينا جاهز دائمًا للمساعدة.",
-      color: "bg-green-50 text-green-500",
-    },
-  ];
-
-  return (
-    <section className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <ScrollReveal>
-          <div className="text-center mb-14">
-            <span className="text-paws-orange font-semibold text-sm uppercase tracking-wider">Why Choose Us</span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-paws-brown-dark mt-2">
-              {t("about_title")}
-            </h2>
-            <div className="w-16 h-1 bg-paws-orange rounded-full mx-auto mt-4" />
-          </div>
-        </ScrollReveal>
-
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {values.map((v, i) => (
-            <ScrollReveal key={v.title} delay={i * 100}>
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-paws-orange/30 hover:shadow-lg transition-all duration-300 group text-center">
-                <div className={`w-14 h-14 ${v.color} rounded-2xl flex items-center justify-center mx-auto mb-5 group-hover:scale-110 transition-transform`}>
-                  <v.icon className="w-7 h-7" />
-                </div>
-                <h3 className="font-bold text-paws-brown-dark text-lg mb-2">
-                  {locale === "ar" ? v.titleAr : v.title}
-                </h3>
-                <p className="text-sm text-paws-brown/70 leading-relaxed">
-                  {locale === "ar" ? v.descAr : v.desc}
-                </p>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ================================================
-   CTA BANNER — Call to action with mascots
+   CTA BANNER — White bg with accent card
    ================================================ */
 function CTABanner() {
   const t = useTranslations("home");
   const locale = useLocale();
 
   return (
-    <section className="py-20 bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-24 bg-white">
+      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
         <ScrollReveal>
-          <div className="relative bg-gradient-to-br from-paws-orange via-paws-orange-light to-amber-400 rounded-3xl p-8 md:p-14 text-white overflow-hidden">
+          <div className="relative bg-neutral-900 rounded-[2rem] p-10 md:p-16 text-white overflow-hidden">
             {/* Decorative mascot images */}
-            <div className="absolute top-4 right-4 md:right-8 w-28 h-28 md:w-40 md:h-40 opacity-20 animate-float">
-              <Image src="/mascots/cairo.png" alt="" width={160} height={160} className="w-full h-full object-contain" />
+            <div className="absolute top-6 right-6 md:right-12 w-32 h-32 md:w-48 md:h-48 opacity-10">
+              <Image src="/mascots/cairo.png" alt="" width={192} height={192} className="w-full h-full object-contain" />
             </div>
-            <div className="absolute bottom-4 right-20 md:right-32 w-24 h-24 md:w-32 md:h-32 opacity-20 animate-float-delay">
-              <Image src="/mascots/luna.png" alt="" width={128} height={128} className="w-full h-full object-contain" />
+            <div className="absolute bottom-6 right-28 md:right-40 w-28 h-28 md:w-40 md:h-40 opacity-10">
+              <Image src="/mascots/luna.png" alt="" width={160} height={160} className="w-full h-full object-contain" />
             </div>
-            <div className="absolute top-1/2 right-16 text-3xl opacity-10 animate-wiggle">🐾</div>
 
             <div className="relative z-10 max-w-2xl">
-              <h2 className="text-3xl md:text-4xl font-extrabold mb-4 leading-tight">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-4">
+                Join Our Family
+              </p>
+              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
                 {t("about_text")}
               </h2>
-              <p className="text-white/90 text-lg mb-8">
+              <p className="text-white/60 text-lg mb-10 max-w-[50ch]">
                 Join 2,000+ happy pet parents in Cairo who trust PAWS Egypt for their pets&apos; needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href={`/${locale}/shop`}>
                   <Button
                     size="lg"
-                    className="bg-white text-paws-orange hover:bg-paws-cream font-bold px-8 shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    className="bg-paws-orange hover:bg-paws-orange/90 text-white font-bold px-8 shadow-[0_8px_30px_rgba(244,124,44,0.3)] transition-all hover:scale-[1.02]"
                   >
                     Start Shopping <ArrowRight className="w-5 h-5 ms-2" />
                   </Button>
@@ -525,7 +225,7 @@ function CTABanner() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-2 border-white text-white hover:bg-white/20 font-bold px-8"
+                    className="border-2 border-white/20 text-white hover:bg-white/10 font-bold px-8"
                   >
                     <Phone className="w-4 h-4 me-2" />
                     Book Grooming
@@ -544,17 +244,46 @@ function CTABanner() {
    HOME PAGE
    ================================================ */
 export default function HomePage() {
+  const t = useTranslations("home");
+  const locale = useLocale();
+
   return (
     <>
       <Navbar />
-      <main>
-        <HeroSection />
+      <main className="bg-white">
+        {/* 1. Text hero with mascot images */}
+        <TextHero
+          locale={locale}
+          title={t("hero_title")}
+          subtitle={t("hero_subtitle")}
+          tagline="Cairo's #1 Pet Lifestyle Brand"
+          ctaText={t("hero_cta")}
+          ctaSecondaryText={t("hero_cta_secondary")}
+        />
+
+        {/* 2. Cairo — full-viewport scroll-driven video */}
+        <ScrollVideoHero
+          src="/mascots/cairo.mp4"
+          name="Cairo"
+          subtitle="The Explorer"
+          description="Our playful golden pup who loves discovering the best products for your furry friends. Loyal, energetic, and always ready for an adventure."
+          textPosition="left"
+          accentColor="text-paws-orange"
+        />
+
+        {/* 3. Luna — full-viewport scroll-driven video */}
+        <ScrollVideoHero
+          src="/mascots/luna.mp4"
+          name="Luna"
+          subtitle="The Wise One"
+          description="Our elegant tabby who knows everything about pet care. Smart, calm, and she picks only the finest quality for your companion."
+          textPosition="right"
+          accentColor="text-emerald-500"
+        />
+
         <TrustBar />
         <CategoriesSection />
-        <MascotIntro />
-        <MascotVideoSection />
         <FeaturedProducts />
-        <WhyPaws />
         <CTABanner />
       </main>
       <Footer />

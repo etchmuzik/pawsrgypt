@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { usePathname, useRouter } from "next/navigation";
 import { ShoppingCart, Menu, X, Globe } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart";
 
@@ -14,7 +14,15 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const otherLocale = locale === "en" ? "ar" : "en";
   const otherLocalePath = pathname.replace(`/${locale}`, `/${otherLocale}`);
@@ -27,7 +35,7 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-paws-sand shadow-sm">
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 backdrop-blur-md border-b border-neutral-100 shadow-sm" : "bg-transparent border-b border-transparent"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -35,7 +43,7 @@ export function Navbar() {
             <div className="w-8 h-8 bg-paws-orange rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">P</span>
             </div>
-            <span className="font-bold text-lg text-paws-brown-dark">
+            <span className="font-bold text-lg text-neutral-900">
               PAWS Egypt
             </span>
           </Link>
@@ -46,7 +54,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-paws-brown hover:text-paws-orange transition-colors"
+                className="text-sm font-medium text-neutral-600 hover:text-paws-orange transition-colors"
               >
                 {link.label}
               </Link>
@@ -60,7 +68,7 @@ export function Navbar() {
               variant="ghost"
               size="sm"
               onClick={() => router.push(otherLocalePath)}
-              className="hidden md:flex gap-1.5 text-paws-brown hover:text-paws-orange"
+              className="hidden md:flex gap-1.5 text-neutral-600 hover:text-paws-orange"
             >
               <Globe className="w-4 h-4" />
               <span className="text-sm font-medium">
@@ -73,7 +81,7 @@ export function Navbar() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="relative text-paws-brown hover:text-paws-orange"
+                className="relative text-neutral-600 hover:text-paws-orange"
               >
                 <ShoppingCart className="w-5 h-5" />
                 {cartCount > 0 && (
@@ -88,7 +96,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              className="md:hidden text-paws-brown"
+              className="md:hidden text-neutral-600"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -99,12 +107,12 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-paws-sand px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white border-t border-neutral-100 px-4 py-4 space-y-3">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="block text-sm font-medium text-paws-brown hover:text-paws-orange py-1"
+              className="block text-sm font-medium text-neutral-600 hover:text-paws-orange py-1"
               onClick={() => setMobileOpen(false)}
             >
               {link.label}
@@ -112,7 +120,7 @@ export function Navbar() {
           ))}
           <button
             onClick={() => router.push(otherLocalePath)}
-            className="flex items-center gap-1.5 text-sm text-paws-brown hover:text-paws-orange py-1"
+            className="flex items-center gap-1.5 text-sm text-neutral-600 hover:text-paws-orange py-1"
           >
             <Globe className="w-4 h-4" />
             {otherLocale === "ar" ? "عربي" : "EN"}
