@@ -149,7 +149,7 @@ export function ScrollVideoHero({
                 muted
                 playsInline
                 preload="auto"
-                className="w-full max-w-[600px] lg:max-w-none aspect-square object-contain will-change-transform"
+                className="w-full max-w-[600px] lg:max-w-none aspect-square object-contain will-change-transform mix-blend-multiply"
               />
             </div>
           </div>

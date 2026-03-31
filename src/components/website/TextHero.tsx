@@ -78,7 +78,7 @@ export function TextHero({
           <div className="flex items-center justify-center relative">
             <div className="relative w-full max-w-[480px]">
               <Image
-                src="/mascots/cairo-luna.jpeg"
+                src="/mascots/cairo-luna.png"
                 alt="Cairo & Luna — PAWS Egypt mascots"
                 width={800}
                 height={450}
