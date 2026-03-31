@@ -57,7 +57,7 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
             PAWS Egypt
           </p>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-3">
+          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-3">
             {t("title")}
           </h1>
           <p className="text-lg text-neutral-500 max-w-[50ch]">
@@ -95,7 +95,7 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
         </div>
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
           {products ? (
             products.map((product, i) => {
               const price = product.product_variants?.[0]?.price ?? 0;

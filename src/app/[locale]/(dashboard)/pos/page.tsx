@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Search, Plus, Minus, Trash2, CreditCard, Banknote, X, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
 interface POSProduct {
   id: string;
@@ -30,10 +30,7 @@ export default function POSPage() {
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     async function loadProducts() {
@@ -79,7 +76,7 @@ export default function POSPage() {
       setLoading(false);
     }
     loadProducts();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [supabase]);
 
   const filtered = products.filter(
     (p) =>
@@ -120,7 +117,7 @@ export default function POSPage() {
 
     try {
       // Create invoice
-      const { data: invoice, error: invoiceError } = await supabase
+      const { data: invoiceData, error: invoiceError } = await supabase
         .from("invoices")
         .insert({
           type: "sale",
@@ -129,11 +126,12 @@ export default function POSPage() {
           tax,
           total,
           notes: `POS Sale - ${payMethod}`,
-        })
+        } as never)
         .select("id")
         .single();
 
       if (invoiceError) throw invoiceError;
+      const invoice = invoiceData as unknown as { id: string };
 
       // Create invoice items
       const items = cart.map((item) => ({
@@ -146,7 +144,7 @@ export default function POSPage() {
 
       const { error: itemsError } = await supabase
         .from("invoice_items")
-        .insert(items);
+        .insert(items as never);
 
       if (itemsError) throw itemsError;
 
@@ -157,24 +155,32 @@ export default function POSPage() {
           invoice_id: invoice.id,
           amount: total,
           method: payMethod,
-        });
+        } as never);
 
       if (payError) throw payError;
 
       setCheckoutMessage(`Invoice created! Total: ${total.toFixed(2)} EGP`);
       setCart([]);
       setTimeout(() => setCheckoutMessage(""), 4000);
-    } catch {
-      setCheckoutMessage("Sale recorded locally. Total: " + total.toFixed(2) + " EGP");
-      setCart([]);
-      setTimeout(() => setCheckoutMessage(""), 4000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      setCheckoutMessage(`Checkout failed: ${message}. Please try again.`);
+      setTimeout(() => setCheckoutMessage(""), 6000);
     }
   }
 
   return (
-    <div className="flex gap-4 h-full -m-6 p-6 relative">
+    <div className="flex flex-col lg:flex-row gap-4 h-full lg:-m-6 lg:p-6 relative">
       {checkoutMessage && (
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 bg-green-50 border border-green-200 text-green-800 text-sm font-medium px-4 py-2 rounded-xl shadow-sm">
+        <div
+          role="status"
+          aria-live="polite"
+          className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 text-sm font-medium px-4 py-2 rounded-xl shadow-sm ${
+            checkoutMessage.startsWith("Checkout failed")
+              ? "bg-red-50 border border-red-200 text-red-800"
+              : "bg-green-50 border border-green-200 text-green-800"
+          }`}
+        >
           {checkoutMessage}
         </div>
       )}
@@ -222,7 +228,7 @@ export default function POSPage() {
       </div>
 
       {/* Right: Cart */}
-      <div className="w-80 shrink-0 flex flex-col bg-white border border-neutral-200 rounded-2xl overflow-hidden">
+      <div className="w-full lg:w-80 shrink-0 flex flex-col bg-white border border-neutral-200 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-neutral-200">
           <h2 className="font-bold text-neutral-900">Current Order</h2>
           {cart.length > 0 && (

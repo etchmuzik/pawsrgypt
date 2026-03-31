@@ -1,0 +1,254 @@
+"use client";
+
+import { useEffect, useRef, useCallback } from "react";
+
+interface ScrollImageHeroProps {
+  /** Directory path containing frame-001.jpg … frame-NNN.jpg */
+  framesPath: string;
+  /** Total number of frames in the sequence */
+  frameCount: number;
+  name: string;
+  subtitle: string;
+  description: string;
+  textPosition?: "left" | "right";
+  accentColor?: string;
+}
+
+/**
+ * Scroll-driven image-sequence hero using <canvas>.
+ * Preloads all frames into memory, then paints the active frame
+ * onto a canvas on every scroll tick — buttery smooth, no DOM swaps.
+ */
+export function ScrollImageHero({
+  framesPath,
+  frameCount,
+  name,
+  subtitle,
+  description,
+  textPosition = "left",
+  accentColor = "text-paws-orange",
+}: ScrollImageHeroProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const cachedRect = useRef({ top: 0, height: 0 });
+  const currentFrame = useRef(-1);
+  const imagesRef = useRef<HTMLImageElement[]>([]);
+  const loadedCount = useRef(0);
+
+  const cacheRect = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    cachedRect.current = {
+      top: rect.top + window.scrollY,
+      height: rect.height,
+    };
+  }, []);
+
+  /** Draw a specific frame onto the canvas, fitting it with object-contain or cover logic. */
+  const drawFrame = useCallback((frameIndex: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const img = imagesRef.current[frameIndex];
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    // Match canvas internal size to its CSS size for crisp rendering
+    const dpr = window.devicePixelRatio || 1;
+    const displayW = canvas.clientWidth;
+    const displayH = canvas.clientHeight;
+
+    if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
+      canvas.width = displayW * dpr;
+      canvas.height = displayH * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    ctx.clearRect(0, 0, displayW, displayH);
+
+    // Determine if we should use contain (mobile) or cover (desktop) logic
+    const isMobile = window.innerWidth < 768;
+    const imgRatio = img.naturalWidth / img.naturalHeight;
+    const canvasRatio = displayW / displayH;
+
+    let drawW: number, drawH: number, drawX: number, drawY: number;
+
+    if (isMobile) {
+      // object-contain: fit entire image within canvas
+      if (imgRatio > canvasRatio) {
+        drawW = displayW;
+        drawH = displayW / imgRatio;
+      } else {
+        drawH = displayH;
+        drawW = displayH * imgRatio;
+      }
+      drawX = (displayW - drawW) / 2;
+      drawY = (displayH - drawH) / 2;
+    } else {
+      // object-cover: fill canvas, crop overflow, anchor top-center
+      if (imgRatio > canvasRatio) {
+        drawH = displayH;
+        drawW = displayH * imgRatio;
+      } else {
+        drawW = displayW;
+        drawH = displayW / imgRatio;
+      }
+      drawX = (displayW - drawW) / 2;
+      drawY = 0; // object-top
+    }
+
+    ctx.drawImage(img, drawX, drawY, drawW, drawH);
+  }, []);
+
+  useEffect(() => {
+    cacheRect();
+
+    // Build frame URLs and preload all images
+    const images: HTMLImageElement[] = [];
+    for (let i = 0; i < frameCount; i++) {
+      const num = String(i + 1).padStart(3, "0");
+      const img = new Image();
+      img.src = `${framesPath}/frame-${num}.jpg`;
+      img.onload = () => {
+        loadedCount.current++;
+        // Draw first frame once loaded
+        if (i === 0) {
+          currentFrame.current = 0;
+          drawFrame(0);
+        }
+      };
+      images.push(img);
+    }
+    imagesRef.current = images;
+
+    const text = textRef.current;
+
+    const scrub = () => {
+      const { top, height } = cachedRect.current;
+      const viewportH = window.innerHeight;
+      const scrollRange = height - viewportH;
+      if (scrollRange <= 0) return;
+
+      const scrolled = window.scrollY - top;
+      const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
+
+      // Pick and draw frame
+      const frameIndex = Math.min(
+        frameCount - 1,
+        Math.floor(progress * frameCount)
+      );
+      if (frameIndex !== currentFrame.current) {
+        currentFrame.current = frameIndex;
+        drawFrame(frameIndex);
+      }
+
+      // Smooth text fade
+      if (text) {
+        const textOpacity =
+          progress < 0.05
+            ? progress / 0.05
+            : progress > 0.85
+              ? (1 - progress) / 0.15
+              : 1;
+        const textY = (1 - Math.min(1, progress / 0.1)) * 30;
+        text.style.opacity = String(Math.max(0, Math.min(1, textOpacity)));
+        text.style.transform = `translate3d(0,${textY}px,0)`;
+      }
+    };
+
+    const handleScroll = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(scrub);
+    };
+
+    const handleResize = () => {
+      cacheRect();
+      // Re-draw current frame at new canvas size
+      if (currentFrame.current >= 0) {
+        // Reset canvas dimensions on resize
+        const canvas = canvasRef.current;
+        if (canvas) {
+          canvas.width = 0;
+          canvas.height = 0;
+        }
+        drawFrame(currentFrame.current);
+      }
+      scrub();
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", handleResize, { passive: true });
+
+    // Initial scrub after a short delay for images to start loading
+    requestAnimationFrame(scrub);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [cacheRect, frameCount, framesPath, drawFrame]);
+
+  const isLeft = textPosition === "left";
+
+  return (
+    <div
+      ref={containerRef}
+      className="h-[120vh] md:h-[200vh] relative"
+      style={{ marginTop: "-2px", marginBottom: "-2px" }}
+    >
+      {/* Sticky viewport */}
+      <div className="sticky top-0 h-[100dvh] overflow-hidden bg-neutral-50 flex flex-col md:block">
+        {/* Canvas — paints active frame, GPU-accelerated */}
+        <canvas
+          ref={canvasRef}
+          aria-label={`${name} mascot animation`}
+          role="img"
+          className="w-full h-[60dvh] md:h-full shrink-0 md:absolute md:inset-0"
+        />
+
+        {/* Text overlay — below canvas on mobile, over canvas on desktop */}
+        <div
+          className={`relative md:absolute md:inset-0 flex items-start md:items-center pt-4 pb-6 md:pt-0 md:pb-0 bg-white md:bg-transparent ${
+            isLeft ? "justify-start" : "justify-end"
+          }`}
+        >
+          <div
+            ref={textRef}
+            className={`relative z-10 w-full lg:w-1/2 px-5 sm:px-8 md:px-16 lg:px-20 ${
+              isLeft ? "text-left" : "md:text-right text-left"
+            }`}
+            style={{ opacity: 0, transform: "translate3d(0,30px,0)" }}
+          >
+            {/* Soft background wash behind text — desktop only */}
+            <div
+              className={`hidden md:block absolute inset-0 -mx-8 -my-16 ${
+                isLeft
+                  ? "bg-gradient-to-r from-white/95 via-white/80 to-transparent"
+                  : "bg-gradient-to-l from-white/95 via-white/80 to-transparent"
+              }`}
+              style={{ backdropFilter: "blur(2px)" }}
+            />
+
+            <div className="relative">
+              <p
+                className={`text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-1 md:mb-4`}
+              >
+                {subtitle}
+              </p>
+              <h2 className="text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-2 md:mb-6">
+                {name}
+              </h2>
+              <p className="text-sm sm:text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[45ch]">
+                {description}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

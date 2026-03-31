@@ -4,7 +4,7 @@ import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
-import { ScrollVideoHero } from "@/components/website/ScrollVideoHero";
+import { ScrollImageHero } from "@/components/website/ScrollImageHero";
 import { TextHero } from "@/components/website/TextHero";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,9 +35,9 @@ function TrustBar() {
   ];
 
   return (
-    <section className="bg-white py-12 border-b border-neutral-100">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+    <section className="bg-white py-8 md:py-12 border-b border-neutral-100">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
           {features.map(({ icon: Icon, text }, i) => (
             <ScrollReveal key={text} delay={i * 80}>
               <div className="flex items-center justify-center gap-3 group cursor-default">
@@ -73,25 +73,25 @@ function CategoriesSection() {
   ];
 
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <section className="py-12 md:py-24 bg-white">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
         <ScrollReveal>
-          <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
+          <div className="text-center mb-8 md:mb-16">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-2 md:mb-3">
               Browse Our Collection
             </p>
-            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+            <h2 className="text-2xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
               {t("categories_title")}
             </h2>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
+        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-5">
           {categories.map((cat, i) => (
             <ScrollReveal key={cat.name} delay={i * 80}>
               <Link
                 href={`/${locale}/shop?category=${cat.name.toLowerCase()}`}
-                className="bg-white border border-neutral-100 rounded-2xl p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 block"
+                className="bg-white border border-neutral-100 rounded-2xl p-4 sm:p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 block"
               >
                 <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4 transition-all ${cat.color}`}>
                   <cat.icon className="w-6 h-6" />
@@ -123,27 +123,27 @@ function FeaturedProducts() {
   ];
 
   return (
-    <section className="py-24 bg-neutral-50/50">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <section className="py-12 md:py-24 bg-neutral-50/50">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
         <ScrollReveal>
-          <div className="flex items-end justify-between mb-14">
+          <div className="flex items-end justify-between mb-8 md:mb-14">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
+              <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-2 md:mb-3">
                 Handpicked for Your Pet
               </p>
-              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
+              <h2 className="text-2xl md:text-5xl font-extrabold tracking-tight text-neutral-900">
                 {t("featured_title")}
               </h2>
             </div>
             <Link href={`/${locale}/shop`}>
-              <Button variant="ghost" className="text-neutral-500 hover:text-paws-orange gap-1 font-semibold">
+              <Button variant="ghost" className="text-neutral-500 hover:text-paws-orange gap-1 font-semibold text-sm">
                 View All <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
           {products.map((product, i) => (
             <ScrollReveal key={product.id} delay={i * 100}>
               <Link
@@ -164,16 +164,16 @@ function FeaturedProducts() {
                     </span>
                   )}
                 </div>
-                <div className="p-5">
-                  <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
-                  <h3 className="font-bold text-neutral-800 group-hover:text-paws-orange transition-colors text-base line-clamp-2">
+                <div className="p-3 sm:p-5">
+                  <p className="text-[10px] sm:text-xs text-neutral-400 font-medium mb-0.5 sm:mb-1">{product.brand}</p>
+                  <h3 className="font-bold text-neutral-800 group-hover:text-paws-orange transition-colors text-xs sm:text-base line-clamp-2">
                     {locale === "ar" ? product.nameAr : product.name}
                   </h3>
-                  <div className="flex items-center justify-between mt-3">
-                    <p className="text-paws-orange font-extrabold text-lg">
-                      {product.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                  <div className="flex items-center justify-between mt-2 sm:mt-3">
+                    <p className="text-paws-orange font-extrabold text-sm sm:text-lg">
+                      {product.price.toLocaleString()} <span className="text-[10px] sm:text-xs font-normal text-neutral-400">EGP</span>
                     </p>
-                    <div className="flex gap-0.5">
+                    <div className="hidden sm:flex gap-0.5">
                       {[...Array(5)].map((_, j) => (
                         <Star key={j} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                       ))}
@@ -197,10 +197,10 @@ function CTABanner() {
   const locale = useLocale();
 
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <section className="py-12 md:py-24 bg-white">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12">
         <ScrollReveal>
-          <div className="relative bg-neutral-900 rounded-[2rem] p-10 md:p-16 text-white overflow-hidden">
+          <div className="relative bg-neutral-900 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 md:p-16 text-white overflow-hidden">
             {/* Decorative mascot images */}
             <div className="absolute top-6 right-6 md:right-12 w-32 h-32 md:w-48 md:h-48 opacity-10">
               <Image src="/mascots/cairo.png" alt="" width={192} height={192} className="w-full h-full object-contain" />
@@ -213,10 +213,10 @@ function CTABanner() {
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-4">
                 Join Our Family
               </p>
-              <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight mb-4 leading-tight">
                 {t("about_text")}
               </h2>
-              <p className="text-white/60 text-lg mb-10 max-w-[50ch]">
+              <p className="text-white/60 text-sm sm:text-lg mb-6 sm:mb-10 max-w-[50ch]">
                 Join 2,000+ happy pet parents in Cairo who trust PAWS Egypt for their pets&apos; needs.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
@@ -266,9 +266,10 @@ export default function HomePage() {
           ctaSecondaryText={t("hero_cta_secondary")}
         />
 
-        {/* 2. Cairo — full-viewport scroll-driven video */}
-        <ScrollVideoHero
-          src="/mascots/cairo.mp4"
+        {/* 2. Cairo — scroll-driven image sequence */}
+        <ScrollImageHero
+          framesPath="/mascots/cairo-frames"
+          frameCount={96}
           name="Cairo"
           subtitle="The Explorer"
           description="Our playful golden pup who loves discovering the best products for your furry friends. Loyal, energetic, and always ready for an adventure."
@@ -276,9 +277,10 @@ export default function HomePage() {
           accentColor="text-paws-orange"
         />
 
-        {/* 3. Luna — full-viewport scroll-driven video */}
-        <ScrollVideoHero
-          src="/mascots/luna.mp4"
+        {/* 3. Luna — scroll-driven image sequence */}
+        <ScrollImageHero
+          framesPath="/mascots/luna-frames"
+          frameCount={96}
           name="Luna"
           subtitle="The Wise One"
           description="Our elegant tabby who knows everything about pet care. Smart, calm, and she picks only the finest quality for your companion."

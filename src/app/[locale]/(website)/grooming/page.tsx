@@ -129,7 +129,7 @@ export default function GroomingPage() {
 
         {/* Booking Form */}
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white border border-neutral-200 rounded-3xl p-8">
+          <div className="bg-white border border-neutral-200 rounded-3xl p-4 sm:p-6 md:p-8">
             <h2 className="text-2xl font-bold text-neutral-900 mb-6 text-center">
               {t("book_appointment")}
             </h2>

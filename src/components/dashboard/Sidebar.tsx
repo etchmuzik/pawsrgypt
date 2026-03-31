@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale } from "next-intl";
+import { useState } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -16,6 +17,8 @@ import {
   LogOut,
   ChevronRight,
   Monitor,
+  Menu,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -38,6 +41,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const locale = useLocale();
   const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -45,17 +49,25 @@ export function Sidebar() {
     router.push(`/${locale}/login`);
   }
 
-  return (
-    <aside className="w-60 bg-sidebar text-sidebar-foreground flex flex-col h-full">
+  const sidebarContent = (
+    <>
       {/* Logo */}
       <div className="h-16 flex items-center gap-2 px-5 border-b border-sidebar-border shrink-0">
         <div className="w-8 h-8 bg-paws-orange rounded-lg flex items-center justify-center">
           <span className="text-white font-bold text-sm">P</span>
         </div>
-        <div>
+        <div className="flex-1">
           <p className="font-bold text-sm text-white">PAWS Egypt</p>
           <p className="text-xs text-sidebar-foreground/60">Management</p>
         </div>
+        {/* Close button on mobile */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden w-8 h-8 flex items-center justify-center text-sidebar-foreground/80 hover:text-white"
+          aria-label="Close menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -69,6 +81,7 @@ export function Sidebar() {
               <li key={item.href}>
                 <Link
                   href={fullHref}
+                  onClick={() => setMobileOpen(false)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                     isActive
@@ -98,6 +111,46 @@ export function Sidebar() {
           <span>Logout</span>
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile hamburger button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-3 left-3 z-50 w-10 h-10 bg-sidebar text-white rounded-xl flex items-center justify-center shadow-lg"
+        aria-label="Open menu"
+        aria-expanded={mobileOpen}
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Mobile slide-out sidebar */}
+      <aside
+        role={mobileOpen ? "dialog" : undefined}
+        aria-modal={mobileOpen ? true : undefined}
+        aria-hidden={!mobileOpen}
+        className={cn(
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-sidebar-foreground flex flex-col transition-transform duration-300",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex w-60 bg-sidebar text-sidebar-foreground flex-col h-full">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }

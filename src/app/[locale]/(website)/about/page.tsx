@@ -50,8 +50,8 @@ export default function AboutPage() {
             </div>
           </div>
           <div className="flex justify-center">
-            <div className="w-64 h-64 bg-neutral-50 rounded-full flex items-center justify-center">
-              <PawPrint className="w-32 h-32 text-paws-orange" />
+            <div className="w-48 h-48 md:w-64 md:h-64 bg-neutral-50 rounded-full flex items-center justify-center">
+              <PawPrint className="w-24 h-24 md:w-32 md:h-32 text-paws-orange" />
             </div>
           </div>
         </div>

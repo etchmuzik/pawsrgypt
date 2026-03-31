@@ -118,45 +118,37 @@ export function ScrollVideoHero({
   return (
     <div
       ref={containerRef}
-      className="h-[150vh] md:h-[200vh] relative"
+      className="h-[120vh] md:h-[200vh] relative"
       style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
-      {/* Sticky viewport — video fills entire screen, no gaps */}
-      <div className="sticky top-0 h-[100dvh] overflow-hidden">
-        {/* Video — absolute, overflows slightly to kill any seam lines */}
+      {/* Sticky viewport */}
+      <div className="sticky top-0 h-[100dvh] overflow-hidden bg-neutral-50 flex flex-col md:block">
+        {/* Video — contain on mobile (show full), cover on desktop (immersive) */}
         <video
           ref={videoRef}
           src={src}
           muted
           playsInline
           preload="auto"
-          className={`absolute w-full h-full object-cover will-change-transform ${
-            isLeft ? "object-right" : "object-left"
-          }`}
-          style={{
-            top: "-4px",
-            left: "-4px",
-            width: "calc(100% + 8px)",
-            height: "calc(100% + 8px)",
-          }}
+          className="md:absolute md:w-full md:h-full object-contain md:object-cover object-center md:object-top will-change-transform w-full h-[60dvh] md:h-full shrink-0"
         />
 
-        {/* Text overlay */}
+        {/* Text overlay — below video on mobile, over video on desktop */}
         <div
-          className={`absolute inset-0 flex items-center ${
+          className={`relative md:absolute md:inset-0 flex items-start md:items-center pt-4 pb-6 md:pt-0 md:pb-0 bg-white md:bg-transparent ${
             isLeft ? "justify-start" : "justify-end"
           }`}
         >
           <div
             ref={textRef}
-            className={`relative z-10 w-full lg:w-1/2 px-8 md:px-16 lg:px-20 ${
-              isLeft ? "text-left" : "text-right"
+            className={`relative z-10 w-full lg:w-1/2 px-5 sm:px-8 md:px-16 lg:px-20 ${
+              isLeft ? "text-left" : "md:text-right text-left"
             }`}
             style={{ opacity: 0, transform: "translate3d(0,30px,0)" }}
           >
-            {/* Soft background wash behind text */}
+            {/* Soft background wash behind text — desktop only */}
             <div
-              className={`absolute inset-0 -mx-8 -my-16 ${
+              className={`hidden md:block absolute inset-0 -mx-8 -my-16 ${
                 isLeft
                   ? "bg-gradient-to-r from-white/95 via-white/80 to-transparent"
                   : "bg-gradient-to-l from-white/95 via-white/80 to-transparent"
@@ -166,14 +158,14 @@ export function ScrollVideoHero({
 
             <div className="relative">
               <p
-                className={`text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-4`}
+                className={`text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-1 md:mb-4`}
               >
                 {subtitle}
               </p>
-              <h2 className="text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-6">
+              <h2 className="text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-2 md:mb-6">
                 {name}
               </h2>
-              <p className="text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[45ch]">
+              <p className="text-sm sm:text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[45ch]">
                 {description}
               </p>
             </div>

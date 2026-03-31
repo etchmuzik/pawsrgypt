@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getLocale } from "next-intl/server";
@@ -17,9 +17,41 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#F97316",
+};
+
 export const metadata: Metadata = {
-  title: "PAWS Egypt — Premium Pet Care",
-  description: "Cairo's premium pet lifestyle brand. Shop pet products and book grooming services.",
+  title: {
+    default: "PAWS Egypt — Premium Pet Care",
+    template: "%s | PAWS Egypt",
+  },
+  description: "Cairo's premium pet lifestyle brand. Shop pet food, accessories, and book grooming services across Egypt.",
+  metadataBase: new URL("https://pawsegypt.com"),
+  openGraph: {
+    type: "website",
+    siteName: "PAWS Egypt",
+    title: "PAWS Egypt — Premium Pet Care",
+    description: "Cairo's premium pet lifestyle brand. Shop pet food, accessories, and book grooming services across Egypt.",
+    locale: "en_EG",
+    url: "https://pawsegypt.com",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PAWS Egypt — Premium Pet Care",
+    description: "Cairo's premium pet lifestyle brand.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/logo.svg",
+    apple: "/logo.svg",
+  },
 };
 
 export default async function LocaleLayout({
