@@ -5,7 +5,6 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +15,6 @@ import { Loader2, ShoppingBag, Package } from "lucide-react";
 export default function CheckoutPage() {
   const locale = useLocale();
   const router = useRouter();
-  const supabase = createClient();
 
   const items = useCartStore((s) => s.items);
   const total = useCartStore((s) => s.total);
@@ -66,47 +64,56 @@ export default function CheckoutPage() {
 
     setLoading(true);
 
-    const orderData = {
-      order_number: "WEB-" + Date.now(),
-      customer_name: form.name.trim(),
-      customer_email: form.email.trim() || null,
-      customer_phone: form.phone.trim(),
-      shipping_address: JSON.stringify({
-        street: form.street.trim(),
-        city: form.city.trim(),
-        area: form.area.trim() || null,
-      }),
-      items: JSON.stringify(
-        items.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          size: item.size ?? null,
-          color: item.color ?? null,
-        }))
-      ),
-      subtotal,
-      shipping: 0,
-      total: grandTotal,
-      status: "pending",
-    };
+    // POST to /api/orders — server route inserts into DB, fires confirmation
+    // emails, and returns the opaque access_token used in the confirmation URL.
+    try {
+      const res = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: form.name.trim(),
+          customer_email: form.email.trim() || null,
+          customer_phone: form.phone.trim(),
+          shipping_address: {
+            street: form.street.trim(),
+            city: form.city.trim(),
+            area: form.area.trim() || null,
+          },
+          items: items.map((item) => ({
+            productId: item.productId,
+            variantId: item.variantId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            size: item.size ?? null,
+            color: item.color ?? null,
+          })),
+          subtotal,
+          shipping: 0,
+          total: grandTotal,
+        }),
+      });
 
-    const { error } = await supabase
-      .from("website_orders")
-      .insert(orderData as never);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        toast.error(body.error ?? "Failed to place order.");
+        setLoading(false);
+        return;
+      }
 
-    setLoading(false);
+      const { access_token } = (await res.json()) as {
+        access_token: string;
+        order_number: string;
+      };
 
-    if (error) {
-      toast.error(error.message ?? "Failed to place order.");
-      return;
+      useCartStore.getState().clearCart();
+      toast.success("Order placed successfully!");
+      router.push(`/${locale}/orders/${access_token}`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Network error";
+      toast.error(message);
+      setLoading(false);
     }
-
-    useCartStore.getState().clearCart();
-    toast.success("Order placed successfully!");
-    router.push(`/${locale}/shop`);
   }
 
   if (items.length === 0) {

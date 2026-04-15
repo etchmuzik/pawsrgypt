@@ -1,11 +1,12 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, SlidersHorizontal, Star } from "lucide-react";
+import { Search, SlidersHorizontal, Star, X } from "lucide-react";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 
 export type ProductRow = {
@@ -48,6 +49,44 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
   const t = useTranslations("shop");
   const locale = useLocale();
 
+  const [query, setQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const normalizedQuery = query.trim().toLowerCase();
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return null;
+
+    const categoryToken = activeCategory === "all" ? null : activeCategory;
+
+    return products.filter((p) => {
+      if (normalizedQuery) {
+        const haystack = [
+          p.name_en,
+          p.name_ar,
+          p.brand ?? "",
+          p.sku,
+          p.categories?.name_en ?? "",
+          p.categories?.name_ar ?? "",
+        ]
+          .join(" ")
+          .toLowerCase();
+        if (!haystack.includes(normalizedQuery)) return false;
+      }
+
+      if (categoryToken) {
+        const cat = (p.categories?.name_en ?? "").toLowerCase();
+        const tokens = categoryToken.toLowerCase().split("-");
+        // Simple category token match — e.g. "dog-food" matches "Food & Treats" + "dog" tag.
+        // For now, keep it lenient: any token appears in the category name.
+        const matches = tokens.some((t) => cat.includes(t));
+        if (!matches) return false;
+      }
+
+      return true;
+    });
+  }, [products, normalizedQuery, activeCategory]);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -71,9 +110,25 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
           <div className="relative flex-1">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
             <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder={t("search_placeholder")}
-              className="ps-9 h-11 bg-white border-neutral-200 focus:border-paws-orange focus:ring-paws-orange/20"
+              className="ps-9 pe-9 h-11 bg-white border-neutral-200 focus:border-paws-orange focus:ring-paws-orange/20"
+              type="search"
+              inputMode="search"
+              autoComplete="off"
+              aria-label={t("search_placeholder")}
             />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute end-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full hover:bg-neutral-100 transition-colors"
+                aria-label="Clear search"
+                type="button"
+              >
+                <X className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+            )}
           </div>
           <Button variant="outline" className="border-neutral-200 gap-2 text-neutral-600 hover:text-paws-orange hover:border-paws-orange h-11 sm:w-auto">
             <SlidersHorizontal className="w-4 h-4" />
@@ -83,20 +138,65 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
 
         {/* Categories — horizontal scroll on mobile */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-6 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mb-10 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 active:scale-[0.97] transition-all duration-200 whitespace-nowrap"
-            >
-              {locale === "ar" ? cat.labelAr : cat.label}
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border active:scale-[0.97] transition-all duration-200 whitespace-nowrap ${
+                  isActive
+                    ? "bg-neutral-900 text-white border-neutral-900"
+                    : "border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-900 hover:text-white hover:border-neutral-900"
+                }`}
+              >
+                {locale === "ar" ? cat.labelAr : cat.label}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Result count + clear filter */}
+        {(query || activeCategory !== "all") && filteredProducts && (
+          <div className="flex items-center justify-between mb-4 text-sm text-neutral-500">
+            <span>
+              {locale === "ar"
+                ? `${filteredProducts.length} نتيجة`
+                : `${filteredProducts.length} result${filteredProducts.length === 1 ? "" : "s"}`}
+            </span>
+            <button
+              onClick={() => {
+                setQuery("");
+                setActiveCategory("all");
+              }}
+              className="text-paws-orange font-semibold hover:underline"
+            >
+              {locale === "ar" ? "مسح الفلتر" : "Clear filters"}
+            </button>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {products && filteredProducts && filteredProducts.length === 0 && (
+          <div className="text-center py-16 sm:py-24">
+            <div className="w-16 h-16 rounded-full bg-neutral-50 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-6 h-6 text-neutral-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-1">
+              {locale === "ar" ? "لا توجد منتجات" : "No products found"}
+            </h3>
+            <p className="text-sm text-neutral-500">
+              {locale === "ar"
+                ? "جرب بحثاً مختلفاً أو امسح الفلتر"
+                : "Try a different search or clear the filters"}
+            </p>
+          </div>
+        )}
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
           {products ? (
-            products.map((product, i) => {
+            (filteredProducts ?? []).map((product, i) => {
               const price = product.product_variants?.[0]?.price ?? 0;
               const imageUrl = product.images?.[0] ?? null;
 
