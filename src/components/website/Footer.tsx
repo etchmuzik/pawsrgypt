@@ -31,7 +31,7 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-3">{t("shop")}</h4>
             <ul className="space-y-2">
-              {["Food & Treats", "Accessories", "Grooming", "Toys"].map((cat) => (
+              {["Food & Treats", "Accessories", "Toys", "Health"].map((cat) => (
                 <li key={cat}>
                   <Link
                     href={`/${locale}/shop`}

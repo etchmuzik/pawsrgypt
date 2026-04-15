@@ -42,7 +42,6 @@ const CATEGORIES = [
   { id: "cat-litter", label: "Cat Litter", labelAr: "رمل قطط" },
   { id: "accessories", label: "Accessories", labelAr: "إكسسوارات" },
   { id: "pharmacy", label: "Pharmacy", labelAr: "صيدلية" },
-  { id: "grooming", label: "Grooming", labelAr: "العناية" },
 ];
 
 export function ShopContent({ products }: { products: ProductRow[] | null }) {

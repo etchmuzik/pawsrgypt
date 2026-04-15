@@ -2,7 +2,6 @@
   "nav": {
     "home": "Home",
     "shop": "Shop",
-    "grooming": "Grooming",
     "about": "About",
     "cart": "Cart",
     "blog": "Blog",
@@ -12,9 +11,8 @@
   },
   "home": {
     "hero_title": "Better Care for Your Pet",
-    "hero_subtitle": "Premium pet products and grooming services in Cairo",
+    "hero_subtitle": "Premium pet products delivered across Cairo",
     "hero_cta": "Shop Now",
-    "hero_cta_secondary": "Book Grooming",
     "categories_title": "Shop by Category",
     "featured_title": "Featured Products",
     "about_title": "Why PAWS Egypt?",
@@ -53,27 +51,10 @@
     "category": "Category",
     "price": "Price"
   },
-  "grooming": {
-    "title": "Grooming Services",
-    "subtitle": "Professional grooming for your beloved pets",
-    "book_now": "Book Now",
-    "services_title": "Our Services",
-    "price_from": "From",
-    "book_appointment": "Book Appointment",
-    "name": "Your Name",
-    "phone": "Phone Number",
-    "pet_name": "Pet Name",
-    "pet_type": "Pet Type",
-    "service": "Service",
-    "date": "Preferred Date",
-    "notes": "Notes",
-    "submit": "Book Appointment",
-    "success": "Appointment booked! We'll contact you shortly."
-  },
   "about": {
     "title": "About PAWS Egypt",
     "mission_title": "Our Mission",
-    "mission_text": "To provide Cairo's pet owners with premium, trusted products and expert grooming services.",
+    "mission_text": "To provide Cairo's pet owners with premium, trusted products for happy, healthy pets.",
     "values_title": "Our Values",
     "contact_title": "Contact Us"
   },

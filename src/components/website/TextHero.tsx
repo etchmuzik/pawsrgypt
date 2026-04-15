@@ -9,7 +9,6 @@ interface TextHeroProps {
   subtitle: string;
   tagline: string;
   ctaText: string;
-  ctaSecondaryText: string;
 }
 
 export function TextHero({
@@ -18,7 +17,6 @@ export function TextHero({
   subtitle,
   tagline,
   ctaText,
-  ctaSecondaryText,
 }: TextHeroProps) {
   return (
     <section className="min-h-[100dvh] bg-white flex items-center relative overflow-hidden">
@@ -44,15 +42,6 @@ export function TextHero({
                 >
                   {ctaText}
                   <ArrowRight className="w-5 h-5 ms-2" />
-                </Button>
-              </Link>
-              <Link href={`/${locale}/grooming`}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-neutral-200 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 font-bold px-8 transition-all"
-                >
-                  {ctaSecondaryText}
                 </Button>
               </Link>
             </div>

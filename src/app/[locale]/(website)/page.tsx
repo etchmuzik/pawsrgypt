@@ -16,11 +16,9 @@ import {
   Sparkles,
   UtensilsCrossed,
   Gem,
-  Scissors,
   Gamepad2,
   HeartPulse,
   BedDouble,
-  Phone,
 } from "lucide-react";
 
 /* ================================================
@@ -31,7 +29,7 @@ function TrustBar() {
     { icon: Truck, text: "Free Cairo Delivery" },
     { icon: Shield, text: "Premium Quality" },
     { icon: Heart, text: "Pet-First Care" },
-    { icon: Sparkles, text: "5-Star Grooming" },
+    { icon: Sparkles, text: "Trusted Brands" },
   ];
 
   return (
@@ -66,7 +64,6 @@ function CategoriesSection() {
   const categories = [
     { name: "Food & Treats", nameAr: "أطعمة ومكافآت", icon: UtensilsCrossed, color: "text-orange-500 bg-orange-50 group-hover:bg-orange-100" },
     { name: "Accessories", nameAr: "إكسسوارات", icon: Gem, color: "text-pink-500 bg-pink-50 group-hover:bg-pink-100" },
-    { name: "Grooming", nameAr: "العناية", icon: Scissors, color: "text-sky-500 bg-sky-50 group-hover:bg-sky-100" },
     { name: "Toys", nameAr: "ألعاب", icon: Gamepad2, color: "text-green-500 bg-green-50 group-hover:bg-green-100" },
     { name: "Health", nameAr: "الصحة", icon: HeartPulse, color: "text-purple-500 bg-purple-50 group-hover:bg-purple-100" },
     { name: "Beds", nameAr: "الفراش", icon: BedDouble, color: "text-amber-500 bg-amber-50 group-hover:bg-amber-100" },
@@ -231,14 +228,13 @@ function CTABanner() {
                     Start Shopping <ArrowRight className="w-5 h-5 ms-2" />
                   </Button>
                 </Link>
-                <Link href={`/${locale}/grooming`}>
+                <Link href={`/${locale}/blog`}>
                   <Button
                     size="lg"
                     variant="outline"
                     className="border-2 border-white/20 text-white hover:bg-white/10 font-bold px-8"
                   >
-                    <Phone className="w-4 h-4 me-2" />
-                    Book Grooming
+                    Read Our Blog
                   </Button>
                 </Link>
               </div>
@@ -266,7 +262,6 @@ export default function HomePage() {
           subtitle={t("hero_subtitle")}
           tagline="Cairo's #1 Pet Lifestyle Brand"
           ctaText={t("hero_cta")}
-          ctaSecondaryText={t("hero_cta_secondary")}
         />
 
         {/* 2. Cairo — scroll-driven image sequence */}
