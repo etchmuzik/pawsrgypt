@@ -146,39 +146,40 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-neutral-100">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
-          <h1 className="text-3xl font-extrabold text-neutral-900">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">
             Checkout
           </h1>
-          <p className="text-neutral-400 mt-1">
+          <p className="text-sm text-neutral-400 mt-1">
             {items.reduce((sum, i) => sum + i.quantity, 0)} items
           </p>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8">
         <form
           onSubmit={handleSubmit}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8"
         >
           {/* Customer Info */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Contact */}
-            <div className="bg-white rounded-2xl border border-neutral-100 p-6 space-y-4">
-              <h2 className="font-semibold text-neutral-900 text-lg">
+            <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-6 space-y-4">
+              <h2 className="font-semibold text-neutral-900 text-base sm:text-lg">
                 Contact Information
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="name">Full Name *</Label>
                   <Input
                     id="name"
                     name="name"
+                    autoComplete="name"
                     value={form.name}
                     onChange={handleChange}
                     placeholder="Your full name"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                     required
                   />
                 </div>
@@ -189,45 +190,50 @@ export default function CheckoutPage() {
                     id="phone"
                     name="phone"
                     type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="01xxxxxxxxx"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                     required
                   />
                 </div>
 
-                <div className="space-y-1.5 md:col-span-2">
+                <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     value={form.email}
                     onChange={handleChange}
                     placeholder="your@email.com"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                   />
                 </div>
               </div>
             </div>
 
             {/* Shipping Address */}
-            <div className="bg-white rounded-2xl border border-neutral-100 p-6 space-y-4">
-              <h2 className="font-semibold text-neutral-900 text-lg">
+            <div className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-6 space-y-4">
+              <h2 className="font-semibold text-neutral-900 text-base sm:text-lg">
                 Shipping Address
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5 md:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5 sm:col-span-2">
                   <Label htmlFor="street">Street Address *</Label>
                   <Input
                     id="street"
                     name="street"
+                    autoComplete="street-address"
                     value={form.street}
                     onChange={handleChange}
                     placeholder="Street name, building number, floor"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                     required
                   />
                 </div>
@@ -237,10 +243,11 @@ export default function CheckoutPage() {
                   <Input
                     id="city"
                     name="city"
+                    autoComplete="address-level2"
                     value={form.city}
                     onChange={handleChange}
                     placeholder="e.g. Cairo"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                     required
                   />
                 </div>
@@ -250,10 +257,11 @@ export default function CheckoutPage() {
                   <Input
                     id="area"
                     name="area"
+                    autoComplete="address-level3"
                     value={form.area}
                     onChange={handleChange}
                     placeholder="e.g. Maadi, Nasr City"
-                    className="bg-white border-neutral-200"
+                    className="bg-white border-neutral-200 h-11"
                   />
                 </div>
               </div>
@@ -262,7 +270,7 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-neutral-50 rounded-2xl p-6 sticky top-24">
+            <div className="bg-neutral-50 rounded-2xl p-4 sm:p-6 lg:sticky lg:top-24">
               <h2 className="text-lg font-bold text-neutral-900 mb-4">
                 Order Summary
               </h2>

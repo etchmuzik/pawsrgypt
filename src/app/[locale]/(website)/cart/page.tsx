@@ -60,15 +60,15 @@ export default function CartPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="border-b border-neutral-100">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-10">
-          <h1 className="text-3xl font-extrabold text-neutral-900">{t("title")}</h1>
-          <p className="text-neutral-400 mt-1">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900">{t("title")}</h1>
+          <p className="text-sm text-neutral-400 mt-1">
             {items.reduce((sum, i) => sum + i.quantity, 0)} {t("items")}
           </p>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8">
         {/* Back to shop */}
         <Link
           href={`/${locale}/shop`}
@@ -78,7 +78,7 @@ export default function CartPage() {
           {t("continue_shopping")}
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {items.map((item) => {
@@ -109,7 +109,7 @@ export default function CartPage() {
                         </h3>
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="text-neutral-400 hover:text-red-500 transition-colors shrink-0 p-1"
+                          className="text-neutral-400 hover:text-red-500 active:text-red-600 transition-colors shrink-0 p-2 -m-2 min-w-11 min-h-11 flex items-center justify-center"
                           aria-label={t("remove")}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -125,20 +125,20 @@ export default function CartPage() {
                         <div className="flex items-center gap-1">
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            className="w-8 h-8 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 active:bg-neutral-100 flex items-center justify-center transition-colors"
                             aria-label="Decrease quantity"
                           >
-                            <Minus className="w-3.5 h-3.5" />
+                            <Minus className="w-4 h-4" />
                           </button>
-                          <span className="w-10 text-center font-medium text-sm text-neutral-900">
+                          <span className="w-10 text-center font-semibold text-sm text-neutral-900 tabular-nums">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                            className="w-8 h-8 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center transition-colors"
+                            className="w-10 h-10 sm:w-9 sm:h-9 rounded-lg border border-neutral-200 bg-white hover:bg-neutral-50 active:bg-neutral-100 flex items-center justify-center transition-colors"
                             aria-label="Increase quantity"
                           >
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-4 h-4" />
                           </button>
                         </div>
 
@@ -167,7 +167,7 @@ export default function CartPage() {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <ScrollReveal delay={100}>
-              <div className="bg-neutral-50 rounded-2xl p-6 sticky top-24">
+              <div className="bg-neutral-50 rounded-2xl p-4 sm:p-6 lg:sticky lg:top-24">
                 <h2 className="text-lg font-bold text-neutral-900 mb-4">
                   {t("title")}
                 </h2>

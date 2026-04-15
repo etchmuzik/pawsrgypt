@@ -36,7 +36,7 @@ export default async function CustomersPage({ params }: CustomersPageProps) {
       </div>
 
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-paws-sand bg-paws-cream/50">
               <th className="text-start px-4 py-3 font-semibold text-paws-brown">Name</th>
@@ -71,7 +71,7 @@ export default async function CustomersPage({ params }: CustomersPageProps) {
               ))
             )}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );

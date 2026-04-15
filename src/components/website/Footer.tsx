@@ -9,10 +9,10 @@ export function Footer() {
 
   return (
     <footer className="bg-neutral-900 text-neutral-300 mt-auto">
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-10 sm:py-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
+          <div className="sm:col-span-2 md:col-span-2">
             <div className="mb-4">
               <PawLogo />
             </div>

@@ -83,17 +83,17 @@ function CategoriesSection() {
           </div>
         </ScrollReveal>
 
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-4">
           {categories.map((cat, i) => (
             <ScrollReveal key={cat.name} delay={i * 80}>
               <Link
                 href={`/${locale}/shop?category=${cat.name.toLowerCase()}`}
-                className="bg-white border border-neutral-100 rounded-2xl p-4 sm:p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 block"
+                className="bg-white border border-neutral-100 rounded-2xl p-4 sm:p-6 text-center transition-all duration-300 cursor-pointer group hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:-translate-y-1 active:scale-[0.98] block"
               >
-                <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center mb-4 transition-all ${cat.color}`}>
-                  <cat.icon className="w-6 h-6" />
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 mx-auto rounded-2xl flex items-center justify-center mb-3 sm:mb-4 transition-all ${cat.color}`}>
+                  <cat.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <p className="text-sm font-bold text-neutral-700 group-hover:text-paws-orange transition-colors">
+                <p className="text-xs sm:text-sm font-bold text-neutral-700 group-hover:text-paws-orange transition-colors">
                   {locale === "ar" ? cat.nameAr : cat.name}
                 </p>
               </Link>
@@ -199,7 +199,7 @@ function CTABanner() {
         <ScrollReveal>
           <div className="relative bg-neutral-900 rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 md:p-16 text-white overflow-hidden">
             {/* Decorative mascot image — combined Cairo & Luna */}
-            <div className="absolute bottom-0 right-0 md:right-8 w-64 h-40 md:w-96 md:h-56 opacity-30 md:opacity-40">
+            <div className="absolute bottom-0 -right-8 sm:right-0 md:right-8 w-48 h-32 sm:w-64 sm:h-40 md:w-96 md:h-56 opacity-20 sm:opacity-30 md:opacity-40 pointer-events-none">
               <Image
                 src="/mascots/cairo-luna.jpeg"
                 alt=""

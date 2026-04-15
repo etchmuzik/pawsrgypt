@@ -20,17 +20,17 @@ export function TextHero({
 }: TextHeroProps) {
   return (
     <section className="min-h-[100dvh] bg-white flex items-center relative overflow-hidden">
-      <div className="w-full max-w-[1400px] mx-auto px-6 lg:px-12 py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-12 lg:gap-8 items-center">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12 sm:py-16 lg:py-20">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 sm:gap-12 lg:gap-8 items-center">
           {/* Text side — left */}
           <div className="text-center lg:text-left">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-6">
+            <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-4 sm:mb-6">
               {tagline}
             </p>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-8">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold tracking-tighter leading-[1.05] text-neutral-900 mb-6 sm:mb-8">
               {title}
             </h1>
-            <p className="text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[55ch] mx-auto lg:mx-0 mb-10">
+            <p className="text-base sm:text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[55ch] mx-auto lg:mx-0 mb-8 sm:mb-10">
               {subtitle}
             </p>
 

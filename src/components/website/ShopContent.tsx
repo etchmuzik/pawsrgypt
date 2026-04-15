@@ -52,41 +52,41 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="bg-white border-b border-neutral-100">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-12 md:py-16">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-3">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-8 sm:py-12 md:py-16">
+          <p className="text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] text-paws-orange mb-2 sm:mb-3">
             PAWS Egypt
           </p>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-3">
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-2 sm:mb-3">
             {t("title")}
           </h1>
-          <p className="text-lg text-neutral-500 max-w-[50ch]">
+          <p className="text-sm sm:text-lg text-neutral-500 max-w-[50ch]">
             Premium pet food, accessories, and supplies delivered across Cairo
           </p>
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-8">
         {/* Search + Filter bar */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">
-            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 pointer-events-none" />
             <Input
               placeholder={t("search_placeholder")}
-              className="ps-9 bg-white border-neutral-200 focus:border-paws-orange focus:ring-paws-orange/20"
+              className="ps-9 h-11 bg-white border-neutral-200 focus:border-paws-orange focus:ring-paws-orange/20"
             />
           </div>
-          <Button variant="outline" className="border-neutral-200 gap-2 text-neutral-600 hover:text-paws-orange hover:border-paws-orange">
+          <Button variant="outline" className="border-neutral-200 gap-2 text-neutral-600 hover:text-paws-orange hover:border-paws-orange h-11 sm:w-auto">
             <SlidersHorizontal className="w-4 h-4" />
             {t("filter")}
           </Button>
         </div>
 
-        {/* Categories */}
-        <div className="flex gap-2 flex-wrap mb-10">
+        {/* Categories — horizontal scroll on mobile */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 sm:flex-wrap sm:overflow-visible sm:pb-0 sm:mb-10 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
-              className="px-4 py-2 rounded-full text-sm font-semibold border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200"
+              className="shrink-0 px-4 py-2 rounded-full text-sm font-semibold border border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-900 hover:text-white hover:border-neutral-900 active:scale-[0.97] transition-all duration-200 whitespace-nowrap"
             >
               {locale === "ar" ? cat.labelAr : cat.label}
             </button>

@@ -43,20 +43,20 @@ export default async function BlogPage({
   return (
     <div>
       {/* Header */}
-      <div className="bg-neutral-900 text-white py-16 md:py-24 text-center">
-        <p className="uppercase tracking-[0.2em] text-paws-orange text-sm mb-4">
+      <div className="bg-neutral-900 text-white py-12 sm:py-16 md:py-24 text-center px-4">
+        <p className="uppercase tracking-[0.2em] text-paws-orange text-xs sm:text-sm mb-3 sm:mb-4">
           PAWS EGYPT BLOG
         </p>
-        <h1 className="text-4xl md:text-6xl font-extrabold mb-4">
+        <h1 className="text-3xl sm:text-4xl md:text-6xl font-extrabold mb-3 sm:mb-4">
           {locale === "ar" ? "المدونة" : "Blog"}
         </h1>
-        <p className="text-neutral-400 max-w-xl mx-auto">
+        <p className="text-sm sm:text-base text-neutral-400 max-w-xl mx-auto">
           Stories, tips, and news from PAWS Egypt
         </p>
       </div>
 
       {/* Posts Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-12 md:py-24">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12 py-10 sm:py-12 md:py-24">
         {posts.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {posts.map((post) => (

@@ -109,7 +109,7 @@ export default async function BlogPostPage({
 
       {/* Article */}
       <article className="max-w-3xl mx-auto px-4 sm:px-6">
-        <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-4">
+        <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight text-neutral-900 mb-3 sm:mb-4 leading-tight">
           {title}
         </h1>
 
@@ -136,7 +136,7 @@ export default async function BlogPostPage({
         <hr className="border-neutral-100 mb-8" />
 
         {/* Content */}
-        <div className="prose prose-lg prose-neutral max-w-none">
+        <div className="prose prose-base sm:prose-lg prose-neutral max-w-none">
           {content
             .split("\n")
             .filter(Boolean)
