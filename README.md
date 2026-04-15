@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PAWS Egypt
+
+Premium pet lifestyle brand for Cairo — Next.js 15 app with Supabase backend.
+
+**Live site:** [pawsegypt.com](https://pawsegypt.com)
+
+## Stack
+
+- **Frontend:** Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS, shadcn/ui
+- **i18n:** next-intl (Arabic / English, RTL-aware)
+- **Backend:** Supabase (Postgres, Auth, Storage, RLS)
+- **Hosting:** Hostinger (CDN + origin)
+- **State:** Zustand (cart, UI)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
+cp .env.example .env.local    # then fill in Supabase credentials
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/[locale]/          # App Router — (website) group for public, (dashboard) for admin
+├── components/            # website/, dashboard/, ui/ (shadcn primitives)
+├── i18n/                  # next-intl config
+├── lib/supabase/          # client + server helpers
+└── stores/                # Zustand cart store
 
-## Learn More
+scripts/
+├── seed-blog-articles.ts      # seed blog content
+├── seed-products.ts           # demo product seed (superseded by pos-products-export.xlsx)
+├── import-pos-products.ts     # imports the 341-product POS catalog
+├── pos-products-export.xlsx   # source of truth for products
+└── translate-products.py      # Arabic translation rules for product names
 
-To learn more about Next.js, take a look at the following resources:
+supabase/migrations/       # DDL, RLS policies, catalog enrichment
+messages/                  # en.json, ar.json — next-intl message catalogs
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Project ID: `shxnczbvtitnnxyxkkyf`. All schema changes tracked in
+`supabase/migrations/`. Run the Supabase CLI to apply locally, or use the
+Supabase dashboard SQL editor.
 
-## Deploy on Vercel
+## Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Site builds with `npm run build` and is deployed to Hostinger. Output is
+a standard Next.js production bundle (`.next/`) served behind Hostinger's
+CDN with the panel's Node.js runtime.
