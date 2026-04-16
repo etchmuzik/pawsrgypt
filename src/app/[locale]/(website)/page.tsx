@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { ScrollImageHero } from "@/components/website/ScrollImageHero";
+import { ScrollVideoHero } from "@/components/website/ScrollVideoHero";
 import { TextHero } from "@/components/website/TextHero";
 import { Button } from "@/components/ui/button";
 import {
@@ -275,10 +276,9 @@ export default function HomePage() {
           accentColor="text-paws-orange"
         />
 
-        {/* 3. Luna — scroll-driven image sequence */}
-        <ScrollImageHero
-          framesPath="/mascots/luna-frames"
-          frameCount={96}
+        {/* 3. Luna — scroll-driven video (transparent background) */}
+        <ScrollVideoHero
+          src="/mascots/luna.mp4"
           name="Luna"
           subtitle="The Wise One"
           description="Our elegant tabby who knows everything about pet care. Smart, calm, and she picks only the finest quality for your companion."

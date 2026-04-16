@@ -122,7 +122,7 @@ export function ScrollVideoHero({
       style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
       {/* Sticky viewport */}
-      <div className="sticky top-0 h-[100dvh] overflow-hidden bg-neutral-50 flex flex-col md:block">
+      <div className="sticky top-0 h-[100dvh] overflow-hidden bg-white flex flex-col md:block">
         {/* Video — contain on mobile (show full), cover on desktop (immersive) */}
         <video
           ref={videoRef}
