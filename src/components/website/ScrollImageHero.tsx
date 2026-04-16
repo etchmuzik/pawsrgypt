@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
 interface ScrollImageHeroProps {
   /** Directory path containing frame-001.jpg … frame-NNN.jpg */
@@ -12,6 +12,14 @@ interface ScrollImageHeroProps {
   description: string;
   textPosition?: "left" | "right";
   accentColor?: string;
+  /**
+   * CSS mix-blend-mode for the canvas element.
+   * Use "multiply" when frames have a pure-white background to make
+   * the character appear to float with no background.
+   */
+  canvasBlendMode?: string;
+  /** Background color of the sticky section. Default: "#fafafa" */
+  sectionBg?: string;
 }
 
 /**
@@ -27,6 +35,8 @@ export function ScrollImageHero({
   description,
   textPosition = "left",
   accentColor = "text-paws-orange",
+  canvasBlendMode,
+  sectionBg = "#fafafa",
 }: ScrollImageHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -201,13 +211,17 @@ export function ScrollImageHero({
       style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
       {/* Sticky viewport */}
-      <div className="sticky top-0 h-[100dvh] overflow-hidden bg-neutral-50 flex flex-col md:block">
+      <div
+        className="sticky top-0 h-[100dvh] overflow-hidden flex flex-col md:block"
+        style={{ backgroundColor: sectionBg }}
+      >
         {/* Canvas — paints active frame, GPU-accelerated */}
         <canvas
           ref={canvasRef}
           aria-label={`${name} mascot animation`}
           role="img"
           className="w-full h-[60dvh] md:h-full shrink-0 md:absolute md:inset-0"
+          style={canvasBlendMode ? { mixBlendMode: canvasBlendMode as React.CSSProperties["mixBlendMode"] } : undefined}
         />
 
         {/* Text overlay — below canvas on mobile, over canvas on desktop */}
