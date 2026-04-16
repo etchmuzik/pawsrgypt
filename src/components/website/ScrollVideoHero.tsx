@@ -11,6 +11,13 @@ interface ScrollVideoHeroProps {
   accentColor?: string;
 }
 
+/**
+ * Scroll-driven video hero using <canvas>.
+ * Seeks the video to the correct time on every scroll tick, then
+ * paints the current video frame onto a canvas — same feel as
+ * ScrollImageHero but using a single video file instead of 96 PNGs.
+ * Works great with transparent-background videos (WebM/HEVC alpha).
+ */
 export function ScrollVideoHero({
   src,
   name,
@@ -20,11 +27,13 @@ export function ScrollVideoHero({
   accentColor = "text-paws-orange",
 }: ScrollVideoHeroProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
   const cachedRect = useRef({ top: 0, height: 0 });
-  const currentTimeRef = useRef(0);
+  const isSeekingRef = useRef(false);
+  const pendingProgressRef = useRef<number | null>(null);
 
   const cacheRect = useCallback(() => {
     const container = containerRef.current;
@@ -36,15 +45,87 @@ export function ScrollVideoHero({
     };
   }, []);
 
-  useEffect(() => {
+  /** Draw the current video frame onto the canvas with contain/cover logic */
+  const drawCurrentFrame = useCallback(() => {
+    const canvas = canvasRef.current;
     const video = videoRef.current;
-    const text = textRef.current;
-    if (!video) return;
+    if (!canvas || !video || video.readyState < 2) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const displayW = canvas.clientWidth;
+    const displayH = canvas.clientHeight;
+
+    if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
+      canvas.width = displayW * dpr;
+      canvas.height = displayH * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    ctx.clearRect(0, 0, displayW, displayH);
+
+    const isMobile = window.innerWidth < 768;
+    const imgRatio = video.videoWidth / video.videoHeight;
+    const canvasRatio = displayW / displayH;
+
+    let drawW: number, drawH: number, drawX: number, drawY: number;
+
+    if (isMobile) {
+      // object-contain: show full mascot
+      if (imgRatio > canvasRatio) {
+        drawW = displayW;
+        drawH = displayW / imgRatio;
+      } else {
+        drawH = displayH;
+        drawW = displayH * imgRatio;
+      }
+      drawX = (displayW - drawW) / 2;
+      drawY = (displayH - drawH) / 2;
+    } else {
+      // object-cover anchored top-center
+      if (imgRatio > canvasRatio) {
+        drawH = displayH;
+        drawW = displayH * imgRatio;
+      } else {
+        drawW = displayW;
+        drawH = displayW / imgRatio;
+      }
+      drawX = (displayW - drawW) / 2;
+      drawY = 0;
+    }
+
+    ctx.drawImage(video, drawX, drawY, drawW, drawH);
+  }, []);
+
+  useEffect(() => {
+    // Create the off-screen video element — never inserted into the DOM
+    const video = document.createElement("video");
+    video.src = src;
+    video.muted = true;
+    video.playsInline = true;
+    video.preload = "auto";
+    videoRef.current = video;
 
     cacheRect();
 
-    // Smooth interpolation — lerp toward target time instead of jumping
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const text = textRef.current;
+
+    const scrubToProgress = (progress: number) => {
+      if (!video.duration || !isFinite(video.duration)) return;
+
+      const targetTime = progress * video.duration;
+
+      if (isSeekingRef.current) {
+        // Store latest pending progress; commit after seek settles
+        pendingProgressRef.current = progress;
+        return;
+      }
+
+      isSeekingRef.current = true;
+      video.currentTime = targetTime;
+    };
 
     const scrub = () => {
       const { top, height } = cachedRect.current;
@@ -55,14 +136,9 @@ export function ScrollVideoHero({
       const scrolled = window.scrollY - top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
 
-      // Smooth video scrubbing with lerp
-      if (video.duration && isFinite(video.duration)) {
-        const targetTime = progress * video.duration;
-        currentTimeRef.current = lerp(currentTimeRef.current, targetTime, 0.35);
-        video.currentTime = currentTimeRef.current;
-      }
+      scrubToProgress(progress);
 
-      // Smooth text fade
+      // Text fade — identical to ScrollImageHero
       if (text) {
         const textOpacity =
           progress < 0.05
@@ -74,15 +150,31 @@ export function ScrollVideoHero({
         text.style.opacity = String(Math.max(0, Math.min(1, textOpacity)));
         text.style.transform = `translate3d(0,${textY}px,0)`;
       }
+    };
 
-      // Keep animating if we haven't converged
-      if (video.duration && isFinite(video.duration)) {
-        const targetTime = progress * video.duration;
-        if (Math.abs(currentTimeRef.current - targetTime) > 0.01) {
-          rafRef.current = requestAnimationFrame(scrub);
-        }
+    // After each seek completes, paint the frame then process any queued scrub
+    const onSeeked = () => {
+      drawCurrentFrame();
+      const pending = pendingProgressRef.current;
+      pendingProgressRef.current = null;
+
+      if (pending !== null && video.duration && isFinite(video.duration)) {
+        video.currentTime = pending * video.duration;
+        // isSeekingRef stays true — another seeked will fire
+      } else {
+        isSeekingRef.current = false;
       }
     };
+
+    const onLoadedData = () => {
+      cacheRect();
+      drawCurrentFrame();
+      scrub();
+    };
+
+    video.addEventListener("seeked", onSeeked);
+    video.addEventListener("loadeddata", onLoadedData);
+    if (video.readyState >= 2) onLoadedData();
 
     const handleScroll = () => {
       cancelAnimationFrame(rafRef.current);
@@ -91,27 +183,31 @@ export function ScrollVideoHero({
 
     const handleResize = () => {
       cacheRect();
+      // Reset canvas size
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = 0;
+        canvas.height = 0;
+      }
+      drawCurrentFrame();
       scrub();
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
-    const onMeta = () => {
-      cacheRect();
-      currentTimeRef.current = 0;
-      scrub();
-    };
-    video.addEventListener("loadedmetadata", onMeta);
-    if (video.readyState >= 1) onMeta();
+    requestAnimationFrame(scrub);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
-      video.removeEventListener("loadedmetadata", onMeta);
+      video.removeEventListener("seeked", onSeeked);
+      video.removeEventListener("loadeddata", onLoadedData);
+      video.src = "";
+      videoRef.current = null;
     };
-  }, [cacheRect]);
+  }, [cacheRect, drawCurrentFrame, src]);
 
   const isLeft = textPosition === "left";
 
@@ -123,17 +219,15 @@ export function ScrollVideoHero({
     >
       {/* Sticky viewport */}
       <div className="sticky top-0 h-[100dvh] overflow-hidden bg-white flex flex-col md:block">
-        {/* Video — contain on mobile (show full), cover on desktop (immersive) */}
-        <video
-          ref={videoRef}
-          src={src}
-          muted
-          playsInline
-          preload="auto"
-          className="md:absolute md:w-full md:h-full object-contain md:object-cover object-center md:object-top will-change-transform w-full h-[60dvh] md:h-full shrink-0"
+        {/* Canvas — painted from video frames, GPU-accelerated */}
+        <canvas
+          ref={canvasRef}
+          aria-label={`${name} mascot animation`}
+          role="img"
+          className="w-full h-[60dvh] md:h-full shrink-0 md:absolute md:inset-0"
         />
 
-        {/* Text overlay — below video on mobile, over video on desktop */}
+        {/* Text overlay — below canvas on mobile, over canvas on desktop */}
         <div
           className={`relative md:absolute md:inset-0 flex items-start md:items-center pt-4 pb-6 md:pt-0 md:pb-0 bg-white md:bg-transparent ${
             isLeft ? "justify-start" : "justify-end"
