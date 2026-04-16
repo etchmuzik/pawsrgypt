@@ -24,8 +24,13 @@ interface ScrollImageHeroProps {
 
 /**
  * Scroll-driven image-sequence hero using <canvas>.
- * Preloads all frames into memory, then paints the active frame
- * onto a canvas on every scroll tick — buttery smooth, no DOM swaps.
+ *
+ * Desktop: canvas fills full viewport, text overlaid left or right with
+ *   a gradient wash behind it. Text fades in/out on scroll.
+ *
+ * Mobile: canvas fills full viewport (no split layout), text is pinned
+ *   to the bottom of the frame with a dark gradient for legibility.
+ *   Text is always visible — no fade/opacity animation on mobile.
  */
 export function ScrollImageHero({
   framesPath,
@@ -57,7 +62,7 @@ export function ScrollImageHero({
     };
   }, []);
 
-  /** Draw a specific frame onto the canvas, fitting it with object-contain or cover logic. */
+  /** Draw a specific frame onto the canvas, fitting it with contain (mobile) or cover (desktop). */
   const drawFrame = useCallback((frameIndex: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -66,7 +71,6 @@ export function ScrollImageHero({
     const img = imagesRef.current[frameIndex];
     if (!img || !img.complete || img.naturalWidth === 0) return;
 
-    // Match canvas internal size to its CSS size for crisp rendering
     const dpr = window.devicePixelRatio || 1;
     const displayW = canvas.clientWidth;
     const displayH = canvas.clientHeight;
@@ -79,7 +83,6 @@ export function ScrollImageHero({
 
     ctx.clearRect(0, 0, displayW, displayH);
 
-    // Determine if we should use contain (mobile) or cover (desktop) logic
     const isMobile = window.innerWidth < 768;
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const canvasRatio = displayW / displayH;
@@ -87,7 +90,7 @@ export function ScrollImageHero({
     let drawW: number, drawH: number, drawX: number, drawY: number;
 
     if (isMobile) {
-      // object-contain: fit entire image within canvas
+      // object-contain on mobile: show the full mascot, centered
       if (imgRatio > canvasRatio) {
         drawW = displayW;
         drawH = displayW / imgRatio;
@@ -98,7 +101,7 @@ export function ScrollImageHero({
       drawX = (displayW - drawW) / 2;
       drawY = (displayH - drawH) / 2;
     } else {
-      // object-cover: fill canvas, crop overflow, anchor top-center
+      // object-cover on desktop: fill canvas, anchor top-center
       if (imgRatio > canvasRatio) {
         drawH = displayH;
         drawW = displayH * imgRatio;
@@ -107,7 +110,7 @@ export function ScrollImageHero({
         drawH = displayW / imgRatio;
       }
       drawX = (displayW - drawW) / 2;
-      drawY = 0; // object-top
+      drawY = 0;
     }
 
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
@@ -116,7 +119,7 @@ export function ScrollImageHero({
   useEffect(() => {
     cacheRect();
 
-    // Build frame URLs and preload all images
+    // Preload all frames
     const images: HTMLImageElement[] = [];
     for (let i = 0; i < frameCount; i++) {
       const num = String(i + 1).padStart(3, "0");
@@ -124,7 +127,6 @@ export function ScrollImageHero({
       img.src = `${framesPath}/frame-${num}.jpg`;
       img.onload = () => {
         loadedCount.current++;
-        // Draw first frame once loaded
         if (i === 0) {
           currentFrame.current = 0;
           drawFrame(0);
@@ -145,7 +147,7 @@ export function ScrollImageHero({
       const scrolled = window.scrollY - top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
 
-      // Pick and draw frame
+      // Frame selection
       const frameIndex = Math.min(
         frameCount - 1,
         Math.floor(progress * frameCount)
@@ -155,17 +157,23 @@ export function ScrollImageHero({
         drawFrame(frameIndex);
       }
 
-      // Smooth text fade
+      // Text animation: desktop only — mobile text is always visible
       if (text) {
-        const textOpacity =
-          progress < 0.05
-            ? progress / 0.05
-            : progress > 0.85
-              ? (1 - progress) / 0.15
-              : 1;
-        const textY = (1 - Math.min(1, progress / 0.1)) * 30;
-        text.style.opacity = String(Math.max(0, Math.min(1, textOpacity)));
-        text.style.transform = `translate3d(0,${textY}px,0)`;
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          text.style.opacity = "1";
+          text.style.transform = "translate3d(0,0,0)";
+        } else {
+          const textOpacity =
+            progress < 0.05
+              ? progress / 0.05
+              : progress > 0.85
+                ? (1 - progress) / 0.15
+                : 1;
+          const textY = (1 - Math.min(1, progress / 0.1)) * 30;
+          text.style.opacity = String(Math.max(0, Math.min(1, textOpacity)));
+          text.style.transform = `translate3d(0,${textY}px,0)`;
+        }
       }
     };
 
@@ -176,9 +184,7 @@ export function ScrollImageHero({
 
     const handleResize = () => {
       cacheRect();
-      // Re-draw current frame at new canvas size
       if (currentFrame.current >= 0) {
-        // Reset canvas dimensions on resize
         const canvas = canvasRef.current;
         if (canvas) {
           canvas.width = 0;
@@ -192,7 +198,6 @@ export function ScrollImageHero({
     window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
 
-    // Initial scrub after a short delay for images to start loading
     requestAnimationFrame(scrub);
 
     return () => {
@@ -207,37 +212,47 @@ export function ScrollImageHero({
   return (
     <div
       ref={containerRef}
-      className="h-[120vh] md:h-[200vh] relative"
+      /* h-[180vh] on mobile gives ~80vh of scroll range (was 20vh) — enough
+         for the animation to feel intentional. Desktop keeps 200vh. */
+      className="h-[180vh] md:h-[200vh] relative"
       style={{ marginTop: "-2px", marginBottom: "-2px" }}
     >
-      {/* Sticky viewport */}
+      {/* Sticky viewport — canvas fills 100% on all sizes */}
       <div
-        className="sticky top-0 h-[100dvh] overflow-hidden flex flex-col md:block"
+        className="sticky top-0 h-[100dvh] overflow-hidden"
         style={{ backgroundColor: sectionBg }}
       >
-        {/* Canvas — paints active frame, GPU-accelerated */}
+        {/* Canvas — always fills the entire sticky panel */}
         <canvas
           ref={canvasRef}
           aria-label={`${name} mascot animation`}
           role="img"
-          className="w-full h-[60dvh] md:h-full shrink-0 md:absolute md:inset-0"
-          style={canvasBlendMode ? { mixBlendMode: canvasBlendMode as React.CSSProperties["mixBlendMode"] } : undefined}
+          className="absolute inset-0 w-full h-full"
+          style={
+            canvasBlendMode
+              ? { mixBlendMode: canvasBlendMode as React.CSSProperties["mixBlendMode"] }
+              : undefined
+          }
         />
 
-        {/* Text overlay — below canvas on mobile, over canvas on desktop */}
+        {/* ── Mobile gradient: bottom fade for text legibility ── */}
+        <div className="md:hidden absolute inset-x-0 bottom-0 h-52 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+
+        {/* ── Text overlay ── */}
         <div
-          className={`relative md:absolute md:inset-0 flex items-start md:items-center pt-4 pb-6 md:pt-0 md:pb-0 bg-white md:bg-transparent ${
+          className={`absolute inset-0 flex items-end md:items-center pb-8 md:pb-0 ${
             isLeft ? "justify-start" : "justify-end"
           }`}
         >
           <div
             ref={textRef}
-            className={`relative z-10 w-full lg:w-1/2 px-5 sm:px-8 md:px-16 lg:px-20 ${
+            className={`relative z-10 w-full md:w-1/2 lg:w-1/2 px-5 sm:px-8 md:px-16 lg:px-20 ${
               isLeft ? "text-left" : "md:text-right text-left"
             }`}
-            style={{ opacity: 0, transform: "translate3d(0,30px,0)" }}
+            /* No initial opacity:0 — scrub() sets the correct value immediately
+               on mount. On mobile scrub() always sets opacity:1. */
           >
-            {/* Soft background wash behind text — desktop only */}
+            {/* Desktop gradient wash behind text */}
             <div
               className={`hidden md:block absolute inset-0 -mx-8 -my-16 ${
                 isLeft
@@ -249,14 +264,14 @@ export function ScrollImageHero({
 
             <div className="relative">
               <p
-                className={`text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-1 md:mb-4`}
+                className={`text-xs sm:text-sm font-semibold uppercase tracking-[0.2em] ${accentColor} mb-1 md:mb-4 drop-shadow-sm`}
               >
                 {subtitle}
               </p>
-              <h2 className="text-2xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-neutral-900 mb-2 md:mb-6">
+              <h2 className="text-3xl sm:text-5xl md:text-7xl font-extrabold tracking-tighter leading-none text-white md:text-neutral-900 mb-2 md:mb-6 drop-shadow-md md:drop-shadow-none">
                 {name}
               </h2>
-              <p className="text-sm sm:text-lg md:text-xl text-neutral-500 leading-relaxed max-w-[45ch]">
+              <p className="text-sm sm:text-lg md:text-xl text-white/90 md:text-neutral-500 leading-relaxed max-w-[45ch] drop-shadow-sm md:drop-shadow-none">
                 {description}
               </p>
             </div>
