@@ -83,35 +83,26 @@ export function ScrollImageHero({
 
     ctx.clearRect(0, 0, displayW, displayH);
 
-    const isMobile = window.innerWidth < 768;
     const imgRatio = img.naturalWidth / img.naturalHeight;
     const canvasRatio = displayW / displayH;
 
     let drawW: number, drawH: number, drawX: number, drawY: number;
 
-    if (isMobile) {
-      // object-contain on mobile: show the full mascot, centered
-      if (imgRatio > canvasRatio) {
-        drawW = displayW;
-        drawH = displayW / imgRatio;
-      } else {
-        drawH = displayH;
-        drawW = displayH * imgRatio;
-      }
-      drawX = (displayW - drawW) / 2;
-      drawY = (displayH - drawH) / 2;
+    // object-cover everywhere: fill the canvas fully (no letterboxing), anchor
+    // top-center so the character's face/head stays in view when the frame is
+    // cropped vertically. Works for landscape sources (Cairo 16:9) AND portrait
+    // sources (Luna 9:16) on any viewport orientation.
+    if (imgRatio > canvasRatio) {
+      // Source is wider than canvas → match height, overflow horizontally
+      drawH = displayH;
+      drawW = displayH * imgRatio;
     } else {
-      // object-cover on desktop: fill canvas, anchor top-center
-      if (imgRatio > canvasRatio) {
-        drawH = displayH;
-        drawW = displayH * imgRatio;
-      } else {
-        drawW = displayW;
-        drawH = displayW / imgRatio;
-      }
-      drawX = (displayW - drawW) / 2;
-      drawY = 0;
+      // Source is taller than canvas → match width, overflow vertically
+      drawW = displayW;
+      drawH = displayW / imgRatio;
     }
+    drawX = (displayW - drawW) / 2;
+    drawY = 0;
 
     ctx.drawImage(img, drawX, drawY, drawW, drawH);
   }, []);

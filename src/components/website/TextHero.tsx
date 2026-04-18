@@ -19,8 +19,8 @@ export function TextHero({
   ctaText,
 }: TextHeroProps) {
   return (
-    <section className="min-h-[100dvh] bg-white flex items-center relative overflow-hidden">
-      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-12 sm:py-16 lg:py-20">
+    <section className="bg-white py-8 sm:py-12 lg:min-h-[100dvh] lg:flex lg:items-center lg:py-0 relative overflow-hidden">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-12 py-6 sm:py-10 lg:py-20">
         <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 sm:gap-12 lg:gap-8 items-center">
           {/* Text side — left */}
           <div className="text-center lg:text-left">
