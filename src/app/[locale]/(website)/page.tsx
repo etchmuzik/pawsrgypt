@@ -201,7 +201,7 @@ function CTABanner() {
             {/* Decorative mascot image — combined Cairo & Luna */}
             <div className="absolute bottom-0 -right-8 sm:right-0 md:right-8 w-48 h-32 sm:w-64 sm:h-40 md:w-96 md:h-56 opacity-20 sm:opacity-30 md:opacity-40 pointer-events-none">
               <Image
-                src="/mascots/cairo-luna.jpeg"
+                src="/mascots/cairo-luna.png"
                 alt=""
                 width={1376}
                 height={768}
