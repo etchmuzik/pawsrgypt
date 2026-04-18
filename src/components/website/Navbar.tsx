@@ -64,7 +64,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(otherLocalePath)}
+              onClick={() => { window.location.href = otherLocalePath; }}
               className="hidden md:flex gap-1.5 text-neutral-600 hover:text-paws-orange"
             >
               <Globe className="w-4 h-4" />
@@ -120,7 +120,7 @@ export function Navbar() {
           <button
             onClick={() => {
               setMobileOpen(false);
-              router.push(otherLocalePath);
+              window.location.href = otherLocalePath;
             }}
             className="flex items-center gap-2 w-full text-base font-medium text-neutral-700 hover:text-paws-orange active:bg-neutral-50 py-3 px-2 rounded-lg"
           >
