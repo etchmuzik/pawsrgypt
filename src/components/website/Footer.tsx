@@ -50,22 +50,37 @@ export function Footer() {
             <ul className="space-y-2 text-sm text-neutral-400">
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-paws-orange shrink-0" />
-                <span>+20 100 000 0000</span>
+                <a href="tel:+201005285753" className="hover:text-paws-orange transition-colors">
+                  +20 100 528 5753
+                </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-paws-orange shrink-0" />
-                <span>hello@pawsegypt.com</span>
+                <a href="mailto:hello@pawsegypt.com" className="hover:text-paws-orange transition-colors">
+                  hello@pawsegypt.com
+                </a>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-paws-orange shrink-0 mt-0.5" />
-                <span>Cairo, Egypt</span>
+                <span>Value Mall, Ground Floor<br />Al Sherouk City, New Cairo</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-neutral-800 mt-8 pt-6 text-center text-xs text-neutral-500">
-          &copy; {new Date().getFullYear()} PAWS Egypt. {t("rights")}.
+        <div className="border-t border-neutral-800 mt-8 pt-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-neutral-500">
+          <span>&copy; {new Date().getFullYear()} PAWS Egypt. {t("rights")}.</span>
+          <span>
+            Website design by{" "}
+            <a
+              href="https://beyondmngmt.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-neutral-400 hover:text-paws-orange transition-colors font-medium"
+            >
+              Beyond MNGMT
+            </a>
+          </span>
         </div>
       </div>
     </footer>
