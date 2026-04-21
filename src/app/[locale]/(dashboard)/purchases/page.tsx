@@ -57,15 +57,37 @@ export default async function PurchasesPage({ params }: PageProps) {
               </tr>
             ) : (
               orders.map((order) => (
-                <tr key={order.id} className="border-b border-paws-sand/50 hover:bg-paws-cream/30">
-                  <td className="px-4 py-3 font-mono text-xs">{order.id.slice(0, 8)}</td>
-                  <td className="px-4 py-3">{order.suppliers?.name ?? "---"}</td>
+                <tr
+                  key={order.id}
+                  className="border-b border-paws-sand/50 hover:bg-paws-cream/30 cursor-pointer"
+                  onClick={undefined}
+                >
+                  <td className="px-4 py-3 font-mono text-xs">
+                    <Link href={`/${locale}/purchases/${order.id}`} className="text-paws-orange hover:underline">
+                      {order.id.slice(0, 8)}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link href={`/${locale}/purchases/${order.id}`} className="hover:underline">
+                      {order.suppliers?.name ?? "---"}
+                    </Link>
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {new Date(order.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3 font-bold">{order.total} EGP</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        order.status === "received"
+                          ? "bg-green-100 text-green-700"
+                          : order.status === "ordered"
+                            ? "bg-blue-100 text-blue-700"
+                            : order.status === "cancelled"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
                       {order.status}
                     </span>
                   </td>
