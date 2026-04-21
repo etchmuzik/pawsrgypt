@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { ScrollImageHero } from "@/components/website/ScrollImageHero";
-import { TextHero } from "@/components/website/TextHero";
+import { ScrollVideoHero } from "@/components/website/ScrollVideoHero";
+import { HeroVideoOverlay } from "@/components/website/HeroVideoOverlay";
 import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
@@ -255,19 +256,27 @@ export default function HomePage() {
 
   return (
     <div className="bg-white">
-        {/* 1. Text hero with mascot images */}
-        <TextHero
-          locale={locale}
-          title={t("hero_title")}
-          subtitle={t("hero_subtitle")}
-          tagline="Cairo's #1 Pet Lifestyle Brand"
-          ctaText={t("hero_cta")}
+        {/* 1. Hero — scroll-driven video with CTA overlay */}
+        <ScrollVideoHero
+          src="/hero.mp4"
+          name="Hero"
+          subtitle=""
+          description=""
+          scrollLength={2.2}
+          overlay={
+            <HeroVideoOverlay
+              locale={locale}
+              title={t("hero_title")}
+              subtitle={t("hero_subtitle")}
+              tagline="Cairo's #1 Pet Lifestyle Brand"
+              ctaText={t("hero_cta")}
+            />
+          }
         />
 
-        {/* 2. Cairo — scroll-driven image sequence */}
-        <ScrollImageHero
-          framesPath="/mascots/cairo-frames"
-          frameCount={96}
+        {/* 2. Cairo — scroll-driven aerial zoom-out video */}
+        <ScrollVideoHero
+          src="/mascots/cairo-hero.mp4"
           name="Cairo"
           subtitle="The Explorer"
           description="Our playful golden pup who loves discovering the best products for your furry friends. Loyal, energetic, and always ready for an adventure."

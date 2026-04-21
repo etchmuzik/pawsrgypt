@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,16 +69,23 @@ export function TextHero({
             </div>
           </div>
 
-          {/* Image side — right */}
+          {/* Video side — right */}
           <div className="flex items-center justify-center relative">
-            <div className="relative w-full max-w-[720px]">
-              <Image
-                src="/mascots/cairo-luna.jpeg"
-                alt="Cairo & Luna — PAWS Egypt mascots"
-                width={1024}
-                height={576}
-                className="w-full h-auto object-contain"
-                priority
+            <div className="relative w-full max-w-[720px] aspect-[16/10] overflow-hidden rounded-2xl">
+              <video
+                src="/hero.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                aria-label="Cairo & Luna — PAWS Egypt mascots"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Fade-to-white at bottom edge */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-24 sm:h-32 bg-gradient-to-b from-transparent to-white"
               />
               {/* Subtle scroll hint */}
               <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center text-neutral-300">

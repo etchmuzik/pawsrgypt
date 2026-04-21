@@ -110,11 +110,21 @@ export function ScrollImageHero({
   useEffect(() => {
     cacheRect();
 
-    // Preload all frames
-    const images: HTMLImageElement[] = [];
-    for (let i = 0; i < frameCount; i++) {
+    // Preload frames — first batch eagerly for instant paint, rest in idle time.
+    // On mobile, parallel-fetching 96 JPGs blocks the main thread and starves
+    // the scroll rAF loop. Staggering keeps scroll buttery.
+    const isMobile =
+      typeof window !== "undefined" &&
+      (window.matchMedia?.("(pointer: coarse)").matches ||
+        window.innerWidth < 768);
+    const EAGER_COUNT = isMobile ? 8 : 16;
+
+    const images: HTMLImageElement[] = new Array(frameCount);
+    const startLoad = (i: number) => {
+      if (images[i]) return;
       const num = String(i + 1).padStart(3, "0");
       const img = new Image();
+      img.decoding = "async";
       img.src = `${framesPath}/frame-${num}.jpg`;
       img.onload = () => {
         loadedCount.current++;
@@ -123,9 +133,26 @@ export function ScrollImageHero({
           drawFrame(0);
         }
       };
-      images.push(img);
-    }
+      images[i] = img;
+    };
+
+    // Eager batch — decoded before first paint
+    for (let i = 0; i < Math.min(EAGER_COUNT, frameCount); i++) startLoad(i);
     imagesRef.current = images;
+
+    // Idle batch — drip-feed the rest so scroll stays smooth
+    let nextIdx = EAGER_COUNT;
+    const ric: (cb: () => void) => number =
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => number })
+        .requestIdleCallback ?? ((cb) => window.setTimeout(cb, 100));
+    const drip = () => {
+      const batch = isMobile ? 4 : 8;
+      for (let k = 0; k < batch && nextIdx < frameCount; k++, nextIdx++) {
+        startLoad(nextIdx);
+      }
+      if (nextIdx < frameCount) ric(drip);
+    };
+    ric(drip);
 
     const text = textRef.current;
 
@@ -138,11 +165,30 @@ export function ScrollImageHero({
       const scrolled = window.scrollY - top;
       const progress = Math.max(0, Math.min(1, scrolled / scrollRange));
 
-      // Frame selection
-      const frameIndex = Math.min(
+      // Frame selection — fall back to nearest decoded frame if the target
+      // frame hasn't loaded yet (keeps animation smooth during drip-load).
+      const targetIdx = Math.min(
         frameCount - 1,
-        Math.floor(progress * frameCount)
+        Math.floor(progress * frameCount),
       );
+      let frameIndex = targetIdx;
+      const imgs = imagesRef.current;
+      const loaded = (i: number) => imgs[i]?.complete && imgs[i].naturalWidth > 0;
+      if (!loaded(frameIndex)) {
+        // Search outward for the nearest ready frame
+        let offset = 1;
+        while (offset < frameCount) {
+          if (targetIdx - offset >= 0 && loaded(targetIdx - offset)) {
+            frameIndex = targetIdx - offset;
+            break;
+          }
+          if (targetIdx + offset < frameCount && loaded(targetIdx + offset)) {
+            frameIndex = targetIdx + offset;
+            break;
+          }
+          offset++;
+        }
+      }
       if (frameIndex !== currentFrame.current) {
         currentFrame.current = frameIndex;
         drawFrame(frameIndex);
@@ -173,17 +219,21 @@ export function ScrollImageHero({
       rafRef.current = requestAnimationFrame(scrub);
     };
 
+    let resizeTimer: number | undefined;
     const handleResize = () => {
-      cacheRect();
-      if (currentFrame.current >= 0) {
-        const canvas = canvasRef.current;
-        if (canvas) {
-          canvas.width = 0;
-          canvas.height = 0;
+      if (resizeTimer !== undefined) window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        cacheRect();
+        if (currentFrame.current >= 0) {
+          const canvas = canvasRef.current;
+          if (canvas) {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+          drawFrame(currentFrame.current);
         }
-        drawFrame(currentFrame.current);
-      }
-      scrub();
+        scrub();
+      }, 150);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -193,6 +243,7 @@ export function ScrollImageHero({
 
     return () => {
       cancelAnimationFrame(rafRef.current);
+      if (resizeTimer !== undefined) window.clearTimeout(resizeTimer);
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleResize);
     };
@@ -211,7 +262,11 @@ export function ScrollImageHero({
       {/* Sticky viewport — canvas fills 100% on all sizes */}
       <div
         className="sticky top-0 h-[100dvh] overflow-hidden"
-        style={{ backgroundColor: sectionBg }}
+        style={{
+          backgroundColor: sectionBg,
+          willChange: "transform",
+          contain: "paint",
+        }}
       >
         {/* Canvas — always fills the entire sticky panel */}
         <canvas
@@ -219,11 +274,15 @@ export function ScrollImageHero({
           aria-label={`${name} mascot animation`}
           role="img"
           className="absolute inset-0 w-full h-full"
-          style={
-            canvasBlendMode
-              ? { mixBlendMode: canvasBlendMode as React.CSSProperties["mixBlendMode"] }
-              : undefined
-          }
+          style={{
+            transform: "translateZ(0)",
+            ...(canvasBlendMode
+              ? {
+                  mixBlendMode:
+                    canvasBlendMode as React.CSSProperties["mixBlendMode"],
+                }
+              : {}),
+          }}
         />
 
         {/* ── Mobile gradient: bottom fade for text legibility ── */}
