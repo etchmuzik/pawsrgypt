@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Loader2, Barcode, X } from "lucide-react";
+import { ArrowLeft, Loader2, Barcode, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { ImageUploader } from "@/components/dashboard/ImageUploader";
+import { RichTextEditor } from "@/components/dashboard/RichTextEditor";
 
 interface CategoryOption {
   id: string;
@@ -70,13 +70,39 @@ function generateBarcode(): string {
   return raw + checkDigit;
 }
 
+function slugifyPart(value: string, len: number): string {
+  const cleaned = value
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, len);
+  return cleaned || "XX";
+}
+
+function generateSku(categoryName: string | undefined, brand: string): string {
+  const cat = slugifyPart(categoryName ?? "PET", 3);
+  const br = slugifyPart(brand || "GEN", 3);
+  const seq = Math.floor(1000 + Math.random() * 9000);
+  return `${cat}-${br}-${seq}`;
+}
+
 export default function NewProductPage() {
+  return (
+    <Suspense fallback={<div className="max-w-3xl mx-auto p-6">Loading…</div>}>
+      <NewProductPageInner />
+    </Suspense>
+  );
+}
+
+function NewProductPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const duplicateId = searchParams.get("duplicate");
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [form, setForm] = useState<ProductForm>(INITIAL_FORM);
   const [tagInput, setTagInput] = useState("");
 
@@ -94,6 +120,57 @@ export default function NewProductPage() {
     loadCategories();
   }, [supabase]);
 
+  useEffect(() => {
+    if (!duplicateId) return;
+    let cancelled = false;
+    async function loadDuplicate() {
+      const { data: product } = await supabase
+        .from("products")
+        .select(
+          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(price, cost_price)",
+        )
+        .eq("id", duplicateId as string)
+        .single();
+      if (cancelled || !product) return;
+      const p = product as {
+        name_en: string;
+        name_ar: string;
+        description_en: string | null;
+        description_ar: string | null;
+        category_id: string | null;
+        brand: string | null;
+        unit_type: string | null;
+        tags: string[] | null;
+        is_active: boolean;
+        is_featured: boolean;
+        product_variants: { price: number; cost_price: number }[];
+      };
+      const variant = p.product_variants?.[0];
+      setForm({
+        sku: "",
+        name_en: `${p.name_en} (copy)`,
+        name_ar: p.name_ar,
+        description_en: p.description_en ?? "",
+        description_ar: p.description_ar ?? "",
+        category_id: p.category_id ?? "",
+        brand: p.brand ?? "",
+        unit_type: p.unit_type ?? "piece",
+        barcode: "",
+        price: variant?.price != null ? String(variant.price) : "",
+        cost_price: variant?.cost_price != null ? String(variant.cost_price) : "",
+        is_active: p.is_active,
+        is_featured: false,
+        images: [],
+        tags: p.tags ?? [],
+      });
+      toast.info("Product duplicated. SKU and images cleared.");
+    }
+    loadDuplicate();
+    return () => {
+      cancelled = true;
+    };
+  }, [duplicateId, supabase]);
+
   function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
@@ -107,6 +184,12 @@ export default function NewProductPage() {
 
   function handleGenerateBarcode() {
     setForm((prev) => ({ ...prev, barcode: generateBarcode() }));
+  }
+
+  function handleGenerateSku() {
+    const category = categories.find((c) => c.id === form.category_id);
+    const sku = generateSku(category?.name_en, form.brand);
+    setForm((prev) => ({ ...prev, sku }));
   }
 
   function handleAddTag(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -124,28 +207,30 @@ export default function NewProductPage() {
     updateField("tags", form.tags.filter((t) => t !== tagToRemove));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
+  async function saveProduct(asDraft: boolean) {
     if (!form.sku.trim() || !form.name_en.trim()) {
       toast.error("SKU and English name are required.");
       return;
     }
 
-    const price = parseFloat(form.price);
-    const costPrice = parseFloat(form.cost_price);
+    const priceRaw = form.price.trim();
+    const costRaw = form.cost_price.trim();
+    const price = priceRaw === "" ? NaN : parseFloat(priceRaw);
+    const costPrice = costRaw === "" ? NaN : parseFloat(costRaw);
 
-    if (isNaN(price) || price < 0) {
-      toast.error("Please enter a valid selling price.");
-      return;
+    if (!asDraft) {
+      if (isNaN(price) || price < 0) {
+        toast.error("Please enter a valid selling price.");
+        return;
+      }
+      if (isNaN(costPrice) || costPrice < 0) {
+        toast.error("Please enter a valid cost price.");
+        return;
+      }
     }
 
-    if (isNaN(costPrice) || costPrice < 0) {
-      toast.error("Please enter a valid cost price.");
-      return;
-    }
-
-    setLoading(true);
+    const setBusy = asDraft ? setSavingDraft : setLoading;
+    setBusy(true);
 
     const { data: product, error: productError } = await supabase
       .from("products")
@@ -161,14 +246,14 @@ export default function NewProductPage() {
         barcode: form.barcode.trim() || null,
         images: form.images,
         tags: form.tags,
-        is_active: form.is_active,
-        is_featured: form.is_featured,
+        is_active: asDraft ? false : form.is_active,
+        is_featured: asDraft ? false : form.is_featured,
       } as never)
       .select("id")
       .single();
 
     if (productError || !product) {
-      setLoading(false);
+      setBusy(false);
       toast.error(productError?.message ?? "Failed to create product");
       return;
     }
@@ -182,21 +267,30 @@ export default function NewProductPage() {
         size: null,
         color: null,
         weight: null,
-        price,
-        cost_price: costPrice,
+        price: isNaN(price) ? 0 : price,
+        cost_price: isNaN(costPrice) ? 0 : costPrice,
         barcode: form.barcode.trim() || null,
-        is_active: form.is_active,
+        is_active: asDraft ? false : form.is_active,
       } as never);
 
-    setLoading(false);
+    setBusy(false);
 
     if (variantError) {
       toast.error(`Product created but variant failed: ${variantError.message}`);
       return;
     }
 
-    toast.success("Product created successfully!");
+    toast.success(asDraft ? "Draft saved." : "Product created successfully!");
     router.push(`/${locale}/products`);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await saveProduct(false);
+  }
+
+  async function handleSaveDraft() {
+    await saveProduct(true);
   }
 
   return (
@@ -222,15 +316,26 @@ export default function NewProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="sku">SKU *</Label>
-              <Input
-                id="sku"
-                name="sku"
-                value={form.sku}
-                onChange={handleChange}
-                placeholder="e.g. PAW-DOG-001"
-                className="bg-white border-paws-sand"
-                required
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="sku"
+                  name="sku"
+                  value={form.sku}
+                  onChange={handleChange}
+                  placeholder="e.g. PAW-DOG-001"
+                  className="bg-white border-paws-sand flex-1"
+                  required
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGenerateSku}
+                  className="gap-1.5 border-paws-sand shrink-0"
+                  title="Generate SKU from category + brand"
+                >
+                  <Sparkles className="w-4 h-4" /> Auto
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -275,25 +380,19 @@ export default function NewProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="description_en">Description (English)</Label>
-              <Textarea
-                id="description_en"
-                name="description_en"
+              <RichTextEditor
                 value={form.description_en}
-                onChange={handleChange}
+                onChange={(html) => updateField("description_en", html)}
                 placeholder="Product description in English"
-                className="bg-white border-paws-sand min-h-[120px]"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="description_ar">Description (Arabic)</Label>
-              <Textarea
-                id="description_ar"
-                name="description_ar"
+              <RichTextEditor
                 value={form.description_ar}
-                onChange={handleChange}
+                onChange={(html) => updateField("description_ar", html)}
                 placeholder="وصف المنتج بالعربية"
-                className="bg-white border-paws-sand min-h-[120px]"
                 dir="rtl"
               />
             </div>
@@ -306,14 +405,14 @@ export default function NewProductPage() {
             Product Images
           </h2>
           <p className="text-sm text-muted-foreground">
-            Upload up to 5 images. The first image will be the main product image.
+            Upload up to 10 images. The first image will be the main product image.
           </p>
           <ImageUploader
             bucket="product-images"
             folder="products"
             images={form.images}
             onChange={(urls) => updateField("images", urls)}
-            maxImages={5}
+            maxImages={10}
           />
         </div>
 
@@ -514,15 +613,25 @@ export default function NewProductPage() {
         </div>
 
         {/* Submit */}
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-wrap gap-3 justify-end">
           <Link href={`/${locale}/products`}>
             <Button type="button" variant="outline" className="border-paws-sand">
               Cancel
             </Button>
           </Link>
           <Button
+            type="button"
+            variant="outline"
+            onClick={handleSaveDraft}
+            disabled={loading || savingDraft}
+            className="border-paws-sand gap-1.5"
+          >
+            {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
+            {savingDraft ? "Saving..." : "Save as Draft"}
+          </Button>
+          <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || savingDraft}
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}

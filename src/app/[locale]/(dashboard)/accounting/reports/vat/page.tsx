@@ -3,38 +3,70 @@ import { Card } from "@/components/ui/card";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
+import { resolveRange } from "@/lib/report-dates";
+import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
 
-async function getVATData() {
+interface VATReportPageProps {
+  searchParams: Promise<{ range?: string }>;
+}
+
+interface Row {
+  subtotal: number;
+  tax_amount: number;
+  total: number;
+  status: string;
+}
+
+async function getVATData(from: string, to: string) {
   const supabase = await createClient();
 
-  const { data: salesInvoices } = await supabase
-    .from("invoices")
-    .select("subtotal, tax, total")
-    .eq("type", "sale");
+  const [salesRes, purchasesRes] = await Promise.all([
+    supabase
+      .from("invoices")
+      .select("subtotal, tax_amount, total, status")
+      .eq("type", "sale")
+      .gte("created_at", from)
+      .lte("created_at", `${to}T23:59:59`),
+    supabase
+      .from("purchase_orders")
+      .select("subtotal, tax_amount, total, status")
+      .gte("created_at", from)
+      .lte("created_at", `${to}T23:59:59`),
+  ]);
 
-  const { data: purchaseOrders } = await supabase
-    .from("purchase_orders")
-    .select("subtotal, tax, total");
+  const salesAll = (salesRes.data as Row[] | null) ?? [];
+  const purchasesAll = (purchasesRes.data as Row[] | null) ?? [];
 
-  type Row = { subtotal: number; tax: number; total: number };
-  const sales = (salesInvoices as Row[] | null) ?? [];
-  const purchases = (purchaseOrders as Row[] | null) ?? [];
+  const sales = salesAll.filter((r) => r.status !== "cancelled");
+  const purchases = purchasesAll.filter((r) => r.status !== "cancelled");
 
-  const vatCollected = sales.reduce((s, r) => s + (r.tax ?? 0), 0);
-  const vatPaid = purchases.reduce((s, r) => s + (r.tax ?? 0), 0);
+  const vatCollected = sales.reduce((s, r) => s + (r.tax_amount ?? 0), 0);
+  const vatPaid = purchases.reduce((s, r) => s + (r.tax_amount ?? 0), 0);
   const salesTotal = sales.reduce((s, r) => s + (r.total ?? 0), 0);
   const purchasesTotal = purchases.reduce((s, r) => s + (r.total ?? 0), 0);
 
-  return { vatCollected, vatPaid, netVAT: vatCollected - vatPaid, salesTotal, purchasesTotal, salesCount: sales.length, purchasesCount: purchases.length };
+  return {
+    vatCollected,
+    vatPaid,
+    netVAT: vatCollected - vatPaid,
+    salesTotal,
+    purchasesTotal,
+    salesCount: sales.length,
+    purchasesCount: purchases.length,
+  };
 }
 
 function fmt(n: number) {
   return n.toLocaleString("en-EG", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-export default async function VATReportPage() {
+export default async function VATReportPage({ searchParams }: VATReportPageProps) {
   const locale = await getLocale();
-  const data = await getVATData();
+  const params = await searchParams;
+  const range = resolveRange(params.range);
+  const data = await getVATData(range.from, range.to);
+
+  const payable = data.netVAT > 0;
 
   return (
     <div>
@@ -43,36 +75,45 @@ export default async function VATReportPage() {
           &larr; Back to Reports
         </Link>
         <h1 className="text-2xl font-bold text-neutral-900 mt-2">VAT Report</h1>
-        <p className="text-sm text-muted-foreground mt-1">VAT collected and paid summary (14% rate)</p>
+        <p className="text-sm text-muted-foreground mt-1">VAT collected and paid for tax filing</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <Card className="p-5 border-neutral-200">
-          <span className="text-sm text-muted-foreground">VAT Collected (Sales)</span>
-          <p className="text-2xl font-bold text-green-600 mt-2">{fmt(data.vatCollected)} EGP</p>
-          <p className="text-xs text-muted-foreground mt-1">{data.salesCount} invoices | {fmt(data.salesTotal)} EGP total</p>
+      <ReportDateFilter basePath={`/${locale}/accounting/reports/vat`} current={range.preset} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <Card className="p-6 border-neutral-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Receipt className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-muted-foreground">VAT Collected (Output)</span>
+          </div>
+          <p className="text-2xl font-bold text-green-600">{fmt(data.vatCollected)} <span className="text-sm font-normal text-muted-foreground">EGP</span></p>
+          <p className="text-xs text-muted-foreground mt-1">from {data.salesCount} sale{data.salesCount !== 1 ? "s" : ""} · {fmt(data.salesTotal)} EGP gross</p>
         </Card>
-        <Card className="p-5 border-neutral-200">
-          <span className="text-sm text-muted-foreground">VAT Paid (Purchases)</span>
-          <p className="text-2xl font-bold text-red-600 mt-2">{fmt(data.vatPaid)} EGP</p>
-          <p className="text-xs text-muted-foreground mt-1">{data.purchasesCount} orders | {fmt(data.purchasesTotal)} EGP total</p>
+        <Card className="p-6 border-neutral-200">
+          <div className="flex items-center gap-2 mb-2">
+            <Receipt className="w-4 h-4 text-red-600" />
+            <span className="text-sm text-muted-foreground">VAT Paid (Input)</span>
+          </div>
+          <p className="text-2xl font-bold text-red-600">{fmt(data.vatPaid)} <span className="text-sm font-normal text-muted-foreground">EGP</span></p>
+          <p className="text-xs text-muted-foreground mt-1">from {data.purchasesCount} purchase{data.purchasesCount !== 1 ? "s" : ""} · {fmt(data.purchasesTotal)} EGP gross</p>
         </Card>
-        <Card className="p-5 border-neutral-200">
-          <span className="text-sm text-muted-foreground">Net VAT Payable</span>
-          <p className={`text-2xl font-bold mt-2 ${data.netVAT >= 0 ? "text-paws-orange" : "text-green-600"}`}>
-            {fmt(data.netVAT)} EGP
+        <Card className={`p-6 border-2 ${payable ? "border-paws-orange" : "border-green-300"}`}>
+          <div className="flex items-center gap-2 mb-2">
+            <Receipt className={`w-4 h-4 ${payable ? "text-paws-orange" : "text-green-600"}`} />
+            <span className="text-sm text-muted-foreground">{payable ? "Net VAT Payable" : "Net VAT Refund"}</span>
+          </div>
+          <p className={`text-3xl font-bold ${payable ? "text-paws-orange" : "text-green-600"}`}>
+            {fmt(Math.abs(data.netVAT))} <span className="text-sm font-normal text-muted-foreground">EGP</span>
           </p>
-          <p className="text-xs text-muted-foreground mt-1">{data.netVAT >= 0 ? "Amount due to tax authority" : "Refundable credit"}</p>
+          <p className="text-xs text-muted-foreground mt-1">Output − Input</p>
         </Card>
       </div>
 
-      {data.salesCount === 0 && data.purchasesCount === 0 && (
-        <Card className="p-12 border-neutral-200 text-center">
-          <Receipt className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="font-semibold text-neutral-900 mb-1">No VAT data</h3>
-          <p className="text-sm text-muted-foreground">Create sales or purchase transactions to generate VAT data.</p>
-        </Card>
-      )}
+      <Card className="p-6 border-neutral-200 bg-neutral-50">
+        <p className="text-xs text-muted-foreground">
+          Cancelled invoices and purchase orders are excluded. Figures come from the <code className="font-mono">tax_amount</code> column on each transaction — tax must be captured at point of sale for this report to be accurate.
+        </p>
+      </Card>
     </div>
   );
 }

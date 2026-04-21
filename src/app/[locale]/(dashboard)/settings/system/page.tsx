@@ -1,9 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Settings, ArrowLeft, Pencil, Plus } from "lucide-react";
+import { Settings, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import type { SystemSettings } from "@/lib/supabase/types";
+import {
+  EditableSetting,
+  InitializeDefaultsButton,
+} from "@/components/dashboard/SystemSettingsClient";
 
 interface SettingsByCategory {
   [category: string]: SystemSettings[];
@@ -137,14 +141,7 @@ export default async function SystemSettingsPage() {
                             {setting.key}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-sm text-paws-brown bg-paws-cream/70 px-3 py-1 rounded-lg max-w-[200px] truncate">
-                            {setting.value}
-                          </span>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
+                        <EditableSetting id={setting.id} value={setting.value} />
                       </div>
                     ))}
                   </div>
@@ -213,9 +210,7 @@ export default async function SystemSettingsPage() {
 
             {/* Initialize Button */}
             <div className="flex justify-center mt-8">
-              <Button className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-                <Plus className="w-4 h-4" /> Initialize Default Settings
-              </Button>
+              <InitializeDefaultsButton />
             </div>
           </div>
         </div>

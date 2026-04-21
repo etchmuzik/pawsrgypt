@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Star, Truck, Shield, Heart, Package } from "luci
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { AddToCartButton } from "@/components/website/AddToCartButton";
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeProductHtml, stripHtml } from "@/lib/html";
 
 type ProductDetail = {
   id: string;
@@ -204,11 +205,13 @@ export default async function ProductDetailPage({
               </div>
 
               {/* Description */}
-              {description && (
+              {description && stripHtml(description) && (
                 <div className="pt-2">
-                  <p className="text-neutral-500 leading-relaxed">
-                    {description}
-                  </p>
+                  <div
+                    className="prose prose-neutral max-w-none text-neutral-500 leading-relaxed prose-headings:text-neutral-800 prose-a:text-paws-orange prose-strong:text-neutral-700"
+                    dir={locale === "ar" ? "rtl" : "ltr"}
+                    dangerouslySetInnerHTML={{ __html: sanitizeProductHtml(description) }}
+                  />
                 </div>
               )}
 

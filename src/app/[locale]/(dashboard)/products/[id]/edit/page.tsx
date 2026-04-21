@@ -7,9 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ImageUploader } from "@/components/dashboard/ImageUploader";
+import { RichTextEditor } from "@/components/dashboard/RichTextEditor";
 import { ArrowLeft, Loader2, Barcode } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -304,25 +304,19 @@ export default function EditProductPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="description_en">Description (English)</Label>
-              <Textarea
-                id="description_en"
-                name="description_en"
+              <RichTextEditor
                 value={form.description_en}
-                onChange={handleChange}
+                onChange={(html) => updateField("description_en", html)}
                 placeholder="Product description in English"
-                className="bg-white border-paws-sand"
               />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="description_ar">Description (Arabic)</Label>
-              <Textarea
-                id="description_ar"
-                name="description_ar"
+              <RichTextEditor
                 value={form.description_ar}
-                onChange={handleChange}
+                onChange={(html) => updateField("description_ar", html)}
                 placeholder="وصف المنتج بالعربية"
-                className="bg-white border-paws-sand"
                 dir="rtl"
               />
             </div>

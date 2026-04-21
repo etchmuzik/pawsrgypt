@@ -5,6 +5,7 @@ import { Plus, Users, ArrowLeft, Filter } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import type { Profile, Branch } from "@/lib/supabase/types";
+import { UserActiveToggle } from "@/components/dashboard/UserActiveToggle";
 
 const ROLE_STYLES: Record<Profile["role"], { bg: string; text: string }> = {
   admin: { bg: "bg-red-100", text: "text-red-700" },
@@ -85,9 +86,11 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
             Manage team members and their access levels
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> Add User
-        </Button>
+        <Link href={`/${locale}/settings/users/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> Add User
+          </Button>
+        </Link>
       </div>
 
       {/* Role Filter */}
@@ -192,16 +195,16 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 text-xs">
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 text-xs text-muted-foreground"
-                        >
-                          {profile.is_active ? "Deactivate" : "Activate"}
-                        </Button>
+                        <Link href={`/${locale}/settings/users/${profile.id}/edit`}>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs">
+                            Edit
+                          </Button>
+                        </Link>
+                        <UserActiveToggle
+                          id={profile.id}
+                          isActive={profile.is_active}
+                          userName={profile.full_name ?? profile.email}
+                        />
                       </div>
                     </td>
                   </tr>
