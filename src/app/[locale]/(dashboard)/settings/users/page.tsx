@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Users, ArrowLeft, Filter } from "lucide-react";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import type { Profile, Branch } from "@/lib/supabase/types";
 import { UserActiveToggle } from "@/components/dashboard/UserActiveToggle";
 
@@ -59,21 +59,23 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
     getBranches(),
   ]);
 
+  const t = await getTranslations("settings");
+  const tCommon = await getTranslations("common");
+
   const roles: Array<{ value: string; label: string }> = [
-    { value: "all", label: "All Roles" },
-    { value: "admin", label: "Admin" },
-    { value: "manager", label: "Manager" },
-    { value: "cashier", label: "Cashier" },
-    { value: "warehouse", label: "Warehouse" },
-    { value: "accountant", label: "Accountant" },
-    { value: "hr", label: "HR" },
+    { value: "all", label: t("all_roles") },
+    { value: "admin", label: t("admin") },
+    { value: "manager", label: t("manager") },
+    { value: "cashier", label: t("cashier") },
+    { value: "warehouse", label: t("warehouse") },
+    { value: "accountant", label: t("accountant") },
+    { value: "hr", label: t("hr_role") },
   ];
 
   const branchMap = new Map(branches.map((b) => [b.id, b.name]));
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/${locale}/settings`}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -81,19 +83,16 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Users Management</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Manage team members and their access levels
-          </p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("users_title")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("users_subtitle")}</p>
         </div>
         <Link href={`/${locale}/settings/users/new`}>
           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> Add User
+            <Plus className="w-4 h-4" /> {t("add_user")}
           </Button>
         </Link>
       </div>
 
-      {/* Role Filter */}
       <div className="flex items-center gap-2 mb-4">
         <Filter className="w-4 h-4 text-muted-foreground" />
         <div className="flex gap-1.5 flex-wrap">
@@ -115,17 +114,16 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
         </div>
       </div>
 
-      {/* Users Table */}
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">
         <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-paws-sand bg-paws-cream/50">
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Name</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Email</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Role</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Branch</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Status</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Actions</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("name")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("email")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("role")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("branch")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("status")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -137,12 +135,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                       <Users className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                      <p className="font-medium text-paws-brown-dark">No users found</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {roleFilter !== "all"
-                          ? `No users with the "${roleFilter}" role. Try a different filter.`
-                          : "Add your first team member to get started."}
-                      </p>
+                      <p className="font-medium text-paws-brown-dark">{t("no_users")}</p>
                     </div>
                   </div>
                 </td>
@@ -151,8 +144,8 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
               profiles.map((profile) => {
                 const roleStyle = ROLE_STYLES[profile.role];
                 const branchName = profile.branch_id
-                  ? (profile.branches?.name ?? branchMap.get(profile.branch_id) ?? "Unknown")
-                  : "Unassigned";
+                  ? (profile.branches?.name ?? branchMap.get(profile.branch_id) ?? "—")
+                  : t("unassigned");
 
                 return (
                   <tr
@@ -167,7 +160,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                             .toUpperCase()}
                         </div>
                         <span className="font-medium text-paws-brown-dark">
-                          {profile.full_name ?? "Unnamed"}
+                          {profile.full_name ?? t("unnamed")}
                         </span>
                       </div>
                     </td>
@@ -177,7 +170,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                         variant="secondary"
                         className={`${roleStyle.bg} ${roleStyle.text} hover:${roleStyle.bg} capitalize`}
                       >
-                        {profile.role}
+                        {t(profile.role === "hr" ? "hr_role" : profile.role)}
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{branchName}</td>
@@ -190,14 +183,14 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                             : "bg-gray-100 text-gray-500 hover:bg-gray-100"
                         }
                       >
-                        {profile.is_active ? "Active" : "Inactive"}
+                        {profile.is_active ? t("active") : t("inactive")}
                       </Badge>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
                         <Link href={`/${locale}/settings/users/${profile.id}/edit`}>
                           <Button variant="ghost" size="sm" className="h-7 text-xs">
-                            Edit
+                            {tCommon("edit")}
                           </Button>
                         </Link>
                         <UserActiveToggle
@@ -214,14 +207,6 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           </tbody>
         </table></div>
       </div>
-
-      {/* Summary */}
-      {profiles.length > 0 && (
-        <p className="text-xs text-muted-foreground mt-3">
-          Showing {profiles.length} user{profiles.length !== 1 ? "s" : ""}
-          {roleFilter !== "all" ? ` with role "${roleFilter}"` : ""}
-        </p>
-      )}
     </div>
   );
 }

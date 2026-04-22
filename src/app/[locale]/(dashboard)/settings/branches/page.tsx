@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import type { Branch } from "@/lib/supabase/types";
 import { BranchActiveToggle } from "@/components/dashboard/BranchActiveToggle";
+import { getTranslations } from "next-intl/server";
 
 async function getBranches(): Promise<Branch[]> {
   const supabase = await createClient();
@@ -20,6 +21,8 @@ async function getBranches(): Promise<Branch[]> {
 export default async function BranchesPage() {
   const locale = await getLocale();
   const branches = await getBranches();
+  const t = await getTranslations("settings");
+  const tCommon = await getTranslations("common");
 
   return (
     <div>
@@ -31,14 +34,11 @@ export default async function BranchesPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Branches</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Manage your store locations
-          </p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("branches")}</h1>
         </div>
         <Link href={`/${locale}/settings/branches/new`}>
           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> Add Branch
+            <Plus className="w-4 h-4" /> {t("add_branch")}
           </Button>
         </Link>
       </div>
@@ -51,14 +51,11 @@ export default async function BranchesPage() {
               <Building2 className="w-6 h-6 text-green-600" />
             </div>
             <div className="text-center">
-              <p className="font-medium text-paws-brown-dark">No branches yet</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Add your first branch to start managing store locations.
-              </p>
+              <p className="font-medium text-paws-brown-dark">{tCommon("no_data")}</p>
             </div>
             <Link href={`/${locale}/settings/branches/new`}>
               <Button size="sm" className="mt-2 gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-                <Plus className="w-4 h-4" /> Add Branch
+                <Plus className="w-4 h-4" /> {t("add_branch")}
               </Button>
             </Link>
           </div>
@@ -92,7 +89,7 @@ export default async function BranchesPage() {
                         : "bg-gray-100 text-gray-500 hover:bg-gray-100"
                     }
                   >
-                    {branch.is_active ? "Active" : "Inactive"}
+                    {branch.is_active ? t("active") : t("inactive")}
                   </Badge>
                 </div>
 
@@ -114,7 +111,7 @@ export default async function BranchesPage() {
                   )}
                   {!branch.address && !branch.phone && (
                     <p className="text-sm text-muted-foreground italic">
-                      No contact details added yet.
+                      —
                     </p>
                   )}
                 </div>
@@ -123,7 +120,7 @@ export default async function BranchesPage() {
                 <div className="flex gap-2 pt-3 border-t border-paws-sand/50">
                   <Link href={`/${locale}/settings/branches/${branch.id}/edit`} className="flex-1">
                     <Button variant="ghost" size="sm" className="h-7 text-xs w-full">
-                      Edit
+                      {tCommon("edit")}
                     </Button>
                   </Link>
                   <BranchActiveToggle id={branch.id} isActive={branch.is_active} />
@@ -137,9 +134,7 @@ export default async function BranchesPage() {
       {/* Summary */}
       {branches.length > 0 && (
         <p className="text-xs text-muted-foreground mt-3">
-          {branches.length} branch{branches.length !== 1 ? "es" : ""} total
-          {" | "}
-          {branches.filter((b) => b.is_active).length} active
+          {branches.length} · {branches.filter((b) => b.is_active).length} {t("active")}
         </p>
       )}
     </div>

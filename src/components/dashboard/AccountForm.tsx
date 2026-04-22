@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,19 +36,31 @@ interface AccountFormProps {
   parents: ParentOption[];
 }
 
-const TYPES: { value: AccountType; label: string }[] = [
-  { value: "asset", label: "Asset" },
-  { value: "liability", label: "Liability" },
-  { value: "equity", label: "Equity" },
-  { value: "income", label: "Income" },
-  { value: "expense", label: "Expense" },
-];
-
 export function AccountForm({ mode, initial, parents }: AccountFormProps) {
   const router = useRouter();
   const locale = useLocale();
+  const tCommon = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const TYPES: { value: AccountType; label: string }[] = [
+    { value: "asset", label: locale === "ar" ? "أصول" : "Asset" },
+    { value: "liability", label: locale === "ar" ? "التزامات" : "Liability" },
+    { value: "equity", label: locale === "ar" ? "حقوق ملكية" : "Equity" },
+    { value: "income", label: locale === "ar" ? "إيرادات" : "Income" },
+    { value: "expense", label: locale === "ar" ? "مصروفات" : "Expense" },
+  ];
+
+  const labels = {
+    code: locale === "ar" ? "الكود" : "Code",
+    type: locale === "ar" ? "النوع" : "Type",
+    nameEn: locale === "ar" ? "الاسم بالإنجليزي" : "English Name",
+    nameAr: locale === "ar" ? "الاسم بالعربي" : "Arabic Name",
+    parent: locale === "ar" ? "حساب الأصل (اختياري)" : "Parent Account (optional)",
+    none: locale === "ar" ? "— لا شيء —" : "— None —",
+    active: locale === "ar" ? "مفعل" : "Active",
+    create: locale === "ar" ? "إنشاء حساب" : "Create Account",
+  };
 
   const [code, setCode] = useState(initial?.code ?? "");
   const [nameEn, setNameEn] = useState(initial?.name_en ?? "");
@@ -73,7 +85,7 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
         ? await createAccount(payload)
         : await updateAccount(initial!.id!, payload);
       if (!res.success) {
-        setError(res.error ?? "Failed to save");
+        setError(res.error ?? tCommon("error"));
         return;
       }
       router.push(`/${locale}/accounting/accounts`);
@@ -87,17 +99,17 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
     <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="sm:col-span-1">
-          <Label htmlFor="code">Code</Label>
+          <Label htmlFor="code">{labels.code}</Label>
           <Input
             id="code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
-            placeholder="e.g. 1100"
+            placeholder="1100"
             required
           />
         </div>
         <div className="sm:col-span-2">
-          <Label htmlFor="type">Type</Label>
+          <Label htmlFor="type">{labels.type}</Label>
           <select
             id="type"
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
@@ -112,7 +124,7 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="name_en">English Name</Label>
+        <Label htmlFor="name_en">{labels.nameEn}</Label>
         <Input
           id="name_en"
           value={nameEn}
@@ -122,7 +134,7 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="name_ar">Arabic Name</Label>
+        <Label htmlFor="name_ar">{labels.nameAr}</Label>
         <Input
           id="name_ar"
           value={nameAr}
@@ -133,14 +145,14 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
       </div>
 
       <div>
-        <Label htmlFor="parent">Parent Account (optional)</Label>
+        <Label htmlFor="parent">{labels.parent}</Label>
         <select
           id="parent"
           className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
           value={parentId}
           onChange={(e) => setParentId(e.target.value)}
         >
-          <option value="">— None —</option>
+          <option value="">{labels.none}</option>
           {validParents.map((p) => (
             <option key={p.id} value={p.id}>
               {p.code} · {p.name_en} ({p.type})
@@ -155,7 +167,7 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
           checked={isActive}
           onChange={(e) => setIsActive(e.target.checked)}
         />
-        Active
+        {labels.active}
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -163,10 +175,10 @@ export function AccountForm({ mode, initial, parents }: AccountFormProps) {
       <div className="flex gap-2">
         <Button type="submit" disabled={pending} className="bg-paws-orange hover:bg-paws-orange/90 text-white">
           {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {mode === "create" ? "Create Account" : "Save Changes"}
+          {mode === "create" ? labels.create : tCommon("save_changes")}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
       </div>
     </form>

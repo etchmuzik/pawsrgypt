@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { setUserActive } from "@/app/[locale]/(dashboard)/settings/users/actions";
@@ -14,22 +15,30 @@ interface UserActiveToggleProps {
 
 export function UserActiveToggle({ id, isActive, userName }: UserActiveToggleProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [optimistic, setOptimistic] = useState(isActive);
+  const L = {
+    deactivate: locale === "ar" ? "إلغاء التفعيل" : "Deactivate",
+    activate: locale === "ar" ? "تفعيل" : "Activate",
+    confirmDeact: locale === "ar" ? `متأكد عايز تلغي تفعيل ${userName}؟` : `Are you sure you want to deactivate ${userName}?`,
+    confirmAct: locale === "ar" ? `متأكد عايز تفعل ${userName}؟` : `Are you sure you want to activate ${userName}?`,
+    failed: locale === "ar" ? "فشل تحديث المستخدم." : "Failed to update user.",
+    done: (next: boolean) => locale === "ar" ? (next ? "تم تفعيل المستخدم." : "تم إلغاء تفعيل المستخدم.") : (next ? "User activated." : "User deactivated."),
+  };
 
   function handleClick() {
     const next = !optimistic;
-    const verb = next ? "activate" : "deactivate";
-    if (!confirm(`Are you sure you want to ${verb} ${userName}?`)) return;
+    if (!confirm(next ? L.confirmAct : L.confirmDeact)) return;
 
     startTransition(async () => {
       const result = await setUserActive(id, next);
       if (!result.ok) {
-        toast.error(result.error ?? "Failed to update user.");
+        toast.error(result.error ?? L.failed);
         return;
       }
       setOptimistic(next);
-      toast.success(`User ${next ? "activated" : "deactivated"}.`);
+      toast.success(L.done(next));
       router.refresh();
     });
   }
@@ -42,7 +51,7 @@ export function UserActiveToggle({ id, isActive, userName }: UserActiveTogglePro
       onClick={handleClick}
       className="h-7 text-xs text-muted-foreground"
     >
-      {optimistic ? "Deactivate" : "Activate"}
+      {optimistic ? L.deactivate : L.activate}
     </Button>
   );
 }

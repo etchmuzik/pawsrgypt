@@ -17,16 +17,20 @@ export function JournalReverseButton({ entryId, alreadyReversed }: JournalRevers
   const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const L = {
+    reversed: locale === "ar" ? "تم العكس" : "Reversed",
+    reverse: locale === "ar" ? "عكس" : "Reverse",
+    confirm: locale === "ar" ? "إنشاء قيد عكسي؟ بيضيف قيد جديد بالمدين والدائن معكوسين." : "Create a reversing entry? This adds a new entry with debits and credits swapped.",
+    failed: locale === "ar" ? "فشل العكس" : "Failed to reverse",
+  };
 
   function handleClick() {
-    if (!window.confirm("Create a reversing entry? This adds a new entry with debits and credits swapped.")) {
-      return;
-    }
+    if (!window.confirm(L.confirm)) return;
     setError(null);
     startTransition(async () => {
       const res = await reverseJournalEntry(entryId);
       if (!res.success) {
-        setError(res.error ?? "Failed to reverse");
+        setError(res.error ?? L.failed);
         return;
       }
       if (res.id) {
@@ -41,7 +45,7 @@ export function JournalReverseButton({ entryId, alreadyReversed }: JournalRevers
   if (alreadyReversed) {
     return (
       <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
-        Reversed
+        {L.reversed}
       </span>
     );
   }
@@ -57,7 +61,7 @@ export function JournalReverseButton({ entryId, alreadyReversed }: JournalRevers
         onClick={handleClick}
       >
         {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
-        Reverse
+        {L.reverse}
       </Button>
     </div>
   );

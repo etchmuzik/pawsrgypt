@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search } from "lucide-react";
 import type { Supplier } from "@/lib/supabase/types";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 interface SuppliersPageProps {
   params: Promise<{ locale: string }>;
@@ -19,16 +20,20 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
     .order("created_at", { ascending: false })
     .limit(50);
 
+  const t = await getTranslations("purchases");
+  const tCommon = await getTranslations("common");
+  const tSettings = await getTranslations("settings");
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-paws-brown-dark">Suppliers</h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{t("suppliers")}</h1>
         <Link href={`/${locale}/purchases/suppliers/new`}>
           <Button
             size="sm"
             className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white"
           >
-            <Plus className="w-4 h-4" /> Add Supplier
+            <Plus className="w-4 h-4" /> {tCommon("add")} {t("supplier")}
           </Button>
         </Link>
       </div>
@@ -36,7 +41,7 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
       <div className="relative mb-4">
         <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search suppliers..."
+          placeholder={`${tCommon("search")}...`}
           className="ps-9 bg-white border-paws-sand max-w-sm"
         />
       </div>
@@ -45,24 +50,12 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
         <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-paws-sand bg-paws-cream/50">
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Name
-              </th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Phone
-              </th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Email
-              </th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Balance
-              </th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Status
-              </th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">
-                Actions
-              </th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("name")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("phone")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("email")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("total")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("status")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("actions")}</th>
             </tr>
           </thead>
           <tbody>
@@ -72,7 +65,7 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
                   colSpan={6}
                   className="px-4 py-12 text-center text-muted-foreground"
                 >
-                  No suppliers yet. Add your first supplier.
+                  {tCommon("no_data")}
                 </td>
               </tr>
             ) : (
@@ -85,13 +78,13 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
                     {supplier.name}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {supplier.phone ?? "---"}
+                    {supplier.phone ?? "—"}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
-                    {supplier.email ?? "---"}
+                    {supplier.email ?? "—"}
                   </td>
                   <td className="px-4 py-3 font-bold">
-                    {supplier.balance} EGP
+                    {supplier.balance} {tCommon("egp")}
                   </td>
                   <td className="px-4 py-3">
                     <Badge
@@ -102,7 +95,7 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
                           : ""
                       }
                     >
-                      {supplier.is_active ? "Active" : "Inactive"}
+                      {supplier.is_active ? tSettings("active") : tSettings("inactive")}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -111,7 +104,7 @@ export default async function SuppliersPage({ params }: SuppliersPageProps) {
                       size="sm"
                       className="h-7 text-xs"
                     >
-                      Edit
+                      {tCommon("edit")}
                     </Button>
                   </td>
                 </tr>

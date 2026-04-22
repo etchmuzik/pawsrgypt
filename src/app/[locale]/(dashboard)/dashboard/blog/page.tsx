@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { BlogPost } from "@/lib/supabase/types";
+import { getTranslations } from "next-intl/server";
 
 export default async function BlogPage({
   params,
@@ -20,33 +21,32 @@ export default async function BlogPage({
     .order("created_at", { ascending: false });
 
   const posts = (data as BlogPost[] | null) ?? [];
+  const t = await getTranslations("blog");
+  const tCommon = await getTranslations("common");
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900">Blog</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">{t("title")}</h1>
         <Link href={`/${locale}/dashboard/blog/new`}>
           <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
             <Plus className="w-4 h-4 mr-2" />
-            Add Post
+            {t("add")}
           </Button>
         </Link>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search posts..."
+          placeholder={`${tCommon("search")}...`}
           className="pl-9 bg-white border-neutral-200"
         />
       </div>
 
-      {/* Table */}
       {posts.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
-          No blog posts yet. Add your first post.
+          {t("no_posts")}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
@@ -54,24 +54,12 @@ export default async function BlogPage({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-neutral-100 bg-neutral-50/50">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Title
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Slug
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Author
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Date
-                  </th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">
-                    Edit
-                  </th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{tCommon("name")}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t("slug")}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{t("author")}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{tCommon("status")}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{tCommon("date")}</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">{tCommon("edit")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -99,10 +87,10 @@ export default async function BlogPage({
                     <td className="px-4 py-3">
                       {post.is_published ? (
                         <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-                          Published
+                          {t("published")}
                         </Badge>
                       ) : (
-                        <Badge variant="secondary">Draft</Badge>
+                        <Badge variant="secondary">{t("draft")}</Badge>
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">

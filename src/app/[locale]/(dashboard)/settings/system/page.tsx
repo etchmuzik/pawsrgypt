@@ -8,6 +8,7 @@ import {
   EditableSetting,
   InitializeDefaultsButton,
 } from "@/components/dashboard/SystemSettingsClient";
+import { getLocale, getTranslations } from "next-intl/server";
 
 interface SettingsByCategory {
   [category: string]: SystemSettings[];
@@ -66,6 +67,20 @@ async function getSettings(): Promise<SystemSettings[]> {
 
 export default async function SystemSettingsPage() {
   const settings = await getSettings();
+  const locale = await getLocale();
+  const t = await getTranslations("settings");
+  const tCommon = await getTranslations("common");
+  const CATEGORY_LABELS_AR: Record<string, { label: string; description: string }> = {
+    general: { label: "عام", description: "إعدادات التطبيق الأساسية" },
+    tax: { label: "الضريبة والتسعير", description: "نسب الضريبة وقواعد التسعير" },
+    invoice: { label: "الفواتير", description: "صيغة وإعدادات الفواتير" },
+    notification: { label: "الإشعارات", description: "تفضيلات التنبيهات والرسائل" },
+    pos: { label: "نقطة البيع", description: "إعدادات جهاز نقطة البيع" },
+    inventory: { label: "المخزون", description: "قواعد المخزون والمستودعات" },
+    hr: { label: "الموارد البشرية", description: "إعدادات الموظفين والرواتب" },
+    other: { label: "أخرى", description: "إعدادات متنوعة" },
+  };
+  const CATEGORY_LABELS_USE = locale === "ar" ? CATEGORY_LABELS_AR : CATEGORY_LABELS;
 
   const grouped: SettingsByCategory = {};
   for (const setting of settings) {
@@ -85,16 +100,13 @@ export default async function SystemSettingsPage() {
     <div>
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/settings">
+        <Link href={`/${locale}/settings`}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-paws-brown-dark">System Settings</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Configure application-wide settings
-          </p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("system")}</h1>
         </div>
       </div>
 
@@ -102,7 +114,7 @@ export default async function SystemSettingsPage() {
         /* Existing Settings Grouped by Category */
         <div className="space-y-6">
           {sortedCategories.map((category) => {
-            const categoryInfo = CATEGORY_LABELS[category] ?? {
+            const categoryInfo = CATEGORY_LABELS_USE[category] ?? {
               label: formatSettingKey(category),
               description: "",
             };
@@ -159,10 +171,7 @@ export default async function SystemSettingsPage() {
                 <Settings className="w-6 h-6 text-paws-brown" />
               </div>
               <div className="text-center">
-                <p className="font-medium text-paws-brown-dark">No system settings configured</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Initialize your system with recommended default settings below.
-                </p>
+                <p className="font-medium text-paws-brown-dark">{tCommon("no_data")}</p>
               </div>
             </div>
 
@@ -173,7 +182,7 @@ export default async function SystemSettingsPage() {
                   DEFAULT_SETTINGS.some((s) => s.category === cat)
                 )
                 .map((category) => {
-                  const categoryInfo = CATEGORY_LABELS[category];
+                  const categoryInfo = CATEGORY_LABELS_USE[category];
                   const categoryDefaults = DEFAULT_SETTINGS.filter(
                     (s) => s.category === category
                   );
@@ -198,7 +207,7 @@ export default async function SystemSettingsPage() {
                               </p>
                             </div>
                             <span className="text-xs font-mono text-muted-foreground bg-white px-2 py-1 rounded border border-paws-sand/50">
-                              Not set
+                              —
                             </span>
                           </div>
                         ))}
@@ -219,8 +228,7 @@ export default async function SystemSettingsPage() {
       {/* Summary */}
       {hasSettings && (
         <p className="text-xs text-muted-foreground mt-3">
-          {settings.length} setting{settings.length !== 1 ? "s" : ""} across{" "}
-          {sortedCategories.length} categor{sortedCategories.length !== 1 ? "ies" : "y"}
+          {settings.length} · {sortedCategories.length}
         </p>
       )}
     </div>

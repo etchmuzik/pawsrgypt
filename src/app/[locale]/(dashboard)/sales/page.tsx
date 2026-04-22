@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 interface InvoiceWithCustomer {
   id: string;
@@ -40,19 +41,21 @@ interface PageProps {
 export default async function SalesPage({ params }: PageProps) {
   const { locale } = await params;
   const invoices = await getInvoices();
+  const t = await getTranslations("sales");
+  const tCommon = await getTranslations("common");
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Sales</h1>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {invoices.length} invoice{invoices.length !== 1 ? "s" : ""}
+            {invoices.length} {t("invoices").toLowerCase()}
           </p>
         </div>
         <Link href={`/${locale}/sales/new`}>
           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> New Invoice
+            <Plus className="w-4 h-4" /> {t("new_invoice")}
           </Button>
         </Link>
       </div>
@@ -63,19 +66,19 @@ export default async function SalesPage({ params }: PageProps) {
             <thead>
               <tr className="border-b border-paws-sand bg-paws-cream/50">
                 <th className="text-start px-4 py-3 font-semibold text-paws-brown">#</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Customer</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Date</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Total</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Paid</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Status</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Actions</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("customer")}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("date")}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("total")}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("paid")}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("status")}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("actions")}</th>
               </tr>
             </thead>
             <tbody>
               {invoices.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                    No invoices yet. Create your first sale.
+                    {t("no_sales")}
                   </td>
                 </tr>
               ) : (
@@ -83,13 +86,13 @@ export default async function SalesPage({ params }: PageProps) {
                   <tr key={inv.id} className="border-b border-paws-sand/50 hover:bg-paws-cream/30">
                     <td className="px-4 py-3 font-mono text-xs">{inv.invoice_number}</td>
                     <td className="px-4 py-3 font-medium text-paws-brown-dark">
-                      {inv.customers?.name ?? "Walk-in Customer"}
+                      {inv.customers?.name ?? t("walk_in")}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(inv.created_at).toLocaleDateString()}
+                      {new Date(inv.created_at).toLocaleDateString(locale === "ar" ? "ar-EG" : "en-EG")}
                     </td>
-                    <td className="px-4 py-3 font-semibold">{inv.total.toLocaleString()} EGP</td>
-                    <td className="px-4 py-3 text-muted-foreground">{inv.paid.toLocaleString()} EGP</td>
+                    <td className="px-4 py-3 font-semibold">{inv.total.toLocaleString()} {tCommon("egp")}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{inv.paid.toLocaleString()} {tCommon("egp")}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${STATUS_COLORS[inv.status] ?? ""}`}>
                         {inv.status}
@@ -98,7 +101,7 @@ export default async function SalesPage({ params }: PageProps) {
                     <td className="px-4 py-3">
                       <Link href={`/${locale}/sales/${inv.id}`}>
                         <Button variant="ghost" size="sm" className="h-7 text-xs text-paws-orange hover:text-paws-orange/80">
-                          View
+                          {tCommon("view")}
                         </Button>
                       </Link>
                     </td>

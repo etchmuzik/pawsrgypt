@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,7 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Loader2, RefreshCw } from "lucide-react";
 import { createUser, updateUser, type UserFormInput } from "@/app/[locale]/(dashboard)/settings/users/actions";
 
-const ROLE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
-  { value: "cashier", label: "Cashier" },
-  { value: "warehouse", label: "Warehouse" },
-  { value: "accountant", label: "Accountant" },
-  { value: "hr", label: "HR" },
-];
+const ROLE_VALUES = ["admin", "manager", "cashier", "warehouse", "accountant", "hr"] as const;
 
 interface Branch {
   id: string;
@@ -51,7 +44,15 @@ function randomPassword(): string {
 export function UserForm({ mode, branches, initial }: UserFormProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
+  const tCustomers = useTranslations("customers");
   const [loading, setLoading] = useState(false);
+
+  const roleOptions = ROLE_VALUES.map((v) => ({
+    value: v,
+    label: t(v === "hr" ? "hr_role" : v),
+  }));
 
   const [form, setForm] = useState({
     email: initial?.email ?? "",
@@ -92,11 +93,11 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
     setLoading(false);
 
     if (!result.ok) {
-      toast.error(result.error ?? "Something went wrong.");
+      toast.error(result.error ?? tCommon("error"));
       return;
     }
 
-    toast.success(mode === "create" ? "User created." : "User updated.");
+    toast.success(tCommon("success"));
     router.push(`/${locale}/settings/users`);
     router.refresh();
   }
@@ -106,23 +107,23 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/${locale}/settings/users`}>
           <Button variant="ghost" size="sm" className="gap-1.5 text-paws-brown">
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {tCommon("back")}
           </Button>
         </Link>
         <h1 className="text-2xl font-bold text-paws-brown-dark">
-          {mode === "create" ? "Add New User" : "Edit User"}
+          {mode === "create" ? t("add_user") : t("edit_user")}
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
           <h2 className="font-semibold text-paws-brown-dark text-lg">
-            User Details
+            {t("users")}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="full_name">Full Name</Label>
+              <Label htmlFor="full_name">{tCustomers("name")}</Label>
               <Input
                 id="full_name"
                 name="full_name"
@@ -134,7 +135,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email *</Label>
+              <Label htmlFor="email">{tCommon("email")} *</Label>
               <Input
                 id="email"
                 name="email"
@@ -148,21 +149,21 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
               />
               {mode === "edit" && (
                 <p className="text-xs text-muted-foreground">
-                  Email can only be changed from the Supabase Auth dashboard.
+                  {locale === "ar" ? "الإيميل بيتغير من لوحة Supabase Auth بس." : "Email can only be changed from the Supabase Auth dashboard."}
                 </p>
               )}
             </div>
 
             {mode === "create" && (
               <div className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="password">Temporary Password *</Label>
+                <Label htmlFor="password">{locale === "ar" ? "كلمة سر مؤقتة" : "Temporary Password"} *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="password"
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="At least 8 characters"
+                    placeholder={locale === "ar" ? "8 حروف على الأقل" : "At least 8 characters"}
                     className="bg-white border-paws-sand font-mono"
                     required
                     minLength={8}
@@ -175,17 +176,17 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
                       setForm((prev) => ({ ...prev, password: randomPassword() }))
                     }
                   >
-                    <RefreshCw className="w-3.5 h-3.5" /> Regenerate
+                    <RefreshCw className="w-3.5 h-3.5" /> {locale === "ar" ? "إعادة توليد" : "Regenerate"}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share this with the user — they should change it on first login.
+                  {locale === "ar" ? "اديها للمستخدم — المفروض يغيرها من أول دخول." : "Share this with the user — they should change it on first login."}
                 </p>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="role">Role *</Label>
+              <Label htmlFor="role">{t("role")} *</Label>
               <select
                 id="role"
                 name="role"
@@ -194,7 +195,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
                 className="w-full h-10 rounded-md border border-paws-sand bg-white px-3 text-sm"
                 required
               >
-                {ROLE_OPTIONS.map((opt) => (
+                {roleOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -203,7 +204,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="branch_id">Branch</Label>
+              <Label htmlFor="branch_id">{t("branch")}</Label>
               <select
                 id="branch_id"
                 name="branch_id"
@@ -211,7 +212,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
                 onChange={handleChange}
                 className="w-full h-10 rounded-md border border-paws-sand bg-white px-3 text-sm"
               >
-                <option value="">Unassigned</option>
+                <option value="">{t("unassigned")}</option>
                 {branches.map((b) => (
                   <option key={b.id} value={b.id}>
                     {b.name}
@@ -225,7 +226,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
         <div className="flex gap-3 justify-end">
           <Link href={`/${locale}/settings/users`}>
             <Button type="button" variant="outline" className="border-paws-sand">
-              Cancel
+              {tCommon("cancel")}
             </Button>
           </Link>
           <Button
@@ -234,7 +235,7 @@ export function UserForm({ mode, branches, initial }: UserFormProps) {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Saving..." : mode === "create" ? "Create User" : "Save Changes"}
+            {loading ? tCommon("loading") : mode === "create" ? t("add_user") : tCommon("save_changes")}
           </Button>
         </div>
       </form>

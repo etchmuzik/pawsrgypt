@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronRight, BookOpen } from "lucide-react";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 type Account = {
   id: string;
@@ -15,12 +15,12 @@ type Account = {
   is_active: boolean;
 };
 
-const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  asset: { label: "Asset", color: "text-blue-700", bg: "bg-blue-50" },
-  liability: { label: "Liability", color: "text-red-700", bg: "bg-red-50" },
-  equity: { label: "Equity", color: "text-purple-700", bg: "bg-purple-50" },
-  income: { label: "Income", color: "text-green-700", bg: "bg-green-50" },
-  expense: { label: "Expense", color: "text-orange-700", bg: "bg-orange-50" },
+const TYPE_COLORS: Record<string, { color: string; bg: string }> = {
+  asset: { color: "text-blue-700", bg: "bg-blue-50" },
+  liability: { color: "text-red-700", bg: "bg-red-50" },
+  equity: { color: "text-purple-700", bg: "bg-purple-50" },
+  income: { color: "text-green-700", bg: "bg-green-50" },
+  expense: { color: "text-orange-700", bg: "bg-orange-50" },
 };
 
 async function getAccounts(): Promise<Account[]> {
@@ -54,20 +54,27 @@ export default async function ChartOfAccountsPage() {
   const accounts = await getAccounts();
   const grouped = groupByType(accounts);
   const typeOrder = ["asset", "liability", "equity", "income", "expense"];
+  const t = await getTranslations("accounting");
+  const tCommon = await getTranslations("common");
+  const tDash = await getTranslations("dashboard");
+  const TYPE_LABELS: Record<string, string> = {
+    asset: locale === "ar" ? "أصول" : "Asset",
+    liability: locale === "ar" ? "التزامات" : "Liability",
+    equity: locale === "ar" ? "حقوق ملكية" : "Equity",
+    income: locale === "ar" ? "إيرادات" : "Income",
+    expense: locale === "ar" ? "مصروفات" : "Expense",
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Chart of Accounts</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your account structure and hierarchy
-          </p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("chart_of_accounts")}</h1>
         </div>
         <Link href={`/${locale}/accounting/accounts/new`}>
           <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
             <Plus className="w-4 h-4 mr-2" />
-            Add Account
+            {t("add_account")}
           </Button>
         </Link>
       </div>
@@ -77,10 +84,7 @@ export default async function ChartOfAccountsPage() {
           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-blue-600" />
           </div>
-          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">No accounts yet</h3>
-          <p className="text-muted-foreground mb-4">
-            Create your first account to start building your chart of accounts.
-          </p>
+          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">{tCommon("no_data")}</h3>
           <Link href={`/${locale}/accounting/accounts/new`}>
             <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
               <Plus className="w-4 h-4 mr-2" />
@@ -93,11 +97,8 @@ export default async function ChartOfAccountsPage() {
           {typeOrder.map((type) => {
             const typeAccounts = grouped[type];
             if (!typeAccounts || typeAccounts.length === 0) return null;
-            const config = TYPE_CONFIG[type] ?? {
-              label: type,
-              color: "text-gray-700",
-              bg: "bg-gray-50",
-            };
+            const config = TYPE_COLORS[type] ?? { color: "text-gray-700", bg: "bg-gray-50" };
+            const label = TYPE_LABELS[type] ?? type;
 
             return (
               <Card key={type} className="border-paws-sand overflow-hidden">
@@ -106,10 +107,10 @@ export default async function ChartOfAccountsPage() {
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
                     >
-                      {config.label}
+                      {label}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      {typeAccounts.length} account{typeAccounts.length !== 1 ? "s" : ""}
+                      {typeAccounts.length}
                     </span>
                   </div>
                 </div>
@@ -137,7 +138,7 @@ export default async function ChartOfAccountsPage() {
                       <div className="flex items-center gap-2">
                         {!account.is_active && (
                           <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded">
-                            Inactive
+                            {locale === "ar" ? "غير مفعل" : "Inactive"}
                           </span>
                         )}
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
@@ -156,7 +157,7 @@ export default async function ChartOfAccountsPage() {
           href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
-          &larr; Back to Accounting
+          &larr; {tDash("back_to_accounting")}
         </Link>
       </div>
     </div>

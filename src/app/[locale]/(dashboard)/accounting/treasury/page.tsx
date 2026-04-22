@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Landmark, Banknote, Building2 } from "lucide-react";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { TreasuryTransferDialog } from "@/components/dashboard/TreasuryTransferDialog";
 
 type TreasuryType = "cash" | "bank";
@@ -42,6 +42,16 @@ function formatCurrency(amount: number, currency = "EGP"): string {
 export default async function TreasuryPage() {
   const locale = await getLocale();
   const accounts = await getTreasuryAccounts();
+  const t = await getTranslations("accounting");
+  const tCommon = await getTranslations("common");
+  const tDash = await getTranslations("dashboard");
+  const labels = {
+    totalBalance: locale === "ar" ? "الرصيد الإجمالي" : "Total Balance",
+    cash: locale === "ar" ? "كاش" : "Cash",
+    bank: locale === "ar" ? "بنك" : "Bank",
+    inactive: locale === "ar" ? "غير مفعل" : "Inactive",
+    branch: locale === "ar" ? "الفرع" : "Branch",
+  };
   const totalBalance = accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0);
   const cashAccounts = accounts.filter((a) => a.type === "cash");
   const bankAccounts = accounts.filter((a) => a.type === "bank");
@@ -52,8 +62,7 @@ export default async function TreasuryPage() {
     <div>
       <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Treasury</h1>
-          <p className="text-sm text-muted-foreground mt-1">Manage cash and bank accounts</p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("treasury")}</h1>
         </div>
         <div className="flex items-center gap-2">
           <TreasuryTransferDialog accounts={activeAccounts.map((a) => ({
@@ -65,7 +74,7 @@ export default async function TreasuryPage() {
           <Link href={`/${locale}/accounting/treasury/new`}>
             <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
               <Plus className="w-4 h-4 mr-2" />
-              Add Account
+              {t("add_treasury")}
             </Button>
           </Link>
         </div>
@@ -76,14 +85,11 @@ export default async function TreasuryPage() {
           <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Landmark className="w-8 h-8 text-purple-600" />
           </div>
-          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">No treasury accounts</h3>
-          <p className="text-muted-foreground mb-4">
-            Add your first cash or bank account to start tracking balances.
-          </p>
+          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">{tCommon("no_data")}</h3>
           <Link href={`/${locale}/accounting/treasury/new`}>
             <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
               <Plus className="w-4 h-4 mr-2" />
-              Add Account
+              {t("add_treasury")}
             </Button>
           </Link>
         </Card>
@@ -95,7 +101,7 @@ export default async function TreasuryPage() {
                 <Landmark className="w-6 h-6 text-paws-orange" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Balance</p>
+                <p className="text-sm text-muted-foreground">{labels.totalBalance}</p>
                 <p className="text-3xl font-bold text-paws-brown-dark">{formatCurrency(totalBalance)}</p>
               </div>
             </div>
@@ -103,13 +109,13 @@ export default async function TreasuryPage() {
               <div className="flex items-center gap-2">
                 <Banknote className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-muted-foreground">
-                  Cash: {cashAccounts.length} account{cashAccounts.length !== 1 ? "s" : ""}
+                  {labels.cash}: {cashAccounts.length}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-muted-foreground">
-                  Bank: {bankAccounts.length} account{bankAccounts.length !== 1 ? "s" : ""}
+                  {labels.bank}: {bankAccounts.length}
                 </span>
               </div>
             </div>
@@ -135,11 +141,11 @@ export default async function TreasuryPage() {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isCash ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
-                          {isCash ? "Cash" : "Bank"}
+                          {isCash ? labels.cash : labels.bank}
                         </span>
                         {!account.is_active && (
                           <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full">
-                            Inactive
+                            {labels.inactive}
                           </span>
                         )}
                       </div>
@@ -153,7 +159,7 @@ export default async function TreasuryPage() {
                         {formatCurrency(Number(account.balance), account.currency)}
                       </p>
                       {account.branches?.name && (
-                        <p className="text-xs text-muted-foreground mt-1">Branch: {account.branches.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{labels.branch}: {account.branches.name}</p>
                       )}
                     </div>
                   </Card>
@@ -169,7 +175,7 @@ export default async function TreasuryPage() {
           href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
-          &larr; Back to Accounting
+          &larr; {tDash("back_to_accounting")}
         </Link>
       </div>
     </div>

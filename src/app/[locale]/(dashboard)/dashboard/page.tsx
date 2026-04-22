@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TrendingUp, ShoppingCart, Package, Users, FileText, PlusCircle, Monitor, BarChart3 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 async function getStats() {
   const supabase = await createClient();
@@ -30,41 +30,19 @@ async function getStats() {
 export default async function DashboardPage() {
   const stats = await getStats();
   const locale = await getLocale();
+  const t = await getTranslations("dashboard");
+  const tCommon = await getTranslations("common");
 
   const cards = [
-    {
-      label: "Total Sales",
-      value: `${stats.totalSales.toLocaleString()} EGP`,
-      icon: TrendingUp,
-      color: "text-green-600",
-      bg: "bg-green-50",
-    },
-    {
-      label: "Orders Today",
-      value: stats.ordersToday,
-      icon: ShoppingCart,
-      color: "text-paws-orange",
-      bg: "bg-orange-50",
-    },
-    {
-      label: "Products",
-      value: stats.totalProducts,
-      icon: Package,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
-    },
-    {
-      label: "Customers",
-      value: stats.totalCustomers,
-      icon: Users,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
-    },
+    { label: t("total_sales"), value: `${stats.totalSales.toLocaleString()} ${tCommon("egp")}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+    { label: t("orders_today"), value: stats.ordersToday, icon: ShoppingCart, color: "text-paws-orange", bg: "bg-orange-50" },
+    { label: t("products_count"), value: stats.totalProducts, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: t("customers_count"), value: stats.totalCustomers, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-neutral-900 mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold text-neutral-900 mb-6">{t("title")}</h1>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -82,13 +60,13 @@ export default async function DashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <h2 className="text-lg font-semibold text-neutral-900 mb-4">Quick Actions</h2>
+      <h2 className="text-lg font-semibold text-neutral-900 mb-4">{t("quick_actions")}</h2>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: "New Invoice", href: `/${locale}/sales/new`, icon: FileText, color: "text-blue-600 bg-blue-50" },
-          { label: "Add Product", href: `/${locale}/products/new`, icon: PlusCircle, color: "text-green-600 bg-green-50" },
-          { label: "Open POS", href: `/${locale}/pos`, icon: Monitor, color: "text-purple-600 bg-purple-50" },
-          { label: "View Reports", href: `/${locale}/accounting`, icon: BarChart3, color: "text-orange-600 bg-orange-50" },
+          { label: t("new_invoice"), href: `/${locale}/sales/new`, icon: FileText, color: "text-blue-600 bg-blue-50" },
+          { label: t("add_product"), href: `/${locale}/products/new`, icon: PlusCircle, color: "text-green-600 bg-green-50" },
+          { label: t("open_pos"), href: `/${locale}/pos`, icon: Monitor, color: "text-purple-600 bg-purple-50" },
+          { label: t("view_reports"), href: `/${locale}/accounting`, icon: BarChart3, color: "text-orange-600 bg-orange-50" },
         ].map((action) => (
           <Link
             key={action.label}

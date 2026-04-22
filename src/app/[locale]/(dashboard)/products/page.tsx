@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { ProductsTable, type ProductRow } from "@/components/dashboard/ProductsTable";
+import { getTranslations } from "next-intl/server";
 
 interface ProductsPageProps {
   params: Promise<{ locale: string }>;
@@ -21,25 +22,27 @@ async function getProducts(): Promise<ProductRow[]> {
 export default async function ProductsPage({ params }: ProductsPageProps) {
   const { locale } = await params;
   const products = await getProducts();
+  const t = await getTranslations("products");
+  const tCommon = await getTranslations("common");
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Products</h1>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("title")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {products.length} product{products.length !== 1 ? "s" : ""} total
+            {products.length} {t("title").toLowerCase()}
           </p>
         </div>
         <div className="flex gap-2">
           <Link href={`/${locale}/products/import`}>
             <Button variant="outline" size="sm" className="gap-1.5 border-paws-sand">
-              <Upload className="w-4 h-4" /> Import
+              <Upload className="w-4 h-4" /> {tCommon("import")}
             </Button>
           </Link>
           <Link href={`/${locale}/products/new`}>
             <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-              <Plus className="w-4 h-4" /> Add Product
+              <Plus className="w-4 h-4" /> {t("add")}
             </Button>
           </Link>
         </div>

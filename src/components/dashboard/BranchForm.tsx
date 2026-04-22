@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +26,8 @@ interface BranchFormProps {
 export function BranchForm({ mode, initial }: BranchFormProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("settings");
+  const tCommon = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -61,29 +63,29 @@ export function BranchForm({ mode, initial }: BranchFormProps) {
   return (
     <form onSubmit={handleSubmit} className="max-w-xl space-y-4">
       <div>
-        <Label htmlFor="name">Name</Label>
+        <Label htmlFor="name">{tCommon("name")}</Label>
         <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="city">City</Label>
+          <Label htmlFor="city">{tCommon("city")}</Label>
           <Input id="city" value={city} onChange={(e) => setCity(e.target.value)} />
         </div>
         <div>
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">{tCommon("phone")}</Label>
           <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="address">Address</Label>
+        <Label htmlFor="address">{tCommon("address")}</Label>
         <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} />
       </div>
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
-        Active
+        {t("active")}
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -91,9 +93,9 @@ export function BranchForm({ mode, initial }: BranchFormProps) {
       <div className="flex gap-2">
         <Button type="submit" disabled={pending} className="bg-paws-orange hover:bg-paws-orange/90 text-white">
           {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {mode === "create" ? "Create Branch" : "Save Changes"}
+          {mode === "create" ? t("add_branch") : tCommon("save_changes")}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>{tCommon("cancel")}</Button>
       </div>
     </form>
   );

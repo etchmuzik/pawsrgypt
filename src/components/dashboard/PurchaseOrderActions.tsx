@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Send, X, Loader2 } from "lucide-react";
 import {
@@ -17,8 +18,17 @@ interface PurchaseOrderActionsProps {
 
 export function PurchaseOrderActions({ orderId, status }: PurchaseOrderActionsProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const L = {
+    ordered: locale === "ar" ? "علّم كأمر شراء" : "Mark as Ordered",
+    received: locale === "ar" ? "علّم كمستلم" : "Mark as Received",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    confirmReceive: locale === "ar" ? "تعليم الطلب كمستلم؟ المخزون هيتحدث." : "Mark this order as received? Stock levels will be updated.",
+    confirmCancel: locale === "ar" ? "إلغاء أمر الشراء ده؟" : "Cancel this purchase order?",
+    failed: locale === "ar" ? "فشلت العملية" : "Action failed",
+  };
 
   function runAction(action: () => Promise<{ success: boolean; error?: string }>, confirmMsg?: string) {
     if (confirmMsg && !window.confirm(confirmMsg)) return;
@@ -26,7 +36,7 @@ export function PurchaseOrderActions({ orderId, status }: PurchaseOrderActionsPr
     startTransition(async () => {
       const res = await action();
       if (!res.success) {
-        setError(res.error ?? "Action failed");
+        setError(res.error ?? L.failed);
         return;
       }
       router.refresh();
@@ -45,7 +55,7 @@ export function PurchaseOrderActions({ orderId, status }: PurchaseOrderActionsPr
           onClick={() => runAction(() => markPurchaseOrderOrdered(orderId))}
         >
           {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          Mark as Ordered
+          {L.ordered}
         </Button>
       )}
 
@@ -57,12 +67,12 @@ export function PurchaseOrderActions({ orderId, status }: PurchaseOrderActionsPr
           onClick={() =>
             runAction(
               () => markPurchaseOrderReceived(orderId),
-              "Mark this order as received? Stock levels will be updated.",
+              L.confirmReceive,
             )
           }
         >
           {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-          Mark as Received
+          {L.received}
         </Button>
       )}
 
@@ -73,11 +83,11 @@ export function PurchaseOrderActions({ orderId, status }: PurchaseOrderActionsPr
           className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
           disabled={pending}
           onClick={() =>
-            runAction(() => cancelPurchaseOrder(orderId), "Cancel this purchase order?")
+            runAction(() => cancelPurchaseOrder(orderId), L.confirmCancel)
           }
         >
           <X className="w-4 h-4" />
-          Cancel
+          {L.cancel}
         </Button>
       )}
 

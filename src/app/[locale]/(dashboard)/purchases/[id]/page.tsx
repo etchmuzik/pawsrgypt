@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PurchaseOrderActions } from "@/components/dashboard/PurchaseOrderActions";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
@@ -62,6 +62,21 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
   const { id } = await params;
   const locale = await getLocale();
   const supabase = await createClient();
+  const t = await getTranslations("purchases");
+  const tCommon = await getTranslations("common");
+  const L = {
+    backLink: locale === "ar" ? "الرجوع للمشتريات" : "Back to Purchases",
+    created: locale === "ar" ? "تاريخ الإنشاء" : "Created",
+    timeline: locale === "ar" ? "الجدول الزمني" : "Timeline",
+    orderedAt: locale === "ar" ? "تاريخ الطلب" : "Ordered",
+    receivedAt: locale === "ar" ? "تاريخ الاستلام" : "Received",
+    product: locale === "ar" ? "المنتج" : "Product",
+    qty: locale === "ar" ? "الكمية" : "Qty",
+    unitCost: locale === "ar" ? "سعر الوحدة" : "Unit Cost",
+    lineTotal: locale === "ar" ? "إجمالي السطر" : "Line Total",
+    noItems: locale === "ar" ? "مفيش أصناف." : "No line items.",
+    notes: locale === "ar" ? "ملاحظات" : "Notes",
+  };
 
   const { data: orderData } = await supabase
     .from("purchase_orders")
@@ -90,7 +105,7 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
           href={`/${locale}/purchases`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
-          &larr; Back to Purchases
+          &larr; {L.backLink}
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3 mt-2">
           <div>
@@ -107,14 +122,14 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
               </span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Created {formatDate(order.created_at)}
+              {L.created}: {formatDate(order.created_at)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {order.status === "draft" && (
               <Link href={`/${locale}/purchases/${order.id}/edit`}>
                 <Button size="sm" variant="outline" className="gap-1.5">
-                  <Pencil className="w-4 h-4" /> Edit
+                  <Pencil className="w-4 h-4" /> {tCommon("edit")}
                 </Button>
               </Link>
             )}
@@ -125,7 +140,7 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
         <Card className="p-5 border-neutral-200 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Supplier</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">{t("supplier")}</h3>
           <p className="text-lg font-semibold text-neutral-900">
             {order.suppliers?.name ?? "—"}
           </p>
@@ -136,18 +151,18 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
           </div>
         </Card>
         <Card className="p-5 border-neutral-200">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-3">Timeline</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-3">{L.timeline}</h3>
           <dl className="text-sm space-y-1.5">
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Created</dt>
+              <dt className="text-muted-foreground">{L.created}</dt>
               <dd className="text-neutral-900">{formatDate(order.created_at)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Ordered</dt>
+              <dt className="text-muted-foreground">{L.orderedAt}</dt>
               <dd className="text-neutral-900">{formatDate(order.ordered_at)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Received</dt>
+              <dt className="text-muted-foreground">{L.receivedAt}</dt>
               <dd className="text-neutral-900">{formatDate(order.received_at)}</dd>
             </div>
           </dl>
@@ -159,18 +174,18 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Product</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground">{L.product}</th>
                 <th className="text-left px-4 py-3 font-semibold text-muted-foreground">SKU</th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Qty</th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Unit Cost</th>
-                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Line Total</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">{L.qty}</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">{L.unitCost}</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground">{L.lineTotal}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
               {items.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                    No line items.
+                    {L.noItems}
                   </td>
                 </tr>
               ) : (
@@ -194,23 +209,23 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
             </tbody>
             <tfoot>
               <tr className="border-t border-neutral-200">
-                <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">Subtotal</td>
+                <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">{tCommon("subtotal")}</td>
                 <td className="px-4 py-2 text-right font-mono">{fmt(order.subtotal)}</td>
               </tr>
               <tr>
-                <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">Tax</td>
+                <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">{tCommon("tax")}</td>
                 <td className="px-4 py-2 text-right font-mono">{fmt(order.tax_amount)}</td>
               </tr>
               {Number(order.discount) > 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">Discount</td>
+                  <td colSpan={4} className="px-4 py-2 text-right text-muted-foreground">{tCommon("discount")}</td>
                   <td className="px-4 py-2 text-right font-mono">-{fmt(order.discount)}</td>
                 </tr>
               )}
               <tr className="bg-neutral-50 font-bold">
-                <td colSpan={4} className="px-4 py-3 text-right text-neutral-900">Total</td>
+                <td colSpan={4} className="px-4 py-3 text-right text-neutral-900">{tCommon("total")}</td>
                 <td className="px-4 py-3 text-right font-mono text-neutral-900">
-                  {fmt(order.total)} EGP
+                  {fmt(order.total)} {tCommon("egp")}
                 </td>
               </tr>
             </tfoot>
@@ -220,7 +235,7 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
 
       {order.notes && (
         <Card className="p-5 border-neutral-200">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2">Notes</h3>
+          <h3 className="text-sm font-semibold text-muted-foreground mb-2">{L.notes}</h3>
           <p className="text-sm text-neutral-900 whitespace-pre-wrap">{order.notes}</p>
         </Card>
       )}

@@ -116,7 +116,13 @@
     "welcome": "Welcome",
     "back_to_accounting": "Back to Accounting",
     "back_to_reports": "Back to Reports",
-    "back_to_settings": "Back to Settings"
+    "back_to_settings": "Back to Settings",
+    "new_invoice": "New Invoice",
+    "add_product": "Add Product",
+    "open_pos": "Open POS",
+    "view_reports": "View Reports",
+    "products_count": "Products",
+    "customers_count": "Customers"
   },
   "products": {
     "title": "Products",
@@ -154,7 +160,13 @@
     "warehouse": "Warehouse",
     "quantity": "Quantity",
     "min_quantity": "Min Quantity",
-    "no_stock": "No stock recorded"
+    "no_stock": "No stock recorded",
+    "total_skus": "Total SKUs",
+    "out_of_stock": "Out of Stock",
+    "ok": "OK",
+    "product": "Product",
+    "qty": "Qty",
+    "min_qty": "Min Qty"
   },
   "sales": {
     "title": "Sales",
@@ -229,7 +241,10 @@
     "salary": "Salary",
     "phone": "Phone",
     "email": "Email",
-    "hire_date": "Hire Date"
+    "hire_date": "Hire Date",
+    "department": "Department",
+    "base_salary": "Base Salary",
+    "no_employees": "No employees yet"
   },
   "settings": {
     "title": "Settings",
@@ -250,7 +265,19 @@
     "active": "Active",
     "inactive": "Inactive",
     "initialize_defaults": "Initialize Default Settings",
-    "save_changes": "Save Changes"
+    "save_changes": "Save Changes",
+    "all_roles": "All Roles",
+    "admin": "Admin",
+    "manager": "Manager",
+    "cashier": "Cashier",
+    "warehouse": "Warehouse",
+    "accountant": "Accountant",
+    "hr_role": "HR",
+    "unassigned": "Unassigned",
+    "unnamed": "Unnamed",
+    "no_users": "No users found",
+    "users_title": "Users Management",
+    "users_subtitle": "Manage team members and their access levels"
   },
   "customers": {
     "title": "Customers",

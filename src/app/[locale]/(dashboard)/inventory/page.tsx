@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeftRight, Plus, BarChart3 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 async function getStockSummary() {
   const supabase = await createClient();
@@ -15,17 +16,20 @@ async function getStockSummary() {
 
 export default async function InventoryPage() {
   const stock = await getStockSummary();
+  const t = await getTranslations("inventory");
+  const tCommon = await getTranslations("common");
+  const tDash = await getTranslations("dashboard");
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-paws-brown-dark">Inventory</h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{t("title")}</h1>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" className="gap-1.5 border-paws-sand">
-            <ArrowLeftRight className="w-4 h-4" /> Transfer Stock
+            <ArrowLeftRight className="w-4 h-4" /> {t("transfer")}
           </Button>
           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> Adjust Stock
+            <Plus className="w-4 h-4" /> {t("adjust")}
           </Button>
         </div>
       </div>
@@ -38,7 +42,7 @@ export default async function InventoryPage() {
               <BarChart3 className="w-5 h-5 text-green-600" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Total SKUs</p>
+              <p className="text-xs text-muted-foreground">{t("total_skus")}</p>
               <p className="text-xl font-bold text-paws-brown-dark">{stock.length}</p>
             </div>
           </div>
@@ -49,7 +53,7 @@ export default async function InventoryPage() {
               <BarChart3 className="w-5 h-5 text-paws-orange" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Low Stock</p>
+              <p className="text-xs text-muted-foreground">{tDash("low_stock")}</p>
               <p className="text-xl font-bold text-paws-brown-dark">
                 {stock.filter((s) => (s as { quantity: number }).quantity <= (s as { min_quantity: number }).min_quantity).length}
               </p>
@@ -62,7 +66,7 @@ export default async function InventoryPage() {
               <BarChart3 className="w-5 h-5 text-red-500" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Out of Stock</p>
+              <p className="text-xs text-muted-foreground">{t("out_of_stock")}</p>
               <p className="text-xl font-bold text-paws-brown-dark">
                 {stock.filter((s) => (s as { quantity: number }).quantity === 0).length}
               </p>
@@ -76,18 +80,18 @@ export default async function InventoryPage() {
         <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-paws-sand bg-paws-cream/50">
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Product</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Warehouse</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Qty</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Min Qty</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Status</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("product")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("warehouse")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("qty")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("min_qty")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("status")}</th>
             </tr>
           </thead>
           <tbody>
             {stock.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                  No stock records. Receive a purchase order to populate inventory.
+                  {t("no_stock")}
                 </td>
               </tr>
             ) : (
@@ -106,7 +110,7 @@ export default async function InventoryPage() {
                     <td className="px-4 py-3 text-muted-foreground">{row.min_quantity}</td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isOut ? "bg-red-100 text-red-700" : isLow ? "bg-orange-100 text-orange-700" : "bg-green-100 text-green-700"}`}>
-                        {isOut ? "Out of Stock" : isLow ? "Low Stock" : "OK"}
+                        {isOut ? t("out_of_stock") : isLow ? tDash("low_stock") : t("ok")}
                       </span>
                     </td>
                   </tr>

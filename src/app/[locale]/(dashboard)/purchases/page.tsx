@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -10,6 +11,8 @@ interface PageProps {
 export default async function PurchasesPage({ params }: PageProps) {
   const { locale } = await params;
   const supabase = await createClient();
+  const t = await getTranslations("purchases");
+  const tCommon = await getTranslations("common");
 
   type PurchaseOrderRow = {
     id: string;
@@ -29,10 +32,10 @@ export default async function PurchasesPage({ params }: PageProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-paws-brown-dark">Purchases</h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{t("title")}</h1>
         <Link href={`/${locale}/purchases/new`}>
           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4" /> New Purchase Order
+            <Plus className="w-4 h-4" /> {t("new_order")}
           </Button>
         </Link>
       </div>
@@ -41,18 +44,18 @@ export default async function PurchasesPage({ params }: PageProps) {
         <div className="overflow-x-auto -mx-4 sm:mx-0"><table className="w-full text-sm min-w-[640px]">
           <thead>
             <tr className="border-b border-paws-sand bg-paws-cream/50">
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">ID</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Supplier</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Date</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Total</th>
-              <th className="text-start px-4 py-3 font-semibold text-paws-brown">Status</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">#</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{t("supplier")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("date")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("total")}</th>
+              <th className="text-start px-4 py-3 font-semibold text-paws-brown">{tCommon("status")}</th>
             </tr>
           </thead>
           <tbody>
             {!orders || orders.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground">
-                  No purchase orders yet.
+                  {t("no_orders")}
                 </td>
               </tr>
             ) : (

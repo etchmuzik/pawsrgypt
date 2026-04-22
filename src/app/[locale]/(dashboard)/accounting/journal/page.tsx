@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, FileText } from "lucide-react";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 type JournalEntry = {
   id: string;
@@ -69,20 +69,20 @@ function formatAmount(amount: number): string {
 export default async function JournalEntriesPage() {
   const locale = await getLocale();
   const entries = await getJournalEntries();
+  const t = await getTranslations("accounting");
+  const tCommon = await getTranslations("common");
+  const tDash = await getTranslations("dashboard");
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-paws-brown-dark">Journal Entries</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            View and create double-entry journal entries
-          </p>
+          <h1 className="text-2xl font-bold text-paws-brown-dark">{t("journal")}</h1>
         </div>
         <Link href={`/${locale}/accounting/journal/new`}>
           <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
             <Plus className="w-4 h-4 mr-2" />
-            New Entry
+            {t("new_entry")}
           </Button>
         </Link>
       </div>
@@ -92,10 +92,7 @@ export default async function JournalEntriesPage() {
           <div className="w-16 h-16 bg-green-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <FileText className="w-8 h-8 text-green-600" />
           </div>
-          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">No journal entries</h3>
-          <p className="text-muted-foreground mb-4">
-            Create your first journal entry to start recording transactions.
-          </p>
+          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">{tCommon("no_data")}</h3>
           <Link href={`/${locale}/accounting/journal/new`}>
             <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
               <Plus className="w-4 h-4 mr-2" />
@@ -110,19 +107,19 @@ export default async function JournalEntriesPage() {
               <thead>
                 <tr className="border-b border-paws-sand bg-paws-cream/30">
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Date
+                    {tCommon("date")}
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Reference
+                    #
                   </th>
                   <th className="text-left px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Description
+                    {tCommon("notes")}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Total Debit
+                    {tCommon("total")}
                   </th>
                   <th className="text-right px-5 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    Total Credit
+                    {tCommon("total")}
                   </th>
                 </tr>
               </thead>
@@ -181,7 +178,7 @@ export default async function JournalEntriesPage() {
           href={`/${locale}/accounting`}
           className="text-sm text-muted-foreground hover:text-paws-orange transition-colors"
         >
-          &larr; Back to Accounting
+          &larr; {tDash("back_to_accounting")}
         </Link>
       </div>
     </div>

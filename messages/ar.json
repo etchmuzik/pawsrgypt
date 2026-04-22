@@ -116,7 +116,13 @@
     "welcome": "أهلاً بيك",
     "back_to_accounting": "الرجوع للمحاسبة",
     "back_to_reports": "الرجوع للتقارير",
-    "back_to_settings": "الرجوع للإعدادات"
+    "back_to_settings": "الرجوع للإعدادات",
+    "new_invoice": "فاتورة جديدة",
+    "add_product": "ضيف منتج",
+    "open_pos": "افتح نقطة البيع",
+    "view_reports": "شوف التقارير",
+    "products_count": "المنتجات",
+    "customers_count": "العملاء"
   },
   "products": {
     "title": "المنتجات",
@@ -154,7 +160,13 @@
     "warehouse": "المستودع",
     "quantity": "الكمية",
     "min_quantity": "الحد الأدنى",
-    "no_stock": "مفيش مخزون متسجل"
+    "no_stock": "مفيش مخزون متسجل",
+    "total_skus": "إجمالي المنتجات",
+    "out_of_stock": "نفد المخزون",
+    "ok": "تمام",
+    "product": "المنتج",
+    "qty": "الكمية",
+    "min_qty": "الحد الأدنى"
   },
   "sales": {
     "title": "المبيعات",
@@ -229,7 +241,10 @@
     "salary": "المرتب",
     "phone": "الموبايل",
     "email": "الإيميل",
-    "hire_date": "تاريخ التعيين"
+    "hire_date": "تاريخ التعيين",
+    "department": "القسم",
+    "base_salary": "المرتب الأساسي",
+    "no_employees": "لسه مفيش موظفين"
   },
   "settings": {
     "title": "الإعدادات",
@@ -250,7 +265,19 @@
     "active": "مفعل",
     "inactive": "غير مفعل",
     "initialize_defaults": "تهيئة الإعدادات الافتراضية",
-    "save_changes": "حفظ التغييرات"
+    "save_changes": "حفظ التغييرات",
+    "all_roles": "كل الصلاحيات",
+    "admin": "مدير",
+    "manager": "مدير فرع",
+    "cashier": "كاشير",
+    "warehouse": "مخزن",
+    "accountant": "محاسب",
+    "hr_role": "موارد بشرية",
+    "unassigned": "غير محدد",
+    "unnamed": "بدون اسم",
+    "no_users": "مفيش مستخدمين",
+    "users_title": "إدارة المستخدمين",
+    "users_subtitle": "إدارة فريق العمل وصلاحياتهم"
   },
   "customers": {
     "title": "العملاء",
