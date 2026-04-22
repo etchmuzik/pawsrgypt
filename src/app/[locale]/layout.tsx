@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Toaster } from "@/components/ui/sonner";
@@ -16,6 +16,10 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 export const viewport = {
   width: "device-width",
@@ -66,6 +70,10 @@ export default async function LocaleLayout({
   if (!routing.locales.includes(locale as "en" | "ar")) {
     notFound();
   }
+
+  // Sets the request-scoped locale so server components (Footer, Navbar on
+  // the website side) that call useTranslations pick up the correct locale.
+  setRequestLocale(locale);
 
   const messages = await getMessages({ locale });
   const dir = locale === "ar" ? "rtl" : "ltr";
