@@ -4,30 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Plus, Landmark, Banknote, Building2 } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
+import { TreasuryTransferDialog } from "@/components/dashboard/TreasuryTransferDialog";
+
+type TreasuryType = "cash" | "bank";
 
 type TreasuryAccount = {
   id: string;
   name_en: string;
   name_ar: string;
-  type: string;
+  type: TreasuryType;
   balance: number;
   currency: string;
-  branch: string | null;
+  branch_id: string | null;
   is_active: boolean;
+  branches: { name: string } | null;
 };
 
 async function getTreasuryAccounts(): Promise<TreasuryAccount[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("treasury_accounts")
-    .select("id, name_en, name_ar, type, balance, currency, branch, is_active")
+    .select("id, name_en, name_ar, type, balance, currency, branch_id, is_active, branches(name)")
     .order("type", { ascending: true })
     .order("name_en", { ascending: true });
 
-  if (error) {
-    return [];
-  }
-
+  if (error) return [];
   return (data as TreasuryAccount[]) ?? [];
 }
 
@@ -45,19 +46,29 @@ export default async function TreasuryPage() {
   const cashAccounts = accounts.filter((a) => a.type === "cash");
   const bankAccounts = accounts.filter((a) => a.type === "bank");
 
+  const activeAccounts = accounts.filter((a) => a.is_active);
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-paws-brown-dark">Treasury</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage cash and bank accounts
-          </p>
+          <p className="text-sm text-muted-foreground mt-1">Manage cash and bank accounts</p>
         </div>
-        <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Account
-        </Button>
+        <div className="flex items-center gap-2">
+          <TreasuryTransferDialog accounts={activeAccounts.map((a) => ({
+            id: a.id,
+            name_en: a.name_en,
+            currency: a.currency,
+            balance: Number(a.balance),
+          }))} />
+          <Link href={`/${locale}/accounting/treasury/new`}>
+            <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Account
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {accounts.length === 0 ? (
@@ -65,20 +76,19 @@ export default async function TreasuryPage() {
           <div className="w-16 h-16 bg-purple-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Landmark className="w-8 h-8 text-purple-600" />
           </div>
-          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">
-            No treasury accounts
-          </h3>
+          <h3 className="text-lg font-semibold text-paws-brown-dark mb-2">No treasury accounts</h3>
           <p className="text-muted-foreground mb-4">
             Add your first cash or bank account to start tracking balances.
           </p>
-          <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Account
-          </Button>
+          <Link href={`/${locale}/accounting/treasury/new`}>
+            <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Account
+            </Button>
+          </Link>
         </Card>
       ) : (
         <>
-          {/* Total Balance Summary */}
           <Card className="p-6 border-paws-sand mb-6 bg-gradient-to-r from-paws-cream to-white">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-paws-orange/10 rounded-xl flex items-center justify-center">
@@ -86,9 +96,7 @@ export default async function TreasuryPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Balance</p>
-                <p className="text-3xl font-bold text-paws-brown-dark">
-                  {formatCurrency(totalBalance)}
-                </p>
+                <p className="text-3xl font-bold text-paws-brown-dark">{formatCurrency(totalBalance)}</p>
               </div>
             </div>
             <div className="flex gap-6 mt-4 pt-4 border-t border-paws-sand/50">
@@ -107,7 +115,6 @@ export default async function TreasuryPage() {
             </div>
           </Card>
 
-          {/* Account Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {accounts.map((account) => {
               const isCash = account.type === "cash";
@@ -116,50 +123,41 @@ export default async function TreasuryPage() {
               const iconBg = isCash ? "bg-green-50" : "bg-blue-50";
 
               return (
-                <Card
+                <Link
                   key={account.id}
-                  className="p-5 border-paws-sand hover:border-paws-orange hover:shadow-md transition-all cursor-pointer"
+                  href={`/${locale}/accounting/treasury/${account.id}/edit`}
+                  className="block"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}>
-                      <Icon className={`w-5 h-5 ${iconColor}`} />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          isCash
-                            ? "bg-green-50 text-green-700"
-                            : "bg-blue-50 text-blue-700"
-                        }`}
-                      >
-                        {isCash ? "Cash" : "Bank"}
-                      </span>
-                      {!account.is_active && (
-                        <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full">
-                          Inactive
+                  <Card className="p-5 border-paws-sand hover:border-paws-orange hover:shadow-md transition-all cursor-pointer h-full">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center`}>
+                        <Icon className={`w-5 h-5 ${iconColor}`} />
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${isCash ? "bg-green-50 text-green-700" : "bg-blue-50 text-blue-700"}`}>
+                          {isCash ? "Cash" : "Bank"}
                         </span>
+                        {!account.is_active && (
+                          <span className="text-xs bg-gray-100 text-muted-foreground px-2 py-0.5 rounded-full">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <h3 className="font-semibold text-paws-brown-dark text-sm">{account.name_en}</h3>
+                    <p className="text-xs text-muted-foreground mb-3" dir="rtl">{account.name_ar}</p>
+
+                    <div className="pt-3 border-t border-paws-sand/50">
+                      <p className="text-xl font-bold text-paws-brown-dark">
+                        {formatCurrency(Number(account.balance), account.currency)}
+                      </p>
+                      {account.branches?.name && (
+                        <p className="text-xs text-muted-foreground mt-1">Branch: {account.branches.name}</p>
                       )}
                     </div>
-                  </div>
-
-                  <h3 className="font-semibold text-paws-brown-dark text-sm">
-                    {account.name_en}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-3" dir="rtl">
-                    {account.name_ar}
-                  </p>
-
-                  <div className="pt-3 border-t border-paws-sand/50">
-                    <p className="text-xl font-bold text-paws-brown-dark">
-                      {formatCurrency(account.balance, account.currency)}
-                    </p>
-                    {account.branch && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Branch: {account.branch}
-                      </p>
-                    )}
-                  </div>
-                </Card>
+                  </Card>
+                </Link>
               );
             })}
           </div>

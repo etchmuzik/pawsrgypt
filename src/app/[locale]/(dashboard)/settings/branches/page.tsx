@@ -6,6 +6,7 @@ import { Plus, Building2, ArrowLeft, MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import type { Branch } from "@/lib/supabase/types";
+import { BranchActiveToggle } from "@/components/dashboard/BranchActiveToggle";
 
 async function getBranches(): Promise<Branch[]> {
   const supabase = await createClient();
@@ -35,9 +36,11 @@ export default async function BranchesPage() {
             Manage your store locations
           </p>
         </div>
-        <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4" /> Add Branch
-        </Button>
+        <Link href={`/${locale}/settings/branches/new`}>
+          <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4" /> Add Branch
+          </Button>
+        </Link>
       </div>
 
       {/* Branch Cards */}
@@ -53,9 +56,11 @@ export default async function BranchesPage() {
                 Add your first branch to start managing store locations.
               </p>
             </div>
-            <Button size="sm" className="mt-2 gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
-              <Plus className="w-4 h-4" /> Add Branch
-            </Button>
+            <Link href={`/${locale}/settings/branches/new`}>
+              <Button size="sm" className="mt-2 gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white">
+                <Plus className="w-4 h-4" /> Add Branch
+              </Button>
+            </Link>
           </div>
         </div>
       ) : (
@@ -116,16 +121,12 @@ export default async function BranchesPage() {
 
                 {/* Actions */}
                 <div className="flex gap-2 pt-3 border-t border-paws-sand/50">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs flex-1">
-                    Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs flex-1 text-muted-foreground"
-                  >
-                    {branch.is_active ? "Deactivate" : "Activate"}
-                  </Button>
+                  <Link href={`/${locale}/settings/branches/${branch.id}/edit`} className="flex-1">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs w-full">
+                      Edit
+                    </Button>
+                  </Link>
+                  <BranchActiveToggle id={branch.id} isActive={branch.is_active} />
                 </div>
               </CardContent>
             </Card>

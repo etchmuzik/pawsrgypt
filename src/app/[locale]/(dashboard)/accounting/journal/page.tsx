@@ -9,7 +9,7 @@ type JournalEntry = {
   id: string;
   reference: string;
   description: string | null;
-  date: string;
+  entry_date: string;
   created_at: string;
   journal_lines: JournalLine[];
 };
@@ -30,7 +30,7 @@ async function getJournalEntries(): Promise<JournalEntry[]> {
       id,
       reference,
       description,
-      date,
+      entry_date,
       created_at,
       journal_lines (
         id,
@@ -40,7 +40,7 @@ async function getJournalEntries(): Promise<JournalEntry[]> {
       )
     `
     )
-    .order("date", { ascending: false })
+    .order("entry_date", { ascending: false })
     .limit(50);
 
   if (error) {
@@ -79,10 +79,12 @@ export default async function JournalEntriesPage() {
             View and create double-entry journal entries
           </p>
         </div>
-        <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          New Entry
-        </Button>
+        <Link href={`/${locale}/accounting/journal/new`}>
+          <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            New Entry
+          </Button>
+        </Link>
       </div>
 
       {entries.length === 0 ? (
@@ -94,10 +96,12 @@ export default async function JournalEntriesPage() {
           <p className="text-muted-foreground mb-4">
             Create your first journal entry to start recording transactions.
           </p>
-          <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            New Entry
-          </Button>
+          <Link href={`/${locale}/accounting/journal/new`}>
+            <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              New Entry
+            </Button>
+          </Link>
         </Card>
       ) : (
         <Card className="border-paws-sand overflow-hidden">
@@ -140,7 +144,7 @@ export default async function JournalEntriesPage() {
                       className="hover:bg-paws-cream/20 transition-colors cursor-pointer"
                     >
                       <td className="px-5 py-3 text-sm text-paws-brown-dark whitespace-nowrap">
-                        {formatDate(entry.date)}
+                        {formatDate(entry.entry_date)}
                       </td>
                       <td className="px-5 py-3">
                         <span className="text-sm font-mono text-paws-brown-dark">

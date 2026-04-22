@@ -64,10 +64,12 @@ export default async function ChartOfAccountsPage() {
             Manage your account structure and hierarchy
           </p>
         </div>
-        <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Account
-        </Button>
+        <Link href={`/${locale}/accounting/accounts/new`}>
+          <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Account
+          </Button>
+        </Link>
       </div>
 
       {accounts.length === 0 ? (
@@ -79,10 +81,12 @@ export default async function ChartOfAccountsPage() {
           <p className="text-muted-foreground mb-4">
             Create your first account to start building your chart of accounts.
           </p>
-          <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Account
-          </Button>
+          <Link href={`/${locale}/accounting/accounts/new`}>
+            <Button className="bg-paws-orange hover:bg-paws-orange/90 text-white">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Account
+            </Button>
+          </Link>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -112,8 +116,9 @@ export default async function ChartOfAccountsPage() {
 
                 <div className="divide-y divide-paws-sand/50">
                   {typeAccounts.map((account) => (
-                    <div
+                    <Link
                       key={account.id}
+                      href={`/${locale}/accounting/accounts/${account.id}/edit`}
                       className="px-5 py-3 flex items-center justify-between hover:bg-paws-cream/20 transition-colors"
                     >
                       <div className="flex items-center gap-4">
@@ -137,7 +142,7 @@ export default async function ChartOfAccountsPage() {
                         )}
                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </Card>
