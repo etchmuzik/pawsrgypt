@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
+import { ReportHeader } from "@/components/dashboard/ReportHeader";
+import { getTranslations } from "next-intl/server";
 
 interface VATReportPageProps {
   searchParams: Promise<{ range?: string }>;
@@ -65,18 +67,13 @@ export default async function VATReportPage({ searchParams }: VATReportPageProps
   const params = await searchParams;
   const range = resolveRange(params.range);
   const data = await getVATData(range.from, range.to);
+  const t = await getTranslations("accounting");
 
   const payable = data.netVAT > 0;
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href={`/${locale}/accounting/reports`} className="text-sm text-muted-foreground hover:text-paws-orange transition-colors">
-          &larr; Back to Reports
-        </Link>
-        <h1 className="text-2xl font-bold text-neutral-900 mt-2">VAT Report</h1>
-        <p className="text-sm text-muted-foreground mt-1">VAT collected and paid for tax filing</p>
-      </div>
+      <ReportHeader title={t("vat_report")} subtitle={t("vat_report")} />
 
       <ReportDateFilter basePath={`/${locale}/accounting/reports/vat`} current={range.preset} />
 

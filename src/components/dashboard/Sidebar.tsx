@@ -20,6 +20,7 @@ import {
   FileText,
   Menu,
   X,
+  Globe,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -42,6 +43,7 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const locale = useLocale();
+  const otherLocale = locale === "ar" ? "en" : "ar";
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -60,7 +62,9 @@ export function Sidebar() {
         </div>
         <div className="flex-1">
           <p className="font-bold text-sm text-white">PAWS Egypt</p>
-          <p className="text-xs text-sidebar-foreground/60">Management</p>
+          <p className="text-xs text-sidebar-foreground/60">
+            {locale === "ar" ? "لوحة الإدارة" : "Management"}
+          </p>
         </div>
         {/* Close button on mobile */}
         <button
@@ -103,14 +107,21 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      {/* Logout */}
-      <div className="p-3 border-t border-sidebar-border shrink-0">
+      {/* Language switcher + Logout */}
+      <div className="p-3 border-t border-sidebar-border shrink-0 space-y-1">
+        <Link
+          href={`/${otherLocale}${pathname.replace(`/${locale}`, "") || ""}`}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{locale === "ar" ? "English" : "العربية"}</span>
+        </Link>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
         >
           <LogOut className="w-4 h-4" />
-          <span>Logout</span>
+          <span>{locale === "ar" ? "تسجيل الخروج" : "Logout"}</span>
         </button>
       </div>
     </>

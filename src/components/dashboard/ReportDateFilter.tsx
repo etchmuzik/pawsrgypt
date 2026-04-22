@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { DATE_PRESETS } from "@/lib/report-dates";
 
 interface ReportDateFilterProps {
@@ -7,6 +10,7 @@ interface ReportDateFilterProps {
 }
 
 export function ReportDateFilter({ basePath, current }: ReportDateFilterProps) {
+  const t = useTranslations("date_presets");
   return (
     <div className="flex flex-wrap gap-1.5 mb-5">
       {DATE_PRESETS.map((preset) => {
@@ -22,7 +26,7 @@ export function ReportDateFilter({ basePath, current }: ReportDateFilterProps) {
                 : "text-xs px-3 py-1.5 rounded-full border border-paws-sand text-paws-brown hover:border-paws-orange hover:text-paws-orange transition-colors"
             }
           >
-            {preset.label}
+            {t(preset.value as "30d" | "90d" | "mtd" | "ytd" | "all")}
           </Link>
         );
       })}

@@ -2,7 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { Scale } from "lucide-react";
 import Link from "next/link";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
+import { ReportHeader } from "@/components/dashboard/ReportHeader";
 
 interface BalanceSheetPageProps {
   searchParams: Promise<{ asOf?: string }>;
@@ -99,6 +100,7 @@ export default async function BalanceSheetPage({ searchParams }: BalanceSheetPag
   const params = await searchParams;
   const asOf = params.asOf ?? todayIso();
   const data = await getBalanceSheet(asOf);
+  const t = await getTranslations("accounting");
 
   const balanced = Math.abs(data.totalAssets - data.totalLiabilitiesAndEquity) < 0.01;
   const empty =
@@ -109,13 +111,7 @@ export default async function BalanceSheetPage({ searchParams }: BalanceSheetPag
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href={`/${locale}/accounting/reports`} className="text-sm text-muted-foreground hover:text-paws-orange transition-colors">
-          &larr; Back to Reports
-        </Link>
-        <h1 className="text-2xl font-bold text-neutral-900 mt-2">Balance Sheet</h1>
-        <p className="text-sm text-muted-foreground mt-1">Assets, liabilities, and equity as of a point in time</p>
-      </div>
+      <ReportHeader title={t("balance_sheet")} subtitle={t("balance_sheet")} />
 
       <form className="mb-6 flex items-end gap-3" action={`/${locale}/accounting/reports/balance-sheet`}>
         <div>

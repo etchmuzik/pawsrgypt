@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
+import { ReportHeader } from "@/components/dashboard/ReportHeader";
+import { getTranslations } from "next-intl/server";
 
 interface ProfitLossPageProps {
   searchParams: Promise<{ range?: string }>;
@@ -73,18 +75,13 @@ export default async function ProfitLossPage({ searchParams }: ProfitLossPagePro
   const params = await searchParams;
   const range = resolveRange(params.range);
   const data = await getPnLData(range.from, range.to);
+  const t = await getTranslations("accounting");
 
   const empty = data.totalIncome === 0 && data.totalExpenses === 0;
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href={`/${locale}/accounting/reports`} className="text-sm text-muted-foreground hover:text-paws-orange transition-colors">
-          &larr; Back to Reports
-        </Link>
-        <h1 className="text-2xl font-bold text-neutral-900 mt-2">Profit & Loss</h1>
-        <p className="text-sm text-muted-foreground mt-1">Revenue, expenses, and net income</p>
-      </div>
+      <ReportHeader title={t("profit_loss")} subtitle={t("profit_loss")} />
 
       <ReportDateFilter basePath={`/${locale}/accounting/reports/profit-loss`} current={range.preset} />
 

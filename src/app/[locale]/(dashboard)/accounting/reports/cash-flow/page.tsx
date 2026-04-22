@@ -5,6 +5,8 @@ import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
+import { ReportHeader } from "@/components/dashboard/ReportHeader";
+import { getTranslations } from "next-intl/server";
 
 interface CashFlowPageProps {
   searchParams: Promise<{ range?: string }>;
@@ -46,6 +48,7 @@ export default async function CashFlowPage({ searchParams }: CashFlowPageProps) 
   const params = await searchParams;
   const range = resolveRange(params.range);
   const data = await getCashFlow(range.from, range.to);
+  const t = await getTranslations("accounting");
 
   const methods = [
     { label: "Cash", value: data.cash, color: "text-green-600", bg: "bg-green-50" },
@@ -56,13 +59,7 @@ export default async function CashFlowPage({ searchParams }: CashFlowPageProps) 
 
   return (
     <div>
-      <div className="mb-6">
-        <Link href={`/${locale}/accounting/reports`} className="text-sm text-muted-foreground hover:text-paws-orange transition-colors">
-          &larr; Back to Reports
-        </Link>
-        <h1 className="text-2xl font-bold text-neutral-900 mt-2">Cash Flow</h1>
-        <p className="text-sm text-muted-foreground mt-1">Cash inflows by payment method</p>
-      </div>
+      <ReportHeader title={t("cash_flow")} subtitle={t("cash_flow")} />
 
       <ReportDateFilter basePath={`/${locale}/accounting/reports/cash-flow`} current={range.preset} />
 
