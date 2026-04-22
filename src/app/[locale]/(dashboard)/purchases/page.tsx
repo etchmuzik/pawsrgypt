@@ -60,7 +60,6 @@ export default async function PurchasesPage({ params }: PageProps) {
                 <tr
                   key={order.id}
                   className="border-b border-paws-sand/50 hover:bg-paws-cream/30 cursor-pointer"
-                  onClick={undefined}
                 >
                   <td className="px-4 py-3 font-mono text-xs">
                     <Link href={`/${locale}/purchases/${order.id}`} className="text-paws-orange hover:underline">
