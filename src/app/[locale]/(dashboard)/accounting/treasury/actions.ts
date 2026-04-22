@@ -78,6 +78,54 @@ export async function updateTreasuryAccount(id: string, input: TreasuryInput): P
   return { success: true, id };
 }
 
+export async function adjustTreasuryBalance(
+  id: string,
+  newBalance: number,
+  reason: string,
+): Promise<ActionResult> {
+  if (!id) return { success: false, error: "Missing id" };
+  if (!reason.trim()) return { success: false, error: "A reason is required for balance adjustments" };
+  const target = Number(newBalance);
+  if (!Number.isFinite(target)) return { success: false, error: "Invalid balance" };
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: current, error: fetchErr } = await supabase
+    .from("treasury_accounts")
+    .select("balance, name_en, currency")
+    .eq("id", id)
+    .maybeSingle();
+  if (fetchErr) return { success: false, error: fetchErr.message };
+  const row = current as { balance: number; name_en: string; currency: string } | null;
+  if (!row) return { success: false, error: "Account not found" };
+
+  const oldBalance = Number(row.balance);
+  if (Math.abs(oldBalance - target) < 0.005) {
+    return { success: false, error: "New balance matches current balance — nothing to adjust" };
+  }
+
+  const { error: updErr } = await supabase
+    .from("treasury_accounts")
+    .update({ balance: target } as never)
+    .eq("id", id);
+  if (updErr) return { success: false, error: updErr.message };
+
+  await supabase.from("audit_log").insert({
+    user_id: user.id,
+    action: "treasury_balance_adjustment",
+    table_name: "treasury_accounts",
+    record_id: id,
+    old_values: { balance: oldBalance },
+    new_values: { balance: target, reason: reason.trim() },
+  } as never);
+
+  revalidatePath("/[locale]/(dashboard)/accounting/treasury", "page");
+  return { success: true, id };
+}
+
 export async function transferBetweenAccounts(
   fromId: string,
   toId: string,

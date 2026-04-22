@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import {
+  adjustTreasuryBalance,
   createTreasuryAccount,
   updateTreasuryAccount,
   type TreasuryType,
@@ -130,7 +131,7 @@ export function TreasuryAccountForm({ mode, initial, branches }: TreasuryAccount
             value={balance}
             onChange={(e) => setBalance(e.target.value)}
           />
-          <p className="text-xs text-muted-foreground mt-1">Balance is managed via transfers after creation.</p>
+          <p className="text-xs text-muted-foreground mt-1">Balance is managed via transfers or adjustments after creation.</p>
         </div>
       )}
 
@@ -150,6 +151,90 @@ export function TreasuryAccountForm({ mode, initial, branches }: TreasuryAccount
           Cancel
         </Button>
       </div>
+
+      {mode === "edit" && initial?.id && (
+        <BalanceAdjustmentSection
+          id={initial.id}
+          currentBalance={initial.balance}
+          currency={initial.currency}
+        />
+      )}
     </form>
+  );
+}
+
+interface BalanceAdjustmentSectionProps {
+  id: string;
+  currentBalance: number;
+  currency: string;
+}
+
+function BalanceAdjustmentSection({ id, currentBalance, currency }: BalanceAdjustmentSectionProps) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [newBalance, setNewBalance] = useState(String(currentBalance));
+  const [reason, setReason] = useState("");
+
+  function handleAdjust(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setError(null);
+    setSuccess(false);
+    if (!window.confirm(`Adjust balance from ${currentBalance.toFixed(2)} to ${Number(newBalance).toFixed(2)} ${currency}? This will be logged to the audit trail.`)) return;
+    startTransition(async () => {
+      const res = await adjustTreasuryBalance(id, Number(newBalance), reason);
+      if (!res.success) {
+        setError(res.error ?? "Failed to adjust");
+        return;
+      }
+      setSuccess(true);
+      setReason("");
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="mt-8 pt-6 border-t border-neutral-200">
+      <h3 className="text-sm font-semibold text-neutral-900 mb-1">Balance Adjustment</h3>
+      <p className="text-xs text-muted-foreground mb-3">
+        Direct balance changes bypass transfers and are recorded to the audit log with the reason provided.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="new_balance" className="text-xs">New Balance ({currency})</Label>
+          <Input
+            id="new_balance"
+            type="number"
+            step="0.01"
+            value={newBalance}
+            onChange={(e) => setNewBalance(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label htmlFor="reason" className="text-xs">Reason (required)</Label>
+          <Input
+            id="reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Bank reconciliation correction"
+          />
+        </div>
+      </div>
+      {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      {success && <p className="text-sm text-green-700 mt-2">Balance adjusted and logged.</p>}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="mt-3 gap-1.5"
+        disabled={pending || !reason.trim() || Number(newBalance) === currentBalance}
+        onClick={handleAdjust}
+      >
+        {pending && <Loader2 className="w-4 h-4 animate-spin" />}
+        Adjust Balance
+      </Button>
+    </div>
   );
 }

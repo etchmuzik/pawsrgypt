@@ -141,15 +141,17 @@ export default async function JournalEntriesPage() {
                   return (
                     <tr
                       key={entry.id}
-                      className="hover:bg-paws-cream/20 transition-colors cursor-pointer"
+                      className="hover:bg-paws-cream/20 transition-colors"
                     >
                       <td className="px-5 py-3 text-sm text-paws-brown-dark whitespace-nowrap">
-                        {formatDate(entry.entry_date)}
+                        <Link href={`/${locale}/accounting/journal/${entry.id}`} className="hover:underline">
+                          {formatDate(entry.entry_date)}
+                        </Link>
                       </td>
                       <td className="px-5 py-3">
-                        <span className="text-sm font-mono text-paws-brown-dark">
-                          {entry.reference}
-                        </span>
+                        <Link href={`/${locale}/accounting/journal/${entry.id}`} className="text-sm font-mono text-paws-orange hover:underline">
+                          {entry.reference ?? entry.id.slice(0, 8)}
+                        </Link>
                       </td>
                       <td className="px-5 py-3 text-sm text-muted-foreground max-w-xs truncate">
                         {entry.description ?? "-"}

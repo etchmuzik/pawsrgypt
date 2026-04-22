@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
 import { PurchaseOrderActions } from "@/components/dashboard/PurchaseOrderActions";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 interface PurchaseDetailProps {
   params: Promise<{ id: string; locale: string }>;
@@ -108,7 +110,16 @@ export default async function PurchaseOrderDetailPage({ params }: PurchaseDetail
               Created {formatDate(order.created_at)}
             </p>
           </div>
-          <PurchaseOrderActions orderId={order.id} status={order.status} />
+          <div className="flex flex-wrap items-center gap-2">
+            {order.status === "draft" && (
+              <Link href={`/${locale}/purchases/${order.id}/edit`}>
+                <Button size="sm" variant="outline" className="gap-1.5">
+                  <Pencil className="w-4 h-4" /> Edit
+                </Button>
+              </Link>
+            )}
+            <PurchaseOrderActions orderId={order.id} status={order.status} />
+          </div>
         </div>
       </div>
 

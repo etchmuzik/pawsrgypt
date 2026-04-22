@@ -84,3 +84,93 @@ export async function createJournalEntry(input: JournalEntryInput): Promise<Acti
   revalidatePath("/[locale]/(dashboard)/accounting/journal", "page");
   return { success: true, id: entryId };
 }
+
+interface SourceLine {
+  account_id: string;
+  debit: number;
+  credit: number;
+  description: string | null;
+}
+
+interface SourceEntry {
+  id: string;
+  entry_date: string;
+  reference: string | null;
+  description: string | null;
+  branch_id: string | null;
+  journal_lines: SourceLine[];
+}
+
+export async function reverseJournalEntry(entryId: string): Promise<ActionResult> {
+  if (!entryId) return { success: false, error: "Missing entry id" };
+
+  const supabase = await createClient();
+  const { data: auth } = await supabase.auth.getUser();
+  const user = auth?.user;
+  if (!user) return { success: false, error: "Not authenticated" };
+
+  const { data: srcData, error: srcErr } = await supabase
+    .from("journal_entries")
+    .select("id, entry_date, reference, description, branch_id, journal_lines(account_id, debit, credit, description)")
+    .eq("id", entryId)
+    .maybeSingle();
+
+  if (srcErr || !srcData) {
+    return { success: false, error: srcErr?.message ?? "Entry not found" };
+  }
+
+  const src = srcData as unknown as SourceEntry;
+  if (!src.journal_lines?.length) {
+    return { success: false, error: "Source entry has no lines to reverse" };
+  }
+
+  const reverseRef = src.reference ? `REVERSAL of ${src.reference}` : `REVERSAL of ${src.id.slice(0, 8)}`;
+
+  const existing = await supabase
+    .from("journal_entries")
+    .select("id")
+    .eq("reference", reverseRef)
+    .limit(1);
+  if ((existing.data as Array<{ id: string }> | null)?.length) {
+    return { success: false, error: "This entry has already been reversed" };
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const reverseDate = today < src.entry_date ? src.entry_date : today;
+
+  const { data: newEntry, error: insertErr } = await supabase
+    .from("journal_entries")
+    .insert({
+      entry_date: reverseDate,
+      reference: reverseRef,
+      description: src.description
+        ? `Reversal of entry ${src.id.slice(0, 8)} — ${src.description}`
+        : `Reversal of entry ${src.id.slice(0, 8)}`,
+      branch_id: src.branch_id,
+      created_by: user.id,
+    } as never)
+    .select("id")
+    .maybeSingle();
+
+  if (insertErr || !newEntry) {
+    return { success: false, error: insertErr?.message ?? "Failed to create reversal" };
+  }
+
+  const newId = (newEntry as { id: string }).id;
+  const reversedLines = src.journal_lines.map((l) => ({
+    entry_id: newId,
+    account_id: l.account_id,
+    debit: Number(l.credit) || 0,
+    credit: Number(l.debit) || 0,
+    description: l.description ? `Reversal: ${l.description}` : "Reversal",
+  }));
+
+  const { error: linesErr } = await supabase.from("journal_lines").insert(reversedLines as never);
+  if (linesErr) {
+    await supabase.from("journal_entries").delete().eq("id", newId);
+    return { success: false, error: linesErr.message };
+  }
+
+  revalidatePath("/[locale]/(dashboard)/accounting/journal", "page");
+  return { success: true, id: newId };
+}

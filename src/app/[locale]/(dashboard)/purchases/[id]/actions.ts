@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 interface ActionResult {
   success: boolean;
   error?: string;
+  id?: string;
 }
 
 interface PurchaseItemRow {
@@ -158,6 +159,97 @@ export async function cancelPurchaseOrder(orderId: string): Promise<ActionResult
   revalidatePath(`/[locale]/(dashboard)/purchases/${orderId}`, "page");
   revalidatePath(`/[locale]/(dashboard)/purchases`, "page");
   return { success: true };
+}
+
+interface PurchaseLineInput {
+  product_id: string;
+  variant_id: string | null;
+  quantity: number;
+  unit_cost: number;
+}
+
+interface UpdatePurchaseOrderInput {
+  supplier_id: string;
+  branch_id: string;
+  notes: string | null;
+  discount: number;
+  tax_rate: number;
+  lines: PurchaseLineInput[];
+}
+
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+export async function updatePurchaseOrder(orderId: string, input: UpdatePurchaseOrderInput): Promise<ActionResult> {
+  if (!orderId) return { success: false, error: "Missing order id" };
+  if (!input.supplier_id) return { success: false, error: "Supplier is required" };
+  if (!input.branch_id) return { success: false, error: "Branch is required" };
+  if (!input.lines.length) return { success: false, error: "At least one line is required" };
+
+  for (const line of input.lines) {
+    if (!line.product_id) return { success: false, error: "Every line needs a product" };
+    const qty = Number(line.quantity);
+    const cost = Number(line.unit_cost);
+    if (!qty || qty <= 0) return { success: false, error: "Quantity must be greater than zero" };
+    if (cost < 0) return { success: false, error: "Unit cost cannot be negative" };
+  }
+
+  const supabase = await createClient();
+
+  const { data: currentData, error: fetchErr } = await supabase
+    .from("purchase_orders")
+    .select("status")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (fetchErr) return { success: false, error: fetchErr.message };
+  const current = (currentData as { status: string } | null)?.status;
+  if (!current) return { success: false, error: "Order not found" };
+  if (current !== "draft") {
+    return { success: false, error: `Only draft orders can be edited (current: ${current})` };
+  }
+
+  const subtotal = input.lines.reduce((s, l) => s + Number(l.quantity) * Number(l.unit_cost), 0);
+  const discount = Number(input.discount) || 0;
+  const taxable = Math.max(0, subtotal - discount);
+  const taxRate = Number(input.tax_rate) || 0;
+  const taxAmount = round2(taxable * (taxRate / 100));
+  const total = round2(taxable + taxAmount);
+
+  const { error: headerErr } = await supabase
+    .from("purchase_orders")
+    .update({
+      supplier_id: input.supplier_id,
+      branch_id: input.branch_id,
+      notes: input.notes?.trim() || null,
+      discount,
+      subtotal: round2(subtotal),
+      tax_amount: taxAmount,
+      total,
+    } as never)
+    .eq("id", orderId);
+  if (headerErr) return { success: false, error: headerErr.message };
+
+  const { error: delErr } = await supabase.from("purchase_items").delete().eq("order_id", orderId);
+  if (delErr) return { success: false, error: delErr.message };
+
+  const lineRows = input.lines.map((l) => {
+    const lineTotal = round2(Number(l.quantity) * Number(l.unit_cost));
+    return {
+      order_id: orderId,
+      product_id: l.product_id,
+      variant_id: l.variant_id,
+      quantity: Number(l.quantity),
+      unit_cost: Number(l.unit_cost),
+      total: lineTotal,
+    };
+  });
+  const { error: insErr } = await supabase.from("purchase_items").insert(lineRows as never);
+  if (insErr) return { success: false, error: insErr.message };
+
+  revalidatePath(`/[locale]/(dashboard)/purchases/${orderId}`, "page");
+  revalidatePath(`/[locale]/(dashboard)/purchases`, "page");
+  return { success: true, id: orderId };
 }
 
 export async function markPurchaseOrderOrdered(orderId: string): Promise<ActionResult> {
