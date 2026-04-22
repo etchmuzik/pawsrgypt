@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +22,7 @@ interface TreasuryTransferDialogProps {
 
 export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +30,17 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
   const [toId, setToId] = useState("");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const L = {
+    transfer: locale === "ar" ? "تحويل" : "Transfer",
+    title: locale === "ar" ? "تحويل بين الحسابات" : "Transfer Between Accounts",
+    from: locale === "ar" ? "من" : "From",
+    to: locale === "ar" ? "إلى" : "To",
+    amount: locale === "ar" ? "المبلغ" : "Amount",
+    note: locale === "ar" ? "ملاحظة (اختياري)" : "Note (optional)",
+    select: locale === "ar" ? "— اختار —" : "— Select —",
+    cancel: locale === "ar" ? "إلغاء" : "Cancel",
+    failed: locale === "ar" ? "فشل التحويل" : "Transfer failed",
+  };
 
   function reset() {
     setFromId("");
@@ -43,7 +56,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
     startTransition(async () => {
       const res = await transferBetweenAccounts(fromId, toId, Number(amount), note || null);
       if (!res.success) {
-        setError(res.error ?? "Transfer failed");
+        setError(res.error ?? L.failed);
         return;
       }
       reset();
@@ -61,14 +74,14 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
         onClick={() => setOpen(true)}
         disabled={accounts.length < 2}
       >
-        <ArrowLeftRight className="w-4 h-4" /> Transfer
+        <ArrowLeftRight className="w-4 h-4" /> {L.transfer}
       </Button>
 
       {open && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl w-full max-w-md p-5 border border-paws-sand">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-neutral-900">Transfer Between Accounts</h2>
+              <h2 className="text-lg font-bold text-neutral-900">{L.title}</h2>
               <button
                 type="button"
                 onClick={() => { setOpen(false); reset(); }}
@@ -80,7 +93,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <Label htmlFor="from">From</Label>
+                <Label htmlFor="from">{L.from}</Label>
                 <select
                   id="from"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
@@ -88,7 +101,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
                   onChange={(e) => setFromId(e.target.value)}
                   required
                 >
-                  <option value="">— Select —</option>
+                  <option value="">{L.select}</option>
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name_en} ({a.currency}) · {a.balance.toFixed(2)}
@@ -98,7 +111,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
               </div>
 
               <div>
-                <Label htmlFor="to">To</Label>
+                <Label htmlFor="to">{L.to}</Label>
                 <select
                   id="to"
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
@@ -106,7 +119,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
                   onChange={(e) => setToId(e.target.value)}
                   required
                 >
-                  <option value="">— Select —</option>
+                  <option value="">{L.select}</option>
                   {accounts.filter((a) => a.id !== fromId).map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name_en} ({a.currency})
@@ -116,7 +129,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
               </div>
 
               <div>
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="amount">{L.amount}</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -129,7 +142,7 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
               </div>
 
               <div>
-                <Label htmlFor="note">Note (optional)</Label>
+                <Label htmlFor="note">{L.note}</Label>
                 <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} />
               </div>
 
@@ -138,10 +151,10 @@ export function TreasuryTransferDialog({ accounts }: TreasuryTransferDialogProps
               <div className="flex gap-2 pt-2">
                 <Button type="submit" disabled={pending} className="bg-paws-orange hover:bg-paws-orange/90 text-white flex-1">
                   {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                  Transfer
+                  {L.transfer}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => { setOpen(false); reset(); }}>
-                  Cancel
+                  {L.cancel}
                 </Button>
               </div>
             </form>

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +49,26 @@ function fmt(n: number): string {
 export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("accounting");
+  const tCommon = useTranslations("common");
+  const L = {
+    reference: locale === "ar" ? "المرجع (اختياري)" : "Reference (optional)",
+    branch: locale === "ar" ? "الفرع (اختياري)" : "Branch (optional)",
+    none: locale === "ar" ? "— لا شيء —" : "— None —",
+    descriptionOpt: locale === "ar" ? "الوصف (اختياري)" : "Description (optional)",
+    account: locale === "ar" ? "الحساب" : "Account",
+    debit: locale === "ar" ? "مدين" : "Debit",
+    credit: locale === "ar" ? "دائن" : "Credit",
+    memo: locale === "ar" ? "بيان" : "Memo",
+    select: locale === "ar" ? "— اختار —" : "— Select —",
+    totals: locale === "ar" ? "الإجمالي" : "Totals",
+    balanced: locale === "ar" ? "متوازن" : "Balanced",
+    diff: locale === "ar" ? "فرق" : "Difference",
+    addLine: locale === "ar" ? "ضيف سطر" : "Add Line",
+    remove: locale === "ar" ? "شيل السطر" : "Remove line",
+    createEntry: locale === "ar" ? "إنشاء القيد" : "Create Entry",
+    failed: locale === "ar" ? "فشل الحفظ" : "Failed to save",
+  };
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -93,7 +113,7 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
     startTransition(async () => {
       const res = await createJournalEntry(payload);
       if (!res.success) {
-        setError(res.error ?? "Failed to save");
+        setError(res.error ?? L.failed);
         return;
       }
       router.push(`/${locale}/accounting/journal`);
@@ -105,22 +125,22 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="entry_date">Date</Label>
+          <Label htmlFor="entry_date">{tCommon("date")}</Label>
           <Input id="entry_date" type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} required />
         </div>
         <div>
-          <Label htmlFor="reference">Reference (optional)</Label>
-          <Input id="reference" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="e.g. JE-001" />
+          <Label htmlFor="reference">{L.reference}</Label>
+          <Input id="reference" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="JE-001" />
         </div>
         <div>
-          <Label htmlFor="branch">Branch (optional)</Label>
+          <Label htmlFor="branch">{L.branch}</Label>
           <select
             id="branch"
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
             value={branchId}
             onChange={(e) => setBranchId(e.target.value)}
           >
-            <option value="">— None —</option>
+            <option value="">{L.none}</option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
@@ -129,7 +149,7 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
       </div>
 
       <div>
-        <Label htmlFor="description">Description (optional)</Label>
+        <Label htmlFor="description">{L.descriptionOpt}</Label>
         <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} />
       </div>
 
@@ -137,10 +157,10 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-neutral-50 border-b border-neutral-200">
-              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Account</th>
-              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">Debit</th>
-              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">Credit</th>
-              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Memo</th>
+              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{L.account}</th>
+              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">{L.debit}</th>
+              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">{L.credit}</th>
+              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{L.memo}</th>
               <th className="w-10"></th>
             </tr>
           </thead>
@@ -154,7 +174,7 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
                     onChange={(e) => updateLine(line.key, { account_id: e.target.value })}
                     required
                   >
-                    <option value="">— Select —</option>
+                    <option value="">{L.select}</option>
                     {accounts.map((a) => (
                       <option key={a.id} value={a.id}>{a.code} · {a.name_en}</option>
                     ))}
@@ -192,7 +212,7 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
                     onClick={() => removeLine(line.key)}
                     disabled={lines.length <= 2}
                     className="text-red-500 hover:text-red-700 disabled:opacity-30"
-                    aria-label="Remove line"
+                    aria-label={L.remove}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -202,15 +222,15 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
           </tbody>
           <tfoot>
             <tr className="bg-neutral-50 border-t-2 border-neutral-200 font-semibold">
-              <td className="px-3 py-2 text-right text-muted-foreground">Totals</td>
+              <td className="px-3 py-2 text-right text-muted-foreground">{L.totals}</td>
               <td className="px-3 py-2 text-right font-mono">{fmt(totalDebit)}</td>
               <td className="px-3 py-2 text-right font-mono">{fmt(totalCredit)}</td>
               <td colSpan={2} className="px-3 py-2">
                 {balanced ? (
-                  <span className="text-green-700 text-xs">Balanced</span>
+                  <span className="text-green-700 text-xs">{L.balanced}</span>
                 ) : (
                   <span className="text-red-600 text-xs">
-                    Difference: {fmt(Math.abs(totalDebit - totalCredit))}
+                    {L.diff}: {fmt(Math.abs(totalDebit - totalCredit))}
                   </span>
                 )}
               </td>
@@ -220,7 +240,7 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
       </div>
 
       <Button type="button" variant="outline" size="sm" onClick={addLine} className="gap-1.5">
-        <Plus className="w-4 h-4" /> Add Line
+        <Plus className="w-4 h-4" /> {L.addLine}
       </Button>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -232,10 +252,10 @@ export function JournalEntryForm({ accounts, branches }: JournalEntryFormProps) 
           className="bg-paws-orange hover:bg-paws-orange/90 text-white"
         >
           {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          Create Entry
+          {L.createEntry}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
       </div>
     </form>

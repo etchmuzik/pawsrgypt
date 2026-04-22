@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,6 +72,20 @@ function fmt(n: number): string {
 export function PurchaseOrderEditForm({ initial, suppliers, branches, products }: PurchaseOrderEditFormProps) {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations("purchases");
+  const tCommon = useTranslations("common");
+  const L = {
+    select: locale === "ar" ? "— اختار —" : "— Select —",
+    product: locale === "ar" ? "المنتج" : "Product",
+    qty: locale === "ar" ? "الكمية" : "Qty",
+    unitCost: locale === "ar" ? "سعر الوحدة" : "Unit Cost",
+    lineTotal: locale === "ar" ? "إجمالي السطر" : "Line Total",
+    remove: locale === "ar" ? "شيل السطر" : "Remove line",
+    addLine: locale === "ar" ? "ضيف سطر" : "Add Line",
+    discount: locale === "ar" ? "الخصم" : "Discount",
+    taxRate: locale === "ar" ? "نسبة الضريبة (%)" : "Tax Rate (%)",
+    failed: locale === "ar" ? "فشل الحفظ" : "Failed to save",
+  };
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -145,7 +159,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
         })),
       });
       if (!res.success) {
-        setError(res.error ?? "Failed to save");
+        setError(res.error ?? L.failed);
         return;
       }
       router.push(`/${locale}/purchases/${initial.id}`);
@@ -157,7 +171,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="supplier">Supplier</Label>
+          <Label htmlFor="supplier">{t("supplier")}</Label>
           <select
             id="supplier"
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
@@ -165,14 +179,14 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
             onChange={(e) => setSupplierId(e.target.value)}
             required
           >
-            <option value="">— Select —</option>
+            <option value="">{L.select}</option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
         </div>
         <div>
-          <Label htmlFor="branch">Branch</Label>
+          <Label htmlFor="branch">{tCommon("branch")}</Label>
           <select
             id="branch"
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"
@@ -180,7 +194,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
             onChange={(e) => setBranchId(e.target.value)}
             required
           >
-            <option value="">— Select —</option>
+            <option value="">{L.select}</option>
             {branches.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
             ))}
@@ -192,10 +206,10 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-neutral-50 border-b border-neutral-200">
-              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Product</th>
-              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-28">Qty</th>
-              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">Unit Cost</th>
-              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">Line Total</th>
+              <th className="text-left px-3 py-2 font-semibold text-muted-foreground">{L.product}</th>
+              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-28">{L.qty}</th>
+              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">{L.unitCost}</th>
+              <th className="text-right px-3 py-2 font-semibold text-muted-foreground w-32">{L.lineTotal}</th>
               <th className="w-10"></th>
             </tr>
           </thead>
@@ -211,7 +225,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
                       onChange={(e) => selectProduct(line.key, e.target.value)}
                       required
                     >
-                      <option value="">— Select —</option>
+                      <option value="">{L.select}</option>
                       {products.map((p) => (
                         <option key={p.id} value={p.id}>{p.sku ? `${p.sku} · ` : ""}{p.name_en}</option>
                       ))}
@@ -244,7 +258,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
                       onClick={() => removeLine(line.key)}
                       disabled={lines.length <= 1}
                       className="text-red-500 hover:text-red-700 disabled:opacity-30"
-                      aria-label="Remove line"
+                      aria-label={L.remove}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -257,12 +271,12 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
       </div>
 
       <Button type="button" variant="outline" size="sm" onClick={addLine} className="gap-1.5">
-        <Plus className="w-4 h-4" /> Add Line
+        <Plus className="w-4 h-4" /> {L.addLine}
       </Button>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <Label htmlFor="discount">Discount (EGP)</Label>
+          <Label htmlFor="discount">{L.discount} ({tCommon("egp")})</Label>
           <Input
             id="discount"
             type="number"
@@ -273,7 +287,7 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
           />
         </div>
         <div>
-          <Label htmlFor="taxRate">Tax Rate (%)</Label>
+          <Label htmlFor="taxRate">{L.taxRate}</Label>
           <Input
             id="taxRate"
             type="number"
@@ -284,16 +298,16 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
           />
         </div>
         <div>
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">{tCommon("notes")}</Label>
           <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
       </div>
 
       <div className="ml-auto max-w-xs bg-neutral-50 rounded-lg p-4 space-y-1 text-sm">
-        <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span className="font-mono">{fmt(totals.subtotal)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span className="font-mono">-{fmt(totals.discount)}</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span className="font-mono">{fmt(totals.tax)}</span></div>
-        <div className="flex justify-between font-bold pt-2 border-t border-neutral-300"><span>Total</span><span className="font-mono">{fmt(totals.total)} EGP</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">{tCommon("subtotal")}</span><span className="font-mono">{fmt(totals.subtotal)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">{L.discount}</span><span className="font-mono">-{fmt(totals.discount)}</span></div>
+        <div className="flex justify-between"><span className="text-muted-foreground">{tCommon("tax")}</span><span className="font-mono">{fmt(totals.tax)}</span></div>
+        <div className="flex justify-between font-bold pt-2 border-t border-neutral-300"><span>{tCommon("total")}</span><span className="font-mono">{fmt(totals.total)} {tCommon("egp")}</span></div>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -301,9 +315,9 @@ export function PurchaseOrderEditForm({ initial, suppliers, branches, products }
       <div className="flex gap-2">
         <Button type="submit" disabled={pending} className="bg-paws-orange hover:bg-paws-orange/90 text-white">
           {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          Save Changes
+          {tCommon("save_changes")}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()}>Cancel</Button>
+        <Button type="button" variant="outline" onClick={() => router.back()}>{tCommon("cancel")}</Button>
       </div>
     </form>
   );

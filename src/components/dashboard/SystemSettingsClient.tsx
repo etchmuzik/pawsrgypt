@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,16 +14,23 @@ import {
 
 export function InitializeDefaultsButton() {
   const router = useRouter();
+  const locale = useLocale();
   const [pending, startTransition] = useTransition();
+  const L = {
+    failed: locale === "ar" ? "فشلت تهيئة الإعدادات." : "Failed to initialize settings.",
+    ok: locale === "ar" ? "تم إنشاء الإعدادات الافتراضية." : "Default settings initialized.",
+    loading: locale === "ar" ? "جاري التهيئة..." : "Initializing...",
+    button: locale === "ar" ? "تهيئة الإعدادات الافتراضية" : "Initialize Default Settings",
+  };
 
   function handleClick() {
     startTransition(async () => {
       const result = await initializeDefaultSettings();
       if (!result.ok) {
-        toast.error(result.error ?? "Failed to initialize settings.");
+        toast.error(result.error ?? L.failed);
         return;
       }
-      toast.success("Default settings initialized.");
+      toast.success(L.ok);
       router.refresh();
     });
   }
@@ -34,7 +42,7 @@ export function InitializeDefaultsButton() {
       className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white"
     >
       {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-      {pending ? "Initializing..." : "Initialize Default Settings"}
+      {pending ? L.loading : L.button}
     </Button>
   );
 }
@@ -46,9 +54,14 @@ interface EditableSettingProps {
 
 export function EditableSetting({ id, value }: EditableSettingProps) {
   const router = useRouter();
+  const locale = useLocale();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const [pending, startTransition] = useTransition();
+  const L = {
+    failed: locale === "ar" ? "فشل تحديث الإعداد." : "Failed to update setting.",
+    ok: locale === "ar" ? "تم تحديث الإعداد." : "Setting updated.",
+  };
 
   function save() {
     if (draft === value) {
@@ -58,10 +71,10 @@ export function EditableSetting({ id, value }: EditableSettingProps) {
     startTransition(async () => {
       const result = await updateSetting(id, draft);
       if (!result.ok) {
-        toast.error(result.error ?? "Failed to update setting.");
+        toast.error(result.error ?? L.failed);
         return;
       }
-      toast.success("Setting updated.");
+      toast.success(L.ok);
       setEditing(false);
       router.refresh();
     });

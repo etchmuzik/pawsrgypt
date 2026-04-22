@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,27 @@ function downloadCsv(csv: string, filename: string) {
 
 export function ProductsTable({ products, locale }: ProductsTableProps) {
   const [query, setQuery] = useState("");
+  const uiLocale = useLocale();
+  const t = useTranslations("products");
+  const tCommon = useTranslations("common");
+  const tSettings = useTranslations("settings");
+  const L = {
+    searchPlaceholder: uiLocale === "ar" ? "دور بالاسم أو الكود أو البراند أو الفئة..." : "Search products by name, SKU, brand, category...",
+    exportCsv: uiLocale === "ar" ? "تصدير CSV" : "Export CSV",
+    image: uiLocale === "ar" ? "الصورة" : "Image",
+    productCol: uiLocale === "ar" ? "المنتج" : "Product",
+    categoryCol: uiLocale === "ar" ? "الفئة" : "Category",
+    priceCol: uiLocale === "ar" ? "السعر" : "Price",
+    costCol: uiLocale === "ar" ? "التكلفة" : "Cost",
+    statusCol: uiLocale === "ar" ? "الحالة" : "Status",
+    actionsCol: uiLocale === "ar" ? "إجراءات" : "Actions",
+    noMatches: uiLocale === "ar" ? "مفيش نتائج" : "No matches",
+    differentSearch: uiLocale === "ar" ? "جرب كلمة بحث تانية." : "Try a different search term.",
+    duplicate: uiLocale === "ar" ? "تكرار" : "Duplicate",
+    duplicateTitle: uiLocale === "ar" ? "تكرار المنتج" : "Duplicate product",
+    featured: uiLocale === "ar" ? "مميز" : "Featured",
+    ofTotal: uiLocale === "ar" ? "من" : "of",
+  };
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -119,14 +141,14 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products by name, SKU, brand, category..."
+            placeholder={L.searchPlaceholder}
             className="ps-9 bg-white border-paws-sand"
           />
         </div>
         <div className="flex items-center gap-2">
           {query && (
             <span className="text-xs text-muted-foreground">
-              {filtered.length} of {products.length}
+              {filtered.length} {L.ofTotal} {products.length}
             </span>
           )}
           <Button
@@ -136,7 +158,7 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
             disabled={filtered.length === 0}
             className="gap-1.5 border-paws-sand"
           >
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> {L.exportCsv}
           </Button>
         </div>
       </div>
@@ -146,14 +168,14 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-paws-sand bg-paws-cream/50">
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Image</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Product</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.image}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.productCol}</th>
                 <th className="text-start px-4 py-3 font-semibold text-paws-brown">SKU</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Category</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Price</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Cost</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Status</th>
-                <th className="text-start px-4 py-3 font-semibold text-paws-brown">Actions</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.categoryCol}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.priceCol}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.costCol}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.statusCol}</th>
+                <th className="text-start px-4 py-3 font-semibold text-paws-brown">{L.actionsCol}</th>
               </tr>
             </thead>
             <tbody>
@@ -166,18 +188,16 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                       </div>
                       <div>
                         <p className="font-medium text-paws-brown-dark">
-                          {query ? "No matches" : "No products yet"}
+                          {query ? L.noMatches : t("no_products")}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {query
-                            ? "Try a different search term."
-                            : "Add your first product to get started."}
+                          {query ? L.differentSearch : ""}
                         </p>
                       </div>
                       {!query && (
                         <Link href={`/${locale}/products/new`}>
                           <Button size="sm" className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white mt-2">
-                            <Plus className="w-4 h-4" /> Add Product
+                            <Plus className="w-4 h-4" /> {t("add")}
                           </Button>
                         </Link>
                       )}
@@ -230,7 +250,7 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                       <td className="px-4 py-3">
                         {price != null ? (
                           <span className="font-semibold text-paws-brown-dark">
-                            {price.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">EGP</span>
+                            {price.toLocaleString()} <span className="text-xs font-normal text-muted-foreground">{tCommon("egp")}</span>
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -240,7 +260,7 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                       <td className="px-4 py-3">
                         {cost != null ? (
                           <span className="text-muted-foreground text-sm">
-                            {cost.toLocaleString()} EGP
+                            {cost.toLocaleString()} {tCommon("egp")}
                           </span>
                         ) : (
                           <span className="text-muted-foreground">—</span>
@@ -253,11 +273,11 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                             variant={product.is_active ? "default" : "secondary"}
                             className={product.is_active ? "bg-green-100 text-green-700 hover:bg-green-100 w-fit" : "w-fit"}
                           >
-                            {product.is_active ? "Active" : "Inactive"}
+                            {product.is_active ? tSettings("active") : tSettings("inactive")}
                           </Badge>
                           {product.is_featured && (
                             <Badge className="bg-paws-orange/10 text-paws-orange hover:bg-paws-orange/10 w-fit text-[10px]">
-                              Featured
+                              {L.featured}
                             </Badge>
                           )}
                         </div>
@@ -268,13 +288,13 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                           <Link href={`/${locale}/products/${product.id}/edit`}>
                             <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-paws-orange hover:text-paws-orange/80 hover:bg-paws-orange/5">
                               <Pencil className="w-3.5 h-3.5" />
-                              Edit
+                              {tCommon("edit")}
                             </Button>
                           </Link>
-                          <Link href={`/${locale}/products/new?duplicate=${product.id}`} title="Duplicate product">
+                          <Link href={`/${locale}/products/new?duplicate=${product.id}`} title={L.duplicateTitle}>
                             <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-paws-brown hover:text-paws-brown/80 hover:bg-paws-cream/50">
                               <Copy className="w-3.5 h-3.5" />
-                              Duplicate
+                              {L.duplicate}
                             </Button>
                           </Link>
                         </div>

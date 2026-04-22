@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useLocale } from "next-intl";
 import { Search, Plus, Minus, Trash2, CreditCard, Banknote, X, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,28 @@ export default function POSPage() {
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const locale = useLocale();
+  const isAr = locale === "ar";
+  const L = {
+    egp: isAr ? "ج.م" : "EGP",
+    searchPlaceholder: isAr ? "دور على منتج أو امسح الباركود..." : "Search product or scan barcode...",
+    loadingProducts: isAr ? "جاري تحميل المنتجات..." : "Loading products...",
+    stock: isAr ? "المخزون" : "Stock",
+    noProducts: isAr ? "مفيش منتجات" : "No products found",
+    currentOrder: isAr ? "الطلب الحالي" : "Current Order",
+    clearAll: isAr ? "امسح الكل" : "Clear all",
+    addFromLeft: isAr ? "ضيف منتجات من اللوحة" : "Add products from the left panel",
+    subtotal: isAr ? "المجموع" : "Subtotal",
+    vat: isAr ? "ضريبة القيمة المضافة (14%)" : "VAT (14%)",
+    total: isAr ? "الإجمالي" : "Total",
+    cash: isAr ? "كاش" : "Cash",
+    card: isAr ? "كارت" : "Card",
+    charge: isAr ? "تحصيل" : "Charge",
+    checkoutFailedPrefix: isAr ? "فشل الدفع" : "Checkout failed",
+    invoiceCreated: isAr ? "تم إنشاء الفاتورة! الإجمالي" : "Invoice created! Total",
+    unknownError: isAr ? "خطأ غير معروف" : "Unknown error",
+    checkoutRetry: isAr ? "حاول تاني." : "Please try again.",
+  };
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -159,12 +182,12 @@ export default function POSPage() {
 
       if (payError) throw payError;
 
-      setCheckoutMessage(`Invoice created! Total: ${total.toFixed(2)} EGP`);
+      setCheckoutMessage(`${L.invoiceCreated}: ${total.toFixed(2)} ${L.egp}`);
       setCart([]);
       setTimeout(() => setCheckoutMessage(""), 4000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setCheckoutMessage(`Checkout failed: ${message}. Please try again.`);
+      const message = err instanceof Error ? err.message : L.unknownError;
+      setCheckoutMessage(`${L.checkoutFailedPrefix}: ${message}. ${L.checkoutRetry}`);
       setTimeout(() => setCheckoutMessage(""), 6000);
     }
   }
@@ -176,7 +199,7 @@ export default function POSPage() {
           role="status"
           aria-live="polite"
           className={`absolute top-2 left-1/2 -translate-x-1/2 z-50 text-sm font-medium px-4 py-2 rounded-xl shadow-sm ${
-            checkoutMessage.startsWith("Checkout failed")
+            checkoutMessage.startsWith(L.checkoutFailedPrefix)
               ? "bg-red-50 border border-red-200 text-red-800"
               : "bg-green-50 border border-green-200 text-green-800"
           }`}
@@ -192,7 +215,7 @@ export default function POSPage() {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search product or scan barcode..."
+            placeholder={L.searchPlaceholder}
             className="ps-9 bg-white border-neutral-200"
             autoFocus
           />
@@ -200,7 +223,7 @@ export default function POSPage() {
 
         {loading ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            Loading products...
+            {L.loadingProducts}
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto">
@@ -214,13 +237,13 @@ export default function POSPage() {
                   <Package className="w-8 h-8" />
                 </div>
                 <p className="text-xs font-semibold text-neutral-900 leading-tight line-clamp-2">{product.name}</p>
-                <p className="text-paws-orange font-bold text-sm mt-1">{product.price.toLocaleString()} EGP</p>
-                <p className="text-xs text-muted-foreground">Stock: {product.stock}</p>
+                <p className="text-paws-orange font-bold text-sm mt-1">{product.price.toLocaleString()} {L.egp}</p>
+                <p className="text-xs text-muted-foreground">{L.stock}: {product.stock}</p>
               </button>
             ))}
             {filtered.length === 0 && (
               <div className="col-span-full text-center py-8 text-muted-foreground text-sm">
-                No products found
+                {L.noProducts}
               </div>
             )}
           </div>
@@ -230,13 +253,13 @@ export default function POSPage() {
       {/* Right: Cart */}
       <div className="w-full lg:w-80 shrink-0 flex flex-col bg-white border border-neutral-200 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-neutral-200">
-          <h2 className="font-bold text-neutral-900">Current Order</h2>
+          <h2 className="font-bold text-neutral-900">{L.currentOrder}</h2>
           {cart.length > 0 && (
             <button
               onClick={() => setCart([])}
               className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1 mt-0.5"
             >
-              <X className="w-3 h-3" /> Clear all
+              <X className="w-3 h-3" /> {L.clearAll}
             </button>
           )}
         </div>
@@ -244,7 +267,7 @@ export default function POSPage() {
         <div className="flex-1 overflow-y-auto p-3 space-y-2">
           {cart.length === 0 ? (
             <p className="text-center text-muted-foreground text-sm py-8">
-              Add products from the left panel
+              {L.addFromLeft}
             </p>
           ) : (
             cart.map((item) => (
@@ -254,7 +277,7 @@ export default function POSPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium line-clamp-1">{item.name}</p>
-                  <p className="text-xs text-paws-orange">{item.price.toLocaleString()} EGP</p>
+                  <p className="text-xs text-paws-orange">{item.price.toLocaleString()} {L.egp}</p>
                 </div>
                 <div className="flex items-center gap-1">
                   <button
@@ -284,17 +307,17 @@ export default function POSPage() {
 
         <div className="p-4 border-t border-neutral-200 space-y-2">
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Subtotal</span>
-            <span>{subtotal.toFixed(2)} EGP</span>
+            <span>{L.subtotal}</span>
+            <span>{subtotal.toFixed(2)} {L.egp}</span>
           </div>
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>VAT (14%)</span>
-            <span>{tax.toFixed(2)} EGP</span>
+            <span>{L.vat}</span>
+            <span>{tax.toFixed(2)} {L.egp}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-bold text-neutral-900">
-            <span>Total</span>
-            <span className="text-paws-orange">{total.toFixed(2)} EGP</span>
+            <span>{L.total}</span>
+            <span className="text-paws-orange">{total.toFixed(2)} {L.egp}</span>
           </div>
 
           <div className="flex gap-2 mt-2">
@@ -302,13 +325,13 @@ export default function POSPage() {
               onClick={() => setPayMethod("cash")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-colors ${payMethod === "cash" ? "bg-paws-orange text-white" : "bg-neutral-50 text-neutral-600"}`}
             >
-              <Banknote className="w-4 h-4" /> Cash
+              <Banknote className="w-4 h-4" /> {L.cash}
             </button>
             <button
               onClick={() => setPayMethod("card")}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-medium transition-colors ${payMethod === "card" ? "bg-paws-orange text-white" : "bg-neutral-50 text-neutral-600"}`}
             >
-              <CreditCard className="w-4 h-4" /> Card
+              <CreditCard className="w-4 h-4" /> {L.card}
             </button>
           </div>
 
@@ -318,7 +341,7 @@ export default function POSPage() {
             onClick={handleCheckout}
             disabled={cart.length === 0}
           >
-            Charge {total.toFixed(2)} EGP
+            {L.charge} {total.toFixed(2)} {L.egp}
           </Button>
         </div>
       </div>

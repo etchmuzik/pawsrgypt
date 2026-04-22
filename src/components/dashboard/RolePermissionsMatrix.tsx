@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Check, X, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -19,14 +20,41 @@ interface RoleMeta {
   color: string;
 }
 
-const ROLES: RoleMeta[] = [
-  { key: "admin", name: "Admin", description: "Full access to all features", color: "bg-red-100 text-red-700" },
-  { key: "manager", name: "Manager", description: "Branch management and reporting", color: "bg-purple-100 text-purple-700" },
-  { key: "cashier", name: "Cashier", description: "POS and sales operations", color: "bg-blue-100 text-blue-700" },
-  { key: "warehouse", name: "Warehouse", description: "Inventory and stock management", color: "bg-amber-100 text-amber-700" },
-  { key: "accountant", name: "Accountant", description: "Financial management and reports", color: "bg-emerald-100 text-emerald-700" },
-  { key: "hr", name: "HR", description: "Employee and payroll management", color: "bg-pink-100 text-pink-700" },
-];
+interface RoleI18n { name: string; description: string; }
+function buildRoles(locale: string): RoleMeta[] {
+  const isAr = locale === "ar";
+  const dict: Record<RoleKey, RoleI18n> = isAr
+    ? {
+        admin: { name: "مدير", description: "صلاحية كاملة لكل المميزات" },
+        manager: { name: "مدير فرع", description: "إدارة الفرع والتقارير" },
+        cashier: { name: "كاشير", description: "نقطة البيع والمبيعات" },
+        warehouse: { name: "مخزن", description: "المخزون والحركة" },
+        accountant: { name: "محاسب", description: "المالية والتقارير" },
+        hr: { name: "موارد بشرية", description: "الموظفين والرواتب" },
+      }
+    : {
+        admin: { name: "Admin", description: "Full access to all features" },
+        manager: { name: "Manager", description: "Branch management and reporting" },
+        cashier: { name: "Cashier", description: "POS and sales operations" },
+        warehouse: { name: "Warehouse", description: "Inventory and stock management" },
+        accountant: { name: "Accountant", description: "Financial management and reports" },
+        hr: { name: "HR", description: "Employee and payroll management" },
+      };
+  const colors: Record<RoleKey, string> = {
+    admin: "bg-red-100 text-red-700",
+    manager: "bg-purple-100 text-purple-700",
+    cashier: "bg-blue-100 text-blue-700",
+    warehouse: "bg-amber-100 text-amber-700",
+    accountant: "bg-emerald-100 text-emerald-700",
+    hr: "bg-pink-100 text-pink-700",
+  };
+  return (Object.keys(dict) as RoleKey[]).map((k) => ({
+    key: k,
+    name: dict[k].name,
+    description: dict[k].description,
+    color: colors[k],
+  }));
+}
 
 const MODULES: ModuleKey[] = [
   "dashboard", "pos", "products", "inventory", "purchases",
@@ -39,6 +67,37 @@ interface Props {
 
 export function RolePermissionsMatrix({ initial }: Props) {
   const router = useRouter();
+  const locale = useLocale();
+  const ROLES = buildRoles(locale);
+  const MODULE_LABELS: Record<ModuleKey, string> = locale === "ar"
+    ? {
+        dashboard: "الرئيسية",
+        pos: "نقطة البيع",
+        products: "المنتجات",
+        inventory: "المخزون",
+        purchases: "المشتريات",
+        sales: "المبيعات",
+        customers: "العملاء",
+        accounting: "المحاسبة",
+        hr: "الموارد البشرية",
+        settings: "الإعدادات",
+      }
+    : {
+        dashboard: "Dashboard",
+        pos: "POS",
+        products: "Products",
+        inventory: "Inventory",
+        purchases: "Purchases",
+        sales: "Sales",
+        customers: "Customers",
+        accounting: "Accounting",
+        hr: "HR",
+        settings: "Settings",
+      };
+  const roleCol = locale === "ar" ? "الصلاحية" : "Role";
+  const failedLbl = locale === "ar" ? "فشل الحفظ" : "Failed to save";
+  const savedLbl = locale === "ar" ? "تم الحفظ!" : "Saved!";
+  const saveLbl = locale === "ar" ? "حفظ التغييرات" : "Save Changes";
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -56,7 +115,7 @@ export function RolePermissionsMatrix({ initial }: Props) {
     startTransition(async () => {
       const res = await saveRolePermissions(permissions);
       if (!res.success) {
-        setError(res.error ?? "Failed to save");
+        setError(res.error ?? failedLbl);
         return;
       }
       setSaved(true);
@@ -75,7 +134,7 @@ export function RolePermissionsMatrix({ initial }: Props) {
           className="bg-paws-orange hover:bg-paws-orange/90 text-white"
         >
           {pending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-          {saved ? "Saved!" : "Save Changes"}
+          {saved ? savedLbl : saveLbl}
         </Button>
       </div>
 
@@ -84,10 +143,10 @@ export function RolePermissionsMatrix({ initial }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="text-left px-4 py-3 font-semibold text-muted-foreground sticky left-0 bg-neutral-50">Role</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground sticky left-0 bg-neutral-50">{roleCol}</th>
                 {MODULES.map((m) => (
-                  <th key={m} className="text-center px-3 py-3 font-semibold text-muted-foreground capitalize">
-                    {m}
+                  <th key={m} className="text-center px-3 py-3 font-semibold text-muted-foreground">
+                    {MODULE_LABELS[m]}
                   </th>
                 ))}
               </tr>
@@ -111,7 +170,7 @@ export function RolePermissionsMatrix({ initial }: Props) {
                           type="button"
                           onClick={() => toggle(role.key, m)}
                           className="p-1 rounded hover:bg-neutral-100 transition-colors"
-                          aria-label={`Toggle ${role.name} ${m}`}
+                          aria-label={`${role.name} · ${MODULE_LABELS[m]}`}
                         >
                           {on ? (
                             <Check className="w-4 h-4 text-green-600" />
