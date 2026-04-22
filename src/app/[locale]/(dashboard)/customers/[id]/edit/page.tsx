@@ -19,6 +19,32 @@ export default function EditCustomerPage() {
   const params = useParams();
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    back: isAr ? "رجوع" : "Back",
+    title: isAr ? "تعديل العميل" : "Edit Customer",
+    info: isAr ? "بيانات العميل" : "Customer Information",
+    name: isAr ? "الاسم" : "Name",
+    phone: isAr ? "الموبايل" : "Phone",
+    email: isAr ? "الإيميل" : "Email",
+    address: isAr ? "العنوان" : "Address",
+    credit: isAr ? "حد الائتمان" : "Credit Limit",
+    notes: isAr ? "ملاحظات" : "Notes",
+    egp: isAr ? "ج.م" : "EGP",
+    namePh: isAr ? "الاسم بالكامل" : "Customer full name",
+    addressPh: isAr ? "العنوان بالكامل" : "Full address",
+    notesPh: isAr ? "أي ملاحظات إضافية على العميل" : "Any additional notes about this customer",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    saveChanges: isAr ? "حفظ التغييرات" : "Save Changes",
+    saving: isAr ? "بيتحفظ..." : "Saving...",
+    nameRequired: isAr ? "اسم العميل مطلوب." : "Customer name is required.",
+    creditInvalid: isAr ? "ادخل حد ائتمان صحيح." : "Please enter a valid credit limit.",
+    notFound: isAr ? "العميل مش موجود" : "Customer not found",
+    updateFailed: isAr ? "فشل تحديث العميل" : "Failed to update customer",
+    ok: isAr ? "تم تحديث العميل بنجاح!" : "Customer updated successfully!",
+    status: isAr ? "حالة التفعيل" : "Active Status",
+    statusNote: isAr ? "العميل يظهر لما يكون مفعل" : "Customer will be visible when active",
+  };
 
   const id = params.id as string;
 
@@ -44,7 +70,7 @@ export default function EditCustomerPage() {
         .single();
 
       if (error || !data) {
-        toast.error("Customer not found");
+        toast.error(L.notFound);
         router.push(`/${locale}/customers`);
         return;
       }
@@ -82,13 +108,13 @@ export default function EditCustomerPage() {
     e.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error("Customer name is required.");
+      toast.error(L.nameRequired);
       return;
     }
 
     const creditLimit = parseFloat(form.credit_limit);
     if (isNaN(creditLimit) || creditLimit < 0) {
-      toast.error("Please enter a valid credit limit.");
+      toast.error(L.creditInvalid);
       return;
     }
 
@@ -112,11 +138,11 @@ export default function EditCustomerPage() {
     setLoading(false);
 
     if (error) {
-      toast.error(error.message ?? "Failed to update customer");
+      toast.error(error.message ?? L.updateFailed);
       return;
     }
 
-    toast.success("Customer updated successfully!");
+    toast.success(L.ok);
     router.push(`/${locale}/customers`);
   }
 
@@ -137,36 +163,36 @@ export default function EditCustomerPage() {
             size="sm"
             className="gap-1.5 text-paws-brown"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {L.back}
           </Button>
         </Link>
         <h1 className="text-2xl font-bold text-paws-brown-dark">
-          Edit Customer
+          {L.title}
         </h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
           <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Customer Information
+            {L.info}
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{L.name} *</Label>
               <Input
                 id="name"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                placeholder="Customer full name"
+                placeholder={L.namePh}
                 className="bg-white border-paws-sand"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{L.phone}</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -179,7 +205,7 @@ export default function EditCustomerPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{L.email}</Label>
               <Input
                 id="email"
                 name="email"
@@ -192,7 +218,7 @@ export default function EditCustomerPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="credit_limit">Credit Limit (EGP)</Label>
+              <Label htmlFor="credit_limit">{L.credit} ({L.egp})</Label>
               <Input
                 id="credit_limit"
                 name="credit_limit"
@@ -208,25 +234,25 @@ export default function EditCustomerPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">{L.address}</Label>
             <Textarea
               id="address"
               name="address"
               value={form.address}
               onChange={handleChange}
-              placeholder="Full address"
+              placeholder={L.addressPh}
               className="bg-white border-paws-sand"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{L.notes}</Label>
             <Textarea
               id="notes"
               name="notes"
               value={form.notes}
               onChange={handleChange}
-              placeholder="Any additional notes about this customer"
+              placeholder={L.notesPh}
               className="bg-white border-paws-sand"
             />
           </div>
@@ -236,9 +262,9 @@ export default function EditCustomerPage() {
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Active Status</Label>
+              <Label>{L.status}</Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Customer will be visible when active
+                {L.statusNote}
               </p>
             </div>
             <Switch
@@ -262,7 +288,7 @@ export default function EditCustomerPage() {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? L.saving : L.saveChanges}
           </Button>
         </div>
       </form>

@@ -16,6 +16,28 @@ export default function NewCustomerPage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = createClient();
+  const isAr = locale === "ar";
+  const L = {
+    back: isAr ? "رجوع" : "Back",
+    title: isAr ? "ضيف عميل جديد" : "Add New Customer",
+    info: isAr ? "بيانات العميل" : "Customer Information",
+    name: isAr ? "الاسم" : "Name",
+    phone: isAr ? "الموبايل" : "Phone",
+    email: isAr ? "الإيميل" : "Email",
+    address: isAr ? "العنوان" : "Address",
+    credit: isAr ? "حد الائتمان" : "Credit Limit",
+    notes: isAr ? "ملاحظات" : "Notes",
+    egp: isAr ? "ج.م" : "EGP",
+    namePh: isAr ? "الاسم بالكامل" : "Customer full name",
+    addressPh: isAr ? "العنوان بالكامل" : "Full address",
+    notesPh: isAr ? "أي ملاحظات إضافية على العميل" : "Any additional notes about this customer",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    create: isAr ? "إنشاء العميل" : "Create Customer",
+    creating: isAr ? "بيتحفظ..." : "Creating...",
+    nameRequired: isAr ? "اسم العميل مطلوب." : "Customer name is required.",
+    creditInvalid: isAr ? "ادخل حد ائتمان صحيح." : "Please enter a valid credit limit.",
+    ok: isAr ? "تم إنشاء العميل بنجاح!" : "Customer created successfully!",
+  };
 
   const [loading, setLoading] = useState(false);
 
@@ -39,13 +61,13 @@ export default function NewCustomerPage() {
     e.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error("Customer name is required.");
+      toast.error(L.nameRequired);
       return;
     }
 
     const creditLimit = parseFloat(form.credit_limit);
     if (isNaN(creditLimit) || creditLimit < 0) {
-      toast.error("Please enter a valid credit limit.");
+      toast.error(L.creditInvalid);
       return;
     }
 
@@ -71,7 +93,7 @@ export default function NewCustomerPage() {
       return;
     }
 
-    toast.success("Customer created successfully!");
+    toast.success(L.ok);
     router.push(`/${locale}/customers`);
   }
 
@@ -84,36 +106,32 @@ export default function NewCustomerPage() {
             size="sm"
             className="gap-1.5 text-paws-brown"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {L.back}
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-paws-brown-dark">
-          Add New Customer
-        </h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{L.title}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Customer Information
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.info}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Name *</Label>
+              <Label htmlFor="name">{L.name} *</Label>
               <Input
                 id="name"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                placeholder="Customer full name"
+                placeholder={L.namePh}
                 className="bg-white border-paws-sand"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">{L.phone}</Label>
               <Input
                 id="phone"
                 name="phone"
@@ -126,7 +144,7 @@ export default function NewCustomerPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{L.email}</Label>
               <Input
                 id="email"
                 name="email"
@@ -139,7 +157,7 @@ export default function NewCustomerPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="credit_limit">Credit Limit (EGP)</Label>
+              <Label htmlFor="credit_limit">{L.credit} ({L.egp})</Label>
               <Input
                 id="credit_limit"
                 name="credit_limit"
@@ -155,25 +173,25 @@ export default function NewCustomerPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">{L.address}</Label>
             <Textarea
               id="address"
               name="address"
               value={form.address}
               onChange={handleChange}
-              placeholder="Full address"
+              placeholder={L.addressPh}
               className="bg-white border-paws-sand"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{L.notes}</Label>
             <Textarea
               id="notes"
               name="notes"
               value={form.notes}
               onChange={handleChange}
-              placeholder="Any additional notes about this customer"
+              placeholder={L.notesPh}
               className="bg-white border-paws-sand"
             />
           </div>
@@ -182,7 +200,7 @@ export default function NewCustomerPage() {
         <div className="flex gap-3 justify-end">
           <Link href={`/${locale}/customers`}>
             <Button type="button" variant="outline" className="border-paws-sand">
-              Cancel
+              {L.cancel}
             </Button>
           </Link>
           <Button
@@ -191,7 +209,7 @@ export default function NewCustomerPage() {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Creating..." : "Create Customer"}
+            {loading ? L.creating : L.create}
           </Button>
         </div>
       </form>

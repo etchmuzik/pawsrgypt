@@ -33,6 +33,39 @@ export default function EditBlogPostPage() {
   const params = useParams();
   const id = params.id as string;
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    title: isAr ? "تعديل المقال" : "Edit Post",
+    basicInfo: isAr ? "البيانات الأساسية" : "Basic Info",
+    titleEn: isAr ? "العنوان (إنجليزي)" : "Title (EN)",
+    titleAr: isAr ? "العنوان (عربي)" : "Title (AR)",
+    slug: isAr ? "الرابط" : "Slug",
+    titleEnPh: isAr ? "عنوان المقال بالإنجليزي" : "Post title in English",
+    titleArPh: isAr ? "عنوان المقال بالعربي" : "Post title in Arabic",
+    content: isAr ? "المحتوى" : "Content",
+    contentEn: isAr ? "المحتوى (إنجليزي)" : "Content (EN)",
+    contentAr: isAr ? "المحتوى (عربي)" : "Content (AR)",
+    contentEnPh: isAr ? "اكتب المحتوى بالإنجليزي..." : "Write your post content in English...",
+    contentArPh: isAr ? "اكتب المحتوى بالعربي..." : "Write your post content in Arabic...",
+    excerptMedia: isAr ? "الملخص والصور" : "Excerpt & Media",
+    excerptEn: isAr ? "الملخص (إنجليزي)" : "Excerpt (EN)",
+    excerptAr: isAr ? "الملخص (عربي)" : "Excerpt (AR)",
+    excerptEnPh: isAr ? "ملخص قصير بالإنجليزي..." : "Short summary in English...",
+    excerptArPh: isAr ? "ملخص قصير بالعربي..." : "Short summary in Arabic...",
+    featuredImage: isAr ? "رابط الصورة الرئيسية" : "Featured Image URL",
+    author: isAr ? "الكاتب" : "Author",
+    authorPh: isAr ? "اسم الكاتب" : "Author name",
+    publishing: isAr ? "النشر" : "Publishing",
+    publishNow: isAr ? "ينشر فوراً" : "Publish immediately",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    save: isAr ? "حفظ التغييرات" : "Save Changes",
+    saving: isAr ? "بيتحفظ..." : "Saving...",
+    loading: isAr ? "جاري التحميل..." : "Loading post...",
+    loadFailed: isAr ? "فشل تحميل المقال." : "Failed to load blog post.",
+    requiredFields: isAr ? "املأ الحقول المطلوبة: العنوان الإنجليزي، الرابط، المحتوى الإنجليزي." : "Please fill in the required fields: Title (EN), Slug, and Content (EN).",
+    saveFailed: isAr ? "فشل حفظ التغييرات" : "Failed to save changes",
+    ok: isAr ? "تم تحديث المقال بنجاح!" : "Blog post updated successfully!",
+  };
 
   const [form, setForm] = useState<BlogForm>({
     title_en: "",
@@ -59,7 +92,7 @@ export default function EditBlogPostPage() {
         .single();
 
       if (error || !data) {
-        toast.error("Failed to load blog post.");
+        toast.error(L.loadFailed);
         router.push(`/${locale}/dashboard/blog`);
         return;
       }
@@ -83,6 +116,7 @@ export default function EditBlogPostPage() {
     }
 
     loadPost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, supabase, locale, router]);
 
   function updateField<K extends keyof BlogForm>(key: K, value: BlogForm[K]) {
@@ -93,7 +127,7 @@ export default function EditBlogPostPage() {
     e.preventDefault();
 
     if (!form.title_en.trim() || !form.slug.trim() || !form.content_en.trim()) {
-      toast.error("Please fill in the required fields: Title (EN), Slug, and Content (EN).");
+      toast.error(L.requiredFields);
       return;
     }
 
@@ -112,7 +146,6 @@ export default function EditBlogPostPage() {
       is_published: form.is_published,
     };
 
-    // Set published_at when toggling from draft to published
     if (form.is_published && !originalPublished) {
       payload.published_at = new Date().toISOString();
     }
@@ -125,25 +158,24 @@ export default function EditBlogPostPage() {
     setLoading(false);
 
     if (error) {
-      toast.error(`Failed to save changes: ${error.message}`);
+      toast.error(`${L.saveFailed}: ${error.message}`);
       return;
     }
 
-    toast.success("Blog post updated successfully!");
+    toast.success(L.ok);
     router.push(`/${locale}/dashboard/blog`);
   }
 
   if (fetching) {
     return (
       <div className="flex items-center justify-center py-20 text-muted-foreground">
-        Loading post...
+        {L.loading}
       </div>
     );
   }
 
   return (
     <div className="space-y-6 max-w-3xl">
-      {/* Header */}
       <div className="flex items-center gap-3">
         <Link
           href={`/${locale}/dashboard/blog`}
@@ -151,150 +183,81 @@ export default function EditBlogPostPage() {
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
-        <h1 className="text-2xl font-bold text-neutral-900">Edit Post</h1>
+        <h1 className="text-2xl font-bold text-neutral-900">{L.title}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
         <div className="bg-white rounded-2xl border border-paws-sand/50 p-6 space-y-4">
-          <h2 className="font-semibold text-neutral-900">Basic Info</h2>
+          <h2 className="font-semibold text-neutral-900">{L.basicInfo}</h2>
 
           <div className="space-y-2">
-            <Label htmlFor="title_en">Title (EN) *</Label>
-            <Input
-              id="title_en"
-              value={form.title_en}
-              onChange={(e) => updateField("title_en", e.target.value)}
-              placeholder="Post title in English"
-              required
-            />
+            <Label htmlFor="title_en">{L.titleEn} *</Label>
+            <Input id="title_en" value={form.title_en} onChange={(e) => updateField("title_en", e.target.value)} placeholder={L.titleEnPh} required />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="title_ar">Title (AR)</Label>
-            <Input
-              id="title_ar"
-              value={form.title_ar}
-              onChange={(e) => updateField("title_ar", e.target.value)}
-              placeholder="Post title in Arabic"
-              dir="rtl"
-            />
+            <Label htmlFor="title_ar">{L.titleAr}</Label>
+            <Input id="title_ar" value={form.title_ar} onChange={(e) => updateField("title_ar", e.target.value)} placeholder={L.titleArPh} dir="rtl" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="slug">Slug *</Label>
-            <Input
-              id="slug"
-              value={form.slug}
-              onChange={(e) => updateField("slug", e.target.value)}
-              placeholder="post-url-slug"
-              required
-            />
+            <Label htmlFor="slug">{L.slug} *</Label>
+            <Input id="slug" value={form.slug} onChange={(e) => updateField("slug", e.target.value)} placeholder="post-url-slug" required />
           </div>
         </div>
 
-        {/* Content */}
         <div className="bg-white rounded-2xl border border-paws-sand/50 p-6 space-y-4">
-          <h2 className="font-semibold text-neutral-900">Content</h2>
+          <h2 className="font-semibold text-neutral-900">{L.content}</h2>
 
           <div className="space-y-2">
-            <Label htmlFor="content_en">Content (EN) *</Label>
-            <Textarea
-              id="content_en"
-              value={form.content_en}
-              onChange={(e) => updateField("content_en", e.target.value)}
-              placeholder="Write your post content in English..."
-              className="min-h-[300px]"
-              required
-            />
+            <Label htmlFor="content_en">{L.contentEn} *</Label>
+            <Textarea id="content_en" value={form.content_en} onChange={(e) => updateField("content_en", e.target.value)} placeholder={L.contentEnPh} className="min-h-[300px]" required />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content_ar">Content (AR)</Label>
-            <Textarea
-              id="content_ar"
-              value={form.content_ar}
-              onChange={(e) => updateField("content_ar", e.target.value)}
-              placeholder="Write your post content in Arabic..."
-              className="min-h-[300px]"
-              dir="rtl"
-            />
+            <Label htmlFor="content_ar">{L.contentAr}</Label>
+            <Textarea id="content_ar" value={form.content_ar} onChange={(e) => updateField("content_ar", e.target.value)} placeholder={L.contentArPh} className="min-h-[300px]" dir="rtl" />
           </div>
         </div>
 
-        {/* Excerpt & Media */}
         <div className="bg-white rounded-2xl border border-paws-sand/50 p-6 space-y-4">
-          <h2 className="font-semibold text-neutral-900">Excerpt & Media</h2>
+          <h2 className="font-semibold text-neutral-900">{L.excerptMedia}</h2>
 
           <div className="space-y-2">
-            <Label htmlFor="excerpt_en">Excerpt (EN)</Label>
-            <Textarea
-              id="excerpt_en"
-              value={form.excerpt_en}
-              onChange={(e) => updateField("excerpt_en", e.target.value)}
-              placeholder="Short summary in English..."
-              className="min-h-[100px]"
-            />
+            <Label htmlFor="excerpt_en">{L.excerptEn}</Label>
+            <Textarea id="excerpt_en" value={form.excerpt_en} onChange={(e) => updateField("excerpt_en", e.target.value)} placeholder={L.excerptEnPh} className="min-h-[100px]" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="excerpt_ar">Excerpt (AR)</Label>
-            <Textarea
-              id="excerpt_ar"
-              value={form.excerpt_ar}
-              onChange={(e) => updateField("excerpt_ar", e.target.value)}
-              placeholder="Short summary in Arabic..."
-              dir="rtl"
-            />
+            <Label htmlFor="excerpt_ar">{L.excerptAr}</Label>
+            <Textarea id="excerpt_ar" value={form.excerpt_ar} onChange={(e) => updateField("excerpt_ar", e.target.value)} placeholder={L.excerptArPh} dir="rtl" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="featured_image">Featured Image URL</Label>
-            <Input
-              id="featured_image"
-              value={form.featured_image}
-              onChange={(e) => updateField("featured_image", e.target.value)}
-              placeholder="https://example.com/image.jpg"
-            />
+            <Label htmlFor="featured_image">{L.featuredImage}</Label>
+            <Input id="featured_image" value={form.featured_image} onChange={(e) => updateField("featured_image", e.target.value)} placeholder="https://example.com/image.jpg" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="author">Author</Label>
-            <Input
-              id="author"
-              value={form.author}
-              onChange={(e) => updateField("author", e.target.value)}
-              placeholder="Author name"
-            />
+            <Label htmlFor="author">{L.author}</Label>
+            <Input id="author" value={form.author} onChange={(e) => updateField("author", e.target.value)} placeholder={L.authorPh} />
           </div>
         </div>
 
-        {/* Publishing */}
         <div className="bg-white rounded-2xl border border-paws-sand/50 p-6 space-y-4">
-          <h2 className="font-semibold text-neutral-900">Publishing</h2>
+          <h2 className="font-semibold text-neutral-900">{L.publishing}</h2>
           <div className="flex items-center gap-3">
-            <Switch
-              id="is_published"
-              checked={form.is_published}
-              onCheckedChange={(checked) => updateField("is_published", checked)}
-            />
-            <Label htmlFor="is_published">Publish immediately</Label>
+            <Switch id="is_published" checked={form.is_published} onCheckedChange={(checked) => updateField("is_published", checked)} />
+            <Label htmlFor="is_published">{L.publishNow}</Label>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-3">
           <Link href={`/${locale}/dashboard/blog`}>
-            <Button type="button" variant="outline">
-              Cancel
-            </Button>
+            <Button type="button" variant="outline">{L.cancel}</Button>
           </Link>
-          <Button
-            type="submit"
-            className="bg-paws-orange hover:bg-paws-orange/90 text-white"
-            disabled={loading}
-          >
-            {loading ? "Saving..." : "Save Changes"}
+          <Button type="submit" className="bg-paws-orange hover:bg-paws-orange/90 text-white" disabled={loading}>
+            {loading ? L.saving : L.save}
           </Button>
         </div>
       </form>

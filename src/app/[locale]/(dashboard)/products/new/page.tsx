@@ -99,6 +99,67 @@ function NewProductPageInner() {
   const duplicateId = searchParams.get("duplicate");
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    back: isAr ? "رجوع" : "Back",
+    title: isAr ? "ضيف منتج جديد" : "Add New Product",
+    basicInfo: isAr ? "البيانات الأساسية" : "Basic Information",
+    auto: isAr ? "تلقائي" : "Auto",
+    autoTitle: isAr ? "توليد SKU من الفئة والبراند" : "Generate SKU from category + brand",
+    skuPh: isAr ? "مثلا: PAW-DOG-001" : "e.g. PAW-DOG-001",
+    brand: isAr ? "البراند" : "Brand",
+    brandPh: isAr ? "مثلا: Royal Canin" : "e.g. Royal Canin",
+    nameEn: isAr ? "الاسم (إنجليزي)" : "Name (English)",
+    nameAr: isAr ? "الاسم (عربي)" : "Name (Arabic)",
+    nameEnPh: isAr ? "اسم المنتج بالإنجليزي" : "Product name in English",
+    nameArPh: "اسم المنتج بالعربي",
+    descEn: isAr ? "الوصف (إنجليزي)" : "Description (English)",
+    descAr: isAr ? "الوصف (عربي)" : "Description (Arabic)",
+    descEnPh: isAr ? "وصف المنتج بالإنجليزي" : "Product description in English",
+    descArPh: "وصف المنتج بالعربي",
+    images: isAr ? "صور المنتج" : "Product Images",
+    imagesNote: isAr ? "ارفع 10 صور كحد أقصى. أول صورة هتكون الرئيسية." : "Upload up to 10 images. The first image will be the main product image.",
+    classification: isAr ? "التصنيف" : "Classification",
+    category: isAr ? "الفئة" : "Category",
+    selectCategory: isAr ? "اختار فئة" : "Select category",
+    unitType: isAr ? "وحدة القياس" : "Unit Type",
+    u_piece: isAr ? "قطعة" : "Piece",
+    u_kg: isAr ? "كيلو (kg)" : "Kilogram (kg)",
+    u_g: isAr ? "جرام (g)" : "Gram (g)",
+    u_l: isAr ? "لتر (L)" : "Liter (L)",
+    u_ml: isAr ? "ميلليلتر (mL)" : "Milliliter (mL)",
+    u_pack: isAr ? "باك" : "Pack",
+    u_box: isAr ? "علبة" : "Box",
+    barcode: isAr ? "الباركود" : "Barcode",
+    barcodePh: isAr ? "ادخل أو ولد باركود" : "Enter or generate barcode",
+    generate: isAr ? "ولد" : "Generate",
+    tags: isAr ? "الوسوم" : "Tags",
+    tagsPh: isAr ? "اكتب وسم واضغط Enter..." : "Type a tag and press Enter...",
+    tagsNote: isAr ? "اضغط Enter أو فاصلة لإضافة وسم" : "Press Enter or comma to add a tag",
+    pricing: isAr ? "التسعير" : "Pricing",
+    sellingPrice: isAr ? "سعر البيع" : "Selling Price",
+    costPrice: isAr ? "سعر التكلفة" : "Cost Price",
+    egp: isAr ? "ج.م" : "EGP",
+    profitMargin: isAr ? "هامش الربح" : "Profit margin",
+    statusVis: isAr ? "الحالة والظهور" : "Status & Visibility",
+    activeStatus: isAr ? "حالة التفعيل" : "Active Status",
+    activeNote: isAr ? "المنتج يظهر لما يكون مفعل" : "Product will be visible when active",
+    featured: isAr ? "منتج مميز" : "Featured Product",
+    featuredNote: isAr ? "يظهر المنتج في قسم المميزات في الموقع" : "Show this product in featured sections on the website",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    saveDraft: isAr ? "حفظ كمسودة" : "Save as Draft",
+    draftSaving: isAr ? "بيتحفظ..." : "Saving...",
+    create: isAr ? "إنشاء المنتج" : "Create Product",
+    creating: isAr ? "بيتحفظ..." : "Creating...",
+    skuNameRequired: isAr ? "الـ SKU والاسم الإنجليزي مطلوبين." : "SKU and English name are required.",
+    priceInvalid: isAr ? "ادخل سعر بيع صحيح." : "Please enter a valid selling price.",
+    costInvalid: isAr ? "ادخل سعر تكلفة صحيح." : "Please enter a valid cost price.",
+    productFailed: isAr ? "فشل إنشاء المنتج" : "Failed to create product",
+    variantFailed: isAr ? "تم إنشاء المنتج بس فشل إنشاء المتغير" : "Product created but variant failed",
+    draftSaved: isAr ? "تم حفظ المسودة." : "Draft saved.",
+    ok: isAr ? "تم إنشاء المنتج بنجاح!" : "Product created successfully!",
+    duplicated: isAr ? "تم تكرار المنتج. الـ SKU والصور اتمسحوا." : "Product duplicated. SKU and images cleared.",
+  };
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -163,7 +224,7 @@ function NewProductPageInner() {
         images: [],
         tags: p.tags ?? [],
       });
-      toast.info("Product duplicated. SKU and images cleared.");
+      toast.info(L.duplicated);
     }
     loadDuplicate();
     return () => {
@@ -209,7 +270,7 @@ function NewProductPageInner() {
 
   async function saveProduct(asDraft: boolean) {
     if (!form.sku.trim() || !form.name_en.trim()) {
-      toast.error("SKU and English name are required.");
+      toast.error(L.skuNameRequired);
       return;
     }
 
@@ -220,11 +281,11 @@ function NewProductPageInner() {
 
     if (!asDraft) {
       if (isNaN(price) || price < 0) {
-        toast.error("Please enter a valid selling price.");
+        toast.error(L.priceInvalid);
         return;
       }
       if (isNaN(costPrice) || costPrice < 0) {
-        toast.error("Please enter a valid cost price.");
+        toast.error(L.costInvalid);
         return;
       }
     }
@@ -254,7 +315,7 @@ function NewProductPageInner() {
 
     if (productError || !product) {
       setBusy(false);
-      toast.error(productError?.message ?? "Failed to create product");
+      toast.error(productError?.message ?? L.productFailed);
       return;
     }
 
@@ -276,11 +337,11 @@ function NewProductPageInner() {
     setBusy(false);
 
     if (variantError) {
-      toast.error(`Product created but variant failed: ${variantError.message}`);
+      toast.error(`${L.variantFailed}: ${variantError.message}`);
       return;
     }
 
-    toast.success(asDraft ? "Draft saved." : "Product created successfully!");
+    toast.success(asDraft ? L.draftSaved : L.ok);
     router.push(`/${locale}/products`);
   }
 
@@ -298,20 +359,16 @@ function NewProductPageInner() {
       <div className="flex items-center gap-3 mb-6">
         <Link href={`/${locale}/products`}>
           <Button variant="ghost" size="sm" className="gap-1.5 text-paws-brown">
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {L.back}
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-paws-brown-dark">
-          Add New Product
-        </h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{L.title}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Basic Information
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.basicInfo}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
@@ -322,7 +379,7 @@ function NewProductPageInner() {
                   name="sku"
                   value={form.sku}
                   onChange={handleChange}
-                  placeholder="e.g. PAW-DOG-001"
+                  placeholder={L.skuPh}
                   className="bg-white border-paws-sand flex-1"
                   required
                 />
@@ -331,46 +388,46 @@ function NewProductPageInner() {
                   variant="outline"
                   onClick={handleGenerateSku}
                   className="gap-1.5 border-paws-sand shrink-0"
-                  title="Generate SKU from category + brand"
+                  title={L.autoTitle}
                 >
-                  <Sparkles className="w-4 h-4" /> Auto
+                  <Sparkles className="w-4 h-4" /> {L.auto}
                 </Button>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="brand">Brand</Label>
+              <Label htmlFor="brand">{L.brand}</Label>
               <Input
                 id="brand"
                 name="brand"
                 value={form.brand}
                 onChange={handleChange}
-                placeholder="e.g. Royal Canin"
+                placeholder={L.brandPh}
                 className="bg-white border-paws-sand"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="name_en">Name (English) *</Label>
+              <Label htmlFor="name_en">{L.nameEn} *</Label>
               <Input
                 id="name_en"
                 name="name_en"
                 value={form.name_en}
                 onChange={handleChange}
-                placeholder="Product name in English"
+                placeholder={L.nameEnPh}
                 className="bg-white border-paws-sand"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="name_ar">Name (Arabic)</Label>
+              <Label htmlFor="name_ar">{L.nameAr}</Label>
               <Input
                 id="name_ar"
                 name="name_ar"
                 value={form.name_ar}
                 onChange={handleChange}
-                placeholder="اسم المنتج بالعربية"
+                placeholder={L.nameArPh}
                 className="bg-white border-paws-sand"
                 dir="rtl"
               />
@@ -379,20 +436,20 @@ function NewProductPageInner() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="description_en">Description (English)</Label>
+              <Label htmlFor="description_en">{L.descEn}</Label>
               <RichTextEditor
                 value={form.description_en}
                 onChange={(html) => updateField("description_en", html)}
-                placeholder="Product description in English"
+                placeholder={L.descEnPh}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description_ar">Description (Arabic)</Label>
+              <Label htmlFor="description_ar">{L.descAr}</Label>
               <RichTextEditor
                 value={form.description_ar}
                 onChange={(html) => updateField("description_ar", html)}
-                placeholder="وصف المنتج بالعربية"
+                placeholder={L.descArPh}
                 dir="rtl"
               />
             </div>
@@ -401,12 +458,8 @@ function NewProductPageInner() {
 
         {/* Product Images */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Product Images
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Upload up to 10 images. The first image will be the main product image.
-          </p>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.images}</h2>
+          <p className="text-sm text-muted-foreground">{L.imagesNote}</p>
           <ImageUploader
             bucket="product-images"
             folder="products"
@@ -418,13 +471,11 @@ function NewProductPageInner() {
 
         {/* Classification */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Classification
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.classification}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="category_id">Category</Label>
+              <Label htmlFor="category_id">{L.category}</Label>
               <select
                 id="category_id"
                 name="category_id"
@@ -432,7 +483,7 @@ function NewProductPageInner() {
                 onChange={handleChange}
                 className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="">Select category</option>
+                <option value="">{L.selectCategory}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {locale === "ar" ? cat.name_ar : cat.name_en}
@@ -442,7 +493,7 @@ function NewProductPageInner() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="unit_type">Unit Type</Label>
+              <Label htmlFor="unit_type">{L.unitType}</Label>
               <select
                 id="unit_type"
                 name="unit_type"
@@ -450,26 +501,26 @@ function NewProductPageInner() {
                 onChange={handleChange}
                 className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="piece">Piece</option>
-                <option value="kg">Kilogram (kg)</option>
-                <option value="g">Gram (g)</option>
-                <option value="l">Liter (L)</option>
-                <option value="ml">Milliliter (mL)</option>
-                <option value="pack">Pack</option>
-                <option value="box">Box</option>
+                <option value="piece">{L.u_piece}</option>
+                <option value="kg">{L.u_kg}</option>
+                <option value="g">{L.u_g}</option>
+                <option value="l">{L.u_l}</option>
+                <option value="ml">{L.u_ml}</option>
+                <option value="pack">{L.u_pack}</option>
+                <option value="box">{L.u_box}</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="barcode">Barcode</Label>
+            <Label htmlFor="barcode">{L.barcode}</Label>
             <div className="flex gap-2">
               <Input
                 id="barcode"
                 name="barcode"
                 value={form.barcode}
                 onChange={handleChange}
-                placeholder="Enter or generate barcode"
+                placeholder={L.barcodePh}
                 className="bg-white border-paws-sand flex-1"
               />
               <Button
@@ -478,14 +529,14 @@ function NewProductPageInner() {
                 onClick={handleGenerateBarcode}
                 className="gap-1.5 border-paws-sand shrink-0"
               >
-                <Barcode className="w-4 h-4" /> Generate
+                <Barcode className="w-4 h-4" /> {L.generate}
               </Button>
             </div>
           </div>
 
           {/* Tags */}
           <div className="space-y-1.5">
-            <Label htmlFor="tags">Tags</Label>
+            <Label htmlFor="tags">{L.tags}</Label>
             <div className="flex flex-wrap gap-2 mb-2">
               {form.tags.map((tag) => (
                 <span
@@ -508,24 +559,20 @@ function NewProductPageInner() {
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               onKeyDown={handleAddTag}
-              placeholder="Type a tag and press Enter..."
+              placeholder={L.tagsPh}
               className="bg-white border-paws-sand"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Press Enter or comma to add a tag
-            </p>
+            <p className="text-xs text-muted-foreground mt-1">{L.tagsNote}</p>
           </div>
         </div>
 
         {/* Pricing */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Pricing
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.pricing}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="price">Selling Price (EGP) *</Label>
+              <Label htmlFor="price">{L.sellingPrice} ({L.egp}) *</Label>
               <Input
                 id="price"
                 name="price"
@@ -541,7 +588,7 @@ function NewProductPageInner() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="cost_price">Cost Price (EGP) *</Label>
+              <Label htmlFor="cost_price">{L.costPrice} ({L.egp}) *</Label>
               <Input
                 id="cost_price"
                 name="cost_price"
@@ -560,7 +607,7 @@ function NewProductPageInner() {
           {form.price && form.cost_price && (
             <div className="bg-paws-cream/50 rounded-xl p-3">
               <p className="text-sm text-paws-brown">
-                Profit margin:{" "}
+                {L.profitMargin}:{" "}
                 <span className="font-semibold text-paws-brown-dark">
                   {(
                     ((parseFloat(form.price) - parseFloat(form.cost_price)) /
@@ -569,7 +616,7 @@ function NewProductPageInner() {
                   ).toFixed(1)}
                   %
                 </span>{" "}
-                ({(parseFloat(form.price) - parseFloat(form.cost_price)).toLocaleString()} EGP)
+                ({(parseFloat(form.price) - parseFloat(form.cost_price)).toLocaleString()} {L.egp})
               </p>
             </div>
           )}
@@ -577,16 +624,12 @@ function NewProductPageInner() {
 
         {/* Status */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Status & Visibility
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.statusVis}</h2>
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Active Status</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Product will be visible when active
-              </p>
+              <Label>{L.activeStatus}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{L.activeNote}</p>
             </div>
             <Switch
               checked={form.is_active}
@@ -598,10 +641,8 @@ function NewProductPageInner() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Featured Product</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Show this product in featured sections on the website
-              </p>
+              <Label>{L.featured}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{L.featuredNote}</p>
             </div>
             <Switch
               checked={form.is_featured}
@@ -616,7 +657,7 @@ function NewProductPageInner() {
         <div className="flex flex-wrap gap-3 justify-end">
           <Link href={`/${locale}/products`}>
             <Button type="button" variant="outline" className="border-paws-sand">
-              Cancel
+              {L.cancel}
             </Button>
           </Link>
           <Button
@@ -627,7 +668,7 @@ function NewProductPageInner() {
             className="border-paws-sand gap-1.5"
           >
             {savingDraft && <Loader2 className="w-4 h-4 animate-spin" />}
-            {savingDraft ? "Saving..." : "Save as Draft"}
+            {savingDraft ? L.draftSaving : L.saveDraft}
           </Button>
           <Button
             type="submit"
@@ -635,7 +676,7 @@ function NewProductPageInner() {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Creating..." : "Create Product"}
+            {loading ? L.creating : L.create}
           </Button>
         </div>
       </form>

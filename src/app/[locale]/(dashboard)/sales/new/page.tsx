@@ -72,6 +72,40 @@ export default function NewInvoicePage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    title: isAr ? "فاتورة جديدة" : "New Invoice",
+    invoiceDetails: isAr ? "بيانات الفاتورة" : "Invoice Details",
+    customer: isAr ? "العميل" : "Customer",
+    searchCustomers: isAr ? "دور على عملاء..." : "Search customers...",
+    status: isAr ? "الحالة" : "Status",
+    draft: isAr ? "مسودة" : "Draft",
+    confirmed: isAr ? "مؤكد" : "Confirmed",
+    lineItems: isAr ? "الأصناف" : "Line Items",
+    addItem: isAr ? "ضيف صنف" : "Add Item",
+    product: isAr ? "المنتج" : "Product",
+    qty: isAr ? "الكمية" : "Qty",
+    unitPrice: isAr ? "سعر الوحدة" : "Unit Price",
+    total: isAr ? "الإجمالي" : "Total",
+    searchProduct: isAr ? "دور على منتج..." : "Search product...",
+    stock: isAr ? "المخزن" : "Stock",
+    egp: isAr ? "ج.م" : "EGP",
+    summary: isAr ? "الملخص" : "Summary",
+    subtotal: isAr ? "المجموع" : "Subtotal",
+    vat: isAr ? "ضريبة القيمة المضافة (14%)" : "VAT (14%)",
+    discount: isAr ? "الخصم" : "Discount",
+    payment: isAr ? "الدفع" : "Payment",
+    amountPaid: isAr ? "المبلغ المدفوع" : "Amount Paid",
+    paymentMethod: isAr ? "طريقة الدفع" : "Payment Method",
+    cash: isAr ? "كاش" : "Cash",
+    card: isAr ? "كارت" : "Card",
+    transfer: isAr ? "تحويل بنكي" : "Bank Transfer",
+    check: isAr ? "شيك" : "Check",
+    remaining: isAr ? "المتبقي" : "Remaining balance",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    create: isAr ? "إنشاء الفاتورة" : "Create Invoice",
+    saving: isAr ? "بيتحفظ..." : "Saving...",
+  };
 
   // Customer state
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -372,9 +406,7 @@ export default function NewInvoicePage() {
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-bold text-paws-brown-dark">
-          New Invoice
-        </h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{L.title}</h1>
       </div>
 
       {error && (
@@ -386,13 +418,11 @@ export default function NewInvoicePage() {
       <div className="space-y-6">
         {/* ---- Customer & Status ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
-          <h2 className="text-sm font-semibold text-paws-brown mb-4">
-            Invoice Details
-          </h2>
+          <h2 className="text-sm font-semibold text-paws-brown mb-4">{L.invoiceDetails}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Customer selector */}
             <div className="relative">
-              <Label htmlFor="customer">Customer</Label>
+              <Label htmlFor="customer">{L.customer}</Label>
               {selectedCustomer ? (
                 <div className="mt-1 flex items-center gap-2 rounded-lg border border-paws-sand bg-paws-cream/30 px-3 py-1.5 text-sm">
                   <span className="flex-1">
@@ -420,7 +450,7 @@ export default function NewInvoicePage() {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <Input
                       id="customer"
-                      placeholder="Search customers..."
+                      placeholder={L.searchCustomers}
                       value={customerSearch}
                       onChange={(e) => {
                         setCustomerSearch(e.target.value);
@@ -465,15 +495,15 @@ export default function NewInvoicePage() {
 
             {/* Status */}
             <div>
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">{L.status}</Label>
               <select
                 id="status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value as InvoiceStatus)}
                 className="mt-1 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="draft">Draft</option>
-                <option value="confirmed">Confirmed</option>
+                <option value="draft">{L.draft}</option>
+                <option value="confirmed">{L.confirmed}</option>
               </select>
             </div>
           </div>
@@ -482,9 +512,7 @@ export default function NewInvoicePage() {
         {/* ---- Line Items ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-paws-brown">
-              Line Items
-            </h2>
+            <h2 className="text-sm font-semibold text-paws-brown">{L.lineItems}</h2>
             <Button
               type="button"
               size="sm"
@@ -492,7 +520,7 @@ export default function NewInvoicePage() {
               className="gap-1 text-xs"
               onClick={addLine}
             >
-              <Plus className="w-3.5 h-3.5" /> Add Item
+              <Plus className="w-3.5 h-3.5" /> {L.addItem}
             </Button>
           </div>
 
@@ -501,19 +529,19 @@ export default function NewInvoicePage() {
               <thead>
                 <tr className="border-b border-paws-sand">
                   <th className="text-start px-2 py-2 font-semibold text-paws-brown w-[40%]">
-                    Product
+                    {L.product}
                   </th>
                   <th className="text-start px-2 py-2 font-semibold text-paws-brown w-[10%]">
                     SKU
                   </th>
                   <th className="text-center px-2 py-2 font-semibold text-paws-brown w-[12%]">
-                    Qty
+                    {L.qty}
                   </th>
                   <th className="text-end px-2 py-2 font-semibold text-paws-brown w-[15%]">
-                    Unit Price
+                    {L.unitPrice}
                   </th>
                   <th className="text-end px-2 py-2 font-semibold text-paws-brown w-[15%]">
-                    Total
+                    {L.total}
                   </th>
                   <th className="w-[8%]" />
                 </tr>
@@ -533,7 +561,7 @@ export default function NewInvoicePage() {
                           <div className="relative">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                             <Input
-                              placeholder="Search product..."
+                              placeholder={L.searchProduct}
                               value={
                                 activeLineKey === line.key ? productSearch : ""
                               }
@@ -649,20 +677,18 @@ export default function NewInvoicePage() {
 
         {/* ---- Summary ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
-          <h2 className="text-sm font-semibold text-paws-brown mb-4">
-            Summary
-          </h2>
+          <h2 className="text-sm font-semibold text-paws-brown mb-4">{L.summary}</h2>
           <div className="max-w-xs ml-auto space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{subtotal.toFixed(2)} EGP</span>
+              <span className="text-muted-foreground">{L.subtotal}</span>
+              <span>{subtotal.toFixed(2)} {L.egp}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">VAT (14%)</span>
-              <span>{taxAmount.toFixed(2)} EGP</span>
+              <span className="text-muted-foreground">{L.vat}</span>
+              <span>{taxAmount.toFixed(2)} {L.egp}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Discount</span>
+              <span className="text-muted-foreground">{L.discount}</span>
               <Input
                 type="number"
                 min={0}
@@ -675,20 +701,18 @@ export default function NewInvoicePage() {
               />
             </div>
             <div className="flex justify-between border-t border-paws-sand pt-2 font-bold text-base">
-              <span>Total</span>
-              <span className="text-paws-orange">{total.toFixed(2)} EGP</span>
+              <span>{L.total}</span>
+              <span className="text-paws-orange">{total.toFixed(2)} {L.egp}</span>
             </div>
           </div>
         </div>
 
         {/* ---- Payment ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
-          <h2 className="text-sm font-semibold text-paws-brown mb-4">
-            Payment
-          </h2>
+          <h2 className="text-sm font-semibold text-paws-brown mb-4">{L.payment}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="amountPaid">Amount Paid (EGP)</Label>
+              <Label htmlFor="amountPaid">{L.amountPaid} ({L.egp})</Label>
               <Input
                 id="amountPaid"
                 type="number"
@@ -702,7 +726,7 @@ export default function NewInvoicePage() {
               />
             </div>
             <div>
-              <Label htmlFor="paymentMethod">Payment Method</Label>
+              <Label htmlFor="paymentMethod">{L.paymentMethod}</Label>
               <select
                 id="paymentMethod"
                 value={paymentMethod}
@@ -711,16 +735,16 @@ export default function NewInvoicePage() {
                 }
                 className="mt-1 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="cash">Cash</option>
-                <option value="card">Card</option>
-                <option value="transfer">Bank Transfer</option>
-                <option value="check">Check</option>
+                <option value="cash">{L.cash}</option>
+                <option value="card">{L.card}</option>
+                <option value="transfer">{L.transfer}</option>
+                <option value="check">{L.check}</option>
               </select>
             </div>
           </div>
           {amountPaid > 0 && amountPaid < total && (
             <p className="mt-2 text-xs text-yellow-600">
-              Remaining balance: {(total - amountPaid).toFixed(2)} EGP
+              {L.remaining}: {(total - amountPaid).toFixed(2)} {L.egp}
             </p>
           )}
         </div>
@@ -732,7 +756,7 @@ export default function NewInvoicePage() {
             onClick={() => router.push(`/${locale}/sales`)}
             disabled={submitting}
           >
-            Cancel
+            {L.cancel}
           </Button>
           <Button
             className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white"
@@ -744,7 +768,7 @@ export default function NewInvoicePage() {
             ) : (
               <CheckCircle className="w-4 h-4" />
             )}
-            {submitting ? "Saving..." : "Create Invoice"}
+            {submitting ? L.saving : L.create}
           </Button>
         </div>
       </div>

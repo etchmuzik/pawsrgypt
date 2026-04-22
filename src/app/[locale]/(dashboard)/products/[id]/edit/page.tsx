@@ -40,6 +40,54 @@ export default function EditProductPage() {
   const params = useParams();
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    back: isAr ? "رجوع" : "Back",
+    title: isAr ? "تعديل المنتج" : "Edit Product",
+    basicInfo: isAr ? "البيانات الأساسية" : "Basic Information",
+    sku: isAr ? "كود المنتج" : "SKU",
+    brand: isAr ? "البراند" : "Brand",
+    brandPh: isAr ? "مثلا: Royal Canin" : "e.g. Royal Canin",
+    nameEn: isAr ? "الاسم (إنجليزي)" : "Name (English)",
+    nameAr: isAr ? "الاسم (عربي)" : "Name (Arabic)",
+    nameEnPh: isAr ? "اسم المنتج بالإنجليزي" : "Product name in English",
+    nameArPh: "اسم المنتج بالعربي",
+    descEn: isAr ? "الوصف (إنجليزي)" : "Description (English)",
+    descAr: isAr ? "الوصف (عربي)" : "Description (Arabic)",
+    descEnPh: isAr ? "وصف المنتج بالإنجليزي" : "Product description in English",
+    descArPh: "وصف المنتج بالعربي",
+    images: isAr ? "صور المنتج" : "Product Images",
+    imagesNote: isAr ? "ارفع 10 صور كحد أقصى. أول صورة هتكون الرئيسية." : "Upload up to 10 images. The first image will be the main product image.",
+    classification: isAr ? "التصنيف" : "Classification",
+    category: isAr ? "الفئة" : "Category",
+    selectCategory: isAr ? "اختار فئة" : "Select category",
+    unitType: isAr ? "وحدة القياس" : "Unit Type",
+    u_piece: isAr ? "قطعة" : "Piece",
+    u_kg: isAr ? "كيلو (kg)" : "Kilogram (kg)",
+    u_g: isAr ? "جرام (g)" : "Gram (g)",
+    u_l: isAr ? "لتر (L)" : "Liter (L)",
+    u_ml: isAr ? "ميلليلتر (mL)" : "Milliliter (mL)",
+    u_pack: isAr ? "باك" : "Pack",
+    u_box: isAr ? "علبة" : "Box",
+    barcode: isAr ? "الباركود" : "Barcode",
+    barcodePh: isAr ? "ادخل أو ولد باركود" : "Enter or generate barcode",
+    generate: isAr ? "ولد" : "Generate",
+    pricing: isAr ? "التسعير" : "Pricing",
+    sellingPrice: isAr ? "سعر البيع" : "Selling Price",
+    costPrice: isAr ? "سعر التكلفة" : "Cost Price",
+    egp: isAr ? "ج.م" : "EGP",
+    tagsCs: isAr ? "وسوم (مفصولة بفاصلة)" : "Tags (comma-separated)",
+    statusVis: isAr ? "الحالة والظهور" : "Status & Visibility",
+    activeStatus: isAr ? "حالة التفعيل" : "Active Status",
+    activeNote: isAr ? "المنتج يظهر لما يكون مفعل" : "Product will be visible when active",
+    featured: isAr ? "منتج مميز" : "Featured",
+    featuredNote: isAr ? "يظهر المنتج في قسم المميزات في الموقع" : "Show this product in featured sections on the website",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    save: isAr ? "حفظ التغييرات" : "Save Changes",
+    saving: isAr ? "بيتحفظ..." : "Saving...",
+    notFound: isAr ? "المنتج مش موجود" : "Product not found",
+    updateFailed: isAr ? "فشل تحديث المنتج" : "Failed to update product",
+  };
 
   const productId = params.id as string;
 
@@ -91,7 +139,7 @@ export default function EditProductPage() {
       }
 
       if (productError || !productData) {
-        toast.error("Product not found");
+        toast.error(L.notFound);
         router.push(`/${locale}/products`);
         return;
       }
@@ -189,7 +237,7 @@ export default function EditProductPage() {
 
     if (productError) {
       setLoading(false);
-      toast.error(productError.message ?? "Failed to update product");
+      toast.error(productError.message ?? L.updateFailed);
       return;
     }
 
@@ -207,12 +255,12 @@ export default function EditProductPage() {
 
     if (variantError) {
       toast.error(
-        `Product updated but variant failed: ${variantError.message}`
+        `${isAr ? "تم تحديث المنتج بس فشل تحديث المتغير" : "Product updated but variant failed"}: ${variantError.message}`
       );
       return;
     }
 
-    toast.success("Product updated successfully!");
+    toast.success(isAr ? "تم تحديث المنتج بنجاح!" : "Product updated successfully!");
     router.push(`/${locale}/products`);
   }
 
@@ -233,68 +281,64 @@ export default function EditProductPage() {
             size="sm"
             className="gap-1.5 text-paws-brown"
           >
-            <ArrowLeft className="w-4 h-4" /> Back
+            <ArrowLeft className="w-4 h-4" /> {L.back}
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-paws-brown-dark">
-          Edit Product
-        </h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{L.title}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Info */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Basic Information
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.basicInfo}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="sku">SKU *</Label>
+              <Label htmlFor="sku">{L.sku} *</Label>
               <Input
                 id="sku"
                 name="sku"
                 value={form.sku}
                 onChange={handleChange}
-                placeholder="e.g. PAW-DOG-001"
+                placeholder="PAW-DOG-001"
                 className="bg-white border-paws-sand"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="brand">Brand</Label>
+              <Label htmlFor="brand">{L.brand}</Label>
               <Input
                 id="brand"
                 name="brand"
                 value={form.brand}
                 onChange={handleChange}
-                placeholder="e.g. Royal Canin"
+                placeholder={L.brandPh}
                 className="bg-white border-paws-sand"
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="name_en">Name (English) *</Label>
+              <Label htmlFor="name_en">{L.nameEn} *</Label>
               <Input
                 id="name_en"
                 name="name_en"
                 value={form.name_en}
                 onChange={handleChange}
-                placeholder="Product name in English"
+                placeholder={L.nameEnPh}
                 className="bg-white border-paws-sand"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="name_ar">Name (Arabic)</Label>
+              <Label htmlFor="name_ar">{L.nameAr}</Label>
               <Input
                 id="name_ar"
                 name="name_ar"
                 value={form.name_ar}
                 onChange={handleChange}
-                placeholder="اسم المنتج بالعربية"
+                placeholder={L.nameArPh}
                 className="bg-white border-paws-sand"
                 dir="rtl"
               />
@@ -303,35 +347,32 @@ export default function EditProductPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="description_en">Description (English)</Label>
+              <Label htmlFor="description_en">{L.descEn}</Label>
               <RichTextEditor
                 value={form.description_en}
                 onChange={(html) => updateField("description_en", html)}
-                placeholder="Product description in English"
+                placeholder={L.descEnPh}
               />
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description_ar">Description (Arabic)</Label>
+              <Label htmlFor="description_ar">{L.descAr}</Label>
               <RichTextEditor
                 value={form.description_ar}
                 onChange={(html) => updateField("description_ar", html)}
-                placeholder="وصف المنتج بالعربية"
+                placeholder={L.descArPh}
                 dir="rtl"
               />
             </div>
           </div>
         </div>
 
-        {/* Classification */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Classification
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.classification}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="category_id">Category</Label>
+              <Label htmlFor="category_id">{L.category}</Label>
               <select
                 id="category_id"
                 name="category_id"
@@ -339,7 +380,7 @@ export default function EditProductPage() {
                 onChange={handleChange}
                 className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="">Select category</option>
+                <option value="">{L.selectCategory}</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {locale === "ar" ? cat.name_ar : cat.name_en}
@@ -349,7 +390,7 @@ export default function EditProductPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="unit_type">Unit Type</Label>
+              <Label htmlFor="unit_type">{L.unitType}</Label>
               <select
                 id="unit_type"
                 name="unit_type"
@@ -357,26 +398,26 @@ export default function EditProductPage() {
                 onChange={handleChange}
                 className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <option value="piece">Piece</option>
-                <option value="kg">Kilogram (kg)</option>
-                <option value="g">Gram (g)</option>
-                <option value="l">Liter (L)</option>
-                <option value="ml">Milliliter (mL)</option>
-                <option value="pack">Pack</option>
-                <option value="box">Box</option>
+                <option value="piece">{L.u_piece}</option>
+                <option value="kg">{L.u_kg}</option>
+                <option value="g">{L.u_g}</option>
+                <option value="l">{L.u_l}</option>
+                <option value="ml">{L.u_ml}</option>
+                <option value="pack">{L.u_pack}</option>
+                <option value="box">{L.u_box}</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="barcode">Barcode</Label>
+            <Label htmlFor="barcode">{L.barcode}</Label>
             <div className="flex gap-2">
               <Input
                 id="barcode"
                 name="barcode"
                 value={form.barcode}
                 onChange={handleChange}
-                placeholder="Enter or generate barcode"
+                placeholder={L.barcodePh}
                 className="bg-white border-paws-sand flex-1"
               />
               <Button
@@ -385,21 +426,18 @@ export default function EditProductPage() {
                 onClick={handleGenerateBarcode}
                 className="gap-1.5 border-paws-sand shrink-0"
               >
-                <Barcode className="w-4 h-4" /> Generate
+                <Barcode className="w-4 h-4" /> {L.generate}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Pricing */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Pricing
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.pricing}</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <Label htmlFor="price">Selling Price (EGP) *</Label>
+              <Label htmlFor="price">{L.sellingPrice} ({L.egp}) *</Label>
               <Input
                 id="price"
                 name="price"
@@ -415,7 +453,7 @@ export default function EditProductPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="cost_price">Cost Price (EGP) *</Label>
+              <Label htmlFor="cost_price">{L.costPrice} ({L.egp}) *</Label>
               <Input
                 id="cost_price"
                 name="cost_price"
@@ -432,11 +470,8 @@ export default function EditProductPage() {
           </div>
         </div>
 
-        {/* Images */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">
-            Images
-          </h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.images}</h2>
 
           <ImageUploader
             bucket="product-images"
@@ -446,31 +481,27 @@ export default function EditProductPage() {
           />
         </div>
 
-        {/* Tags */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">Tags</h2>
+          <h2 className="font-semibold text-paws-brown-dark text-lg">{isAr ? "وسوم" : "Tags"}</h2>
 
           <div className="space-y-1.5">
-            <Label htmlFor="tags">Tags (comma-separated)</Label>
+            <Label htmlFor="tags">{L.tagsCs}</Label>
             <Input
               id="tags"
               name="tags"
               value={form.tags}
               onChange={handleChange}
-              placeholder="e.g. dog, food, premium"
+              placeholder={isAr ? "مثلا: كلاب، طعام، راقي" : "e.g. dog, food, premium"}
               className="bg-white border-paws-sand"
             />
           </div>
         </div>
 
-        {/* Status */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label>Active Status</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Product will be visible when active
-              </p>
+              <Label>{L.activeStatus}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{L.activeNote}</p>
             </div>
             <Switch
               checked={form.is_active}
@@ -482,10 +513,8 @@ export default function EditProductPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Featured</Label>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Show this product in featured sections
-              </p>
+              <Label>{L.featured}</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">{L.featuredNote}</p>
             </div>
             <Switch
               checked={form.is_featured}
@@ -499,7 +528,7 @@ export default function EditProductPage() {
         <div className="flex gap-3 justify-end">
           <Link href={`/${locale}/products`}>
             <Button type="button" variant="outline" className="border-paws-sand">
-              Cancel
+              {L.cancel}
             </Button>
           </Link>
           <Button
@@ -508,7 +537,7 @@ export default function EditProductPage() {
             className="bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? L.saving : L.save}
           </Button>
         </div>
       </form>

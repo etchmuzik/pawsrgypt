@@ -74,6 +74,37 @@ export default function NewPurchaseOrderPage() {
   const router = useRouter();
   const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
+  const isAr = locale === "ar";
+  const L = {
+    title: isAr ? "أمر شراء جديد" : "New Purchase Order",
+    orderDetails: isAr ? "بيانات الأمر" : "Order Details",
+    supplier: isAr ? "المورد" : "Supplier",
+    branch: isAr ? "الفرع" : "Branch",
+    notesOpt: isAr ? "ملاحظات (اختياري)" : "Notes (optional)",
+    notesPh: isAr ? "أي ملاحظات على أمر الشراء..." : "Any notes for this purchase order...",
+    searchSuppliers: isAr ? "دور على موردين..." : "Search suppliers...",
+    lineItems: isAr ? "الأصناف" : "Line Items",
+    addItem: isAr ? "ضيف صنف" : "Add Item",
+    product: isAr ? "المنتج" : "Product",
+    qty: isAr ? "الكمية" : "Qty",
+    unitCost: isAr ? "سعر الوحدة" : "Unit Cost",
+    total: isAr ? "الإجمالي" : "Total",
+    searchProduct: isAr ? "دور على منتج..." : "Search product...",
+    cost: isAr ? "التكلفة" : "Cost",
+    egp: isAr ? "ج.م" : "EGP",
+    summary: isAr ? "الملخص" : "Summary",
+    subtotal: isAr ? "المجموع" : "Subtotal",
+    tax: isAr ? "ضريبة (14%)" : "Tax (14%)",
+    cancel: isAr ? "إلغاء" : "Cancel",
+    create: isAr ? "إنشاء أمر الشراء" : "Create Purchase Order",
+    saving: isAr ? "بيتحفظ..." : "Saving...",
+    pickSupplier: isAr ? "اختار مورد من فضلك." : "Please select a supplier.",
+    pickBranch: isAr ? "اختار فرع من فضلك." : "Please select a branch.",
+    needLine: isAr ? "ضيف صنف واحد على الأقل." : "Add at least one product line item.",
+    mustLogin: isAr ? "لازم تسجل دخول." : "You must be logged in.",
+    failedCreate: isAr ? "فشل إنشاء أمر الشراء." : "Failed to create purchase order.",
+    unexpected: isAr ? "حصل خطأ غير متوقع." : "An unexpected error occurred.",
+  };
 
   // Supplier
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -238,17 +269,17 @@ export default function NewPurchaseOrderPage() {
     setError(null);
 
     if (!selectedSupplier) {
-      setError("Please select a supplier.");
+      setError(L.pickSupplier);
       return;
     }
     if (!selectedBranchId) {
-      setError("Please select a branch.");
+      setError(L.pickBranch);
       return;
     }
 
     const validLines = lines.filter((l) => l.productId && l.quantity > 0);
     if (validLines.length === 0) {
-      setError("Add at least one product line item.");
+      setError(L.needLine);
       return;
     }
 
@@ -259,7 +290,7 @@ export default function NewPurchaseOrderPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) {
-        setError("You must be logged in.");
+        setError(L.mustLogin);
         setSubmitting(false);
         return;
       }
@@ -287,7 +318,7 @@ export default function NewPurchaseOrderPage() {
 
       if (orderErr || !order) {
         throw new Error(
-          orderErr?.message ?? "Failed to create purchase order."
+          orderErr?.message ?? L.failedCreate
         );
       }
 
@@ -312,7 +343,7 @@ export default function NewPurchaseOrderPage() {
       router.push(`/${locale}/purchases`);
     } catch (err: unknown) {
       const message =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
+        err instanceof Error ? err.message : L.unexpected;
       setError(message);
     } finally {
       setSubmitting(false);
@@ -331,9 +362,7 @@ export default function NewPurchaseOrderPage() {
         >
           <ArrowLeft className="w-4 h-4" />
         </Button>
-        <h1 className="text-2xl font-bold text-paws-brown-dark">
-          New Purchase Order
-        </h1>
+        <h1 className="text-2xl font-bold text-paws-brown-dark">{L.title}</h1>
       </div>
 
       {error && (
@@ -345,13 +374,11 @@ export default function NewPurchaseOrderPage() {
       <div className="space-y-6">
         {/* ---- Supplier & Branch ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
-          <h2 className="text-sm font-semibold text-paws-brown mb-4">
-            Order Details
-          </h2>
+          <h2 className="text-sm font-semibold text-paws-brown mb-4">{L.orderDetails}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Supplier selector */}
             <div className="relative">
-              <Label htmlFor="supplier">Supplier</Label>
+              <Label htmlFor="supplier">{L.supplier}</Label>
               {selectedSupplier ? (
                 <div className="mt-1 flex items-center gap-2 rounded-lg border border-paws-sand bg-paws-cream/30 px-3 py-1.5 text-sm">
                   <span className="flex-1">
@@ -379,7 +406,7 @@ export default function NewPurchaseOrderPage() {
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                     <Input
                       id="supplier"
-                      placeholder="Search suppliers..."
+                      placeholder={L.searchSuppliers}
                       value={supplierSearch}
                       onChange={(e) => {
                         setSupplierSearch(e.target.value);
@@ -424,7 +451,7 @@ export default function NewPurchaseOrderPage() {
 
             {/* Branch selector */}
             <div>
-              <Label htmlFor="branch">Branch</Label>
+              <Label htmlFor="branch">{L.branch}</Label>
               <select
                 id="branch"
                 value={selectedBranchId}
@@ -442,14 +469,14 @@ export default function NewPurchaseOrderPage() {
 
           {/* Notes */}
           <div className="mt-4">
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">{L.notesOpt}</Label>
             <textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
               className="mt-1 w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-none"
-              placeholder="Any notes for this purchase order..."
+              placeholder={L.notesPh}
             />
           </div>
         </div>
@@ -457,9 +484,7 @@ export default function NewPurchaseOrderPage() {
         {/* ---- Line Items ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-paws-brown">
-              Line Items
-            </h2>
+            <h2 className="text-sm font-semibold text-paws-brown">{L.lineItems}</h2>
             <Button
               type="button"
               size="sm"
@@ -467,7 +492,7 @@ export default function NewPurchaseOrderPage() {
               className="gap-1 text-xs"
               onClick={addLine}
             >
-              <Plus className="w-3.5 h-3.5" /> Add Item
+              <Plus className="w-3.5 h-3.5" /> {L.addItem}
             </Button>
           </div>
 
@@ -476,19 +501,19 @@ export default function NewPurchaseOrderPage() {
               <thead>
                 <tr className="border-b border-paws-sand">
                   <th className="text-start px-2 py-2 font-semibold text-paws-brown w-[40%]">
-                    Product
+                    {L.product}
                   </th>
                   <th className="text-start px-2 py-2 font-semibold text-paws-brown w-[10%]">
                     SKU
                   </th>
                   <th className="text-center px-2 py-2 font-semibold text-paws-brown w-[12%]">
-                    Qty
+                    {L.qty}
                   </th>
                   <th className="text-end px-2 py-2 font-semibold text-paws-brown w-[15%]">
-                    Unit Cost
+                    {L.unitCost}
                   </th>
                   <th className="text-end px-2 py-2 font-semibold text-paws-brown w-[15%]">
-                    Total
+                    {L.total}
                   </th>
                   <th className="w-[8%]" />
                 </tr>
@@ -508,7 +533,7 @@ export default function NewPurchaseOrderPage() {
                           <div className="relative">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                             <Input
-                              placeholder="Search product..."
+                              placeholder={L.searchProduct}
                               value={
                                 activeLineKey === line.key ? productSearch : ""
                               }
@@ -552,8 +577,8 @@ export default function NewPurchaseOrderPage() {
                                     </span>
                                     {p.product_variants?.[0] && (
                                       <span className="ml-2 text-paws-brown font-semibold">
-                                        Cost: {p.product_variants[0].cost_price}{" "}
-                                        EGP
+                                        {L.cost}: {p.product_variants[0].cost_price}{" "}
+                                        {L.egp}
                                       </span>
                                     )}
                                   </button>
@@ -625,21 +650,19 @@ export default function NewPurchaseOrderPage() {
 
         {/* ---- Summary ---- */}
         <div className="bg-white rounded-2xl border border-paws-sand p-5">
-          <h2 className="text-sm font-semibold text-paws-brown mb-4">
-            Summary
-          </h2>
+          <h2 className="text-sm font-semibold text-paws-brown mb-4">{L.summary}</h2>
           <div className="max-w-xs ml-auto space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{subtotal.toFixed(2)} EGP</span>
+              <span className="text-muted-foreground">{L.subtotal}</span>
+              <span>{subtotal.toFixed(2)} {L.egp}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Tax (14%)</span>
-              <span>{taxAmount.toFixed(2)} EGP</span>
+              <span className="text-muted-foreground">{L.tax}</span>
+              <span>{taxAmount.toFixed(2)} {L.egp}</span>
             </div>
             <div className="flex justify-between border-t border-paws-sand pt-2 font-bold text-base">
-              <span>Total</span>
-              <span className="text-paws-orange">{total.toFixed(2)} EGP</span>
+              <span>{L.total}</span>
+              <span className="text-paws-orange">{total.toFixed(2)} {L.egp}</span>
             </div>
           </div>
         </div>
@@ -651,7 +674,7 @@ export default function NewPurchaseOrderPage() {
             onClick={() => router.push(`/${locale}/purchases`)}
             disabled={submitting}
           >
-            Cancel
+            {L.cancel}
           </Button>
           <Button
             className="gap-1.5 bg-paws-orange hover:bg-paws-orange/90 text-white"
@@ -663,7 +686,7 @@ export default function NewPurchaseOrderPage() {
             ) : (
               <CheckCircle className="w-4 h-4" />
             )}
-            {submitting ? "Saving..." : "Create Purchase Order"}
+            {submitting ? L.saving : L.create}
           </Button>
         </div>
       </div>
