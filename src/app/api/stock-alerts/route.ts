@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface StockAlertInput {
   productId?: string;
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Valid email is required" }, { status: 400 });
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { error } = await supabase
     .from("stock_alerts")

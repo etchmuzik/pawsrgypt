@@ -44,6 +44,8 @@ export const FALLBACK_PRODUCTS = [
 
 const CATEGORIES = [
   { id: "all", label: "All", labelAr: "الكل" },
+  { id: "offers", label: "Offers", labelAr: "عروض" },
+  { id: "packages", label: "Packages", labelAr: "باكدج" },
   { id: "dog-food", label: "Dog Food", labelAr: "طعام كلاب" },
   { id: "cat-food", label: "Cat Food", labelAr: "طعام قطط" },
   { id: "cat-litter", label: "Cat Litter", labelAr: "رمل قطط" },
