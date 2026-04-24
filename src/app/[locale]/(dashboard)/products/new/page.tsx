@@ -36,6 +36,14 @@ interface ProductForm {
   is_featured: boolean;
   images: string[];
   tags: string[];
+  initial_qty: string;
+  warehouse_id: string;
+  min_qty: string;
+}
+
+interface WarehouseOption {
+  id: string;
+  name: string;
 }
 
 const INITIAL_FORM: ProductForm = {
@@ -54,6 +62,9 @@ const INITIAL_FORM: ProductForm = {
   is_featured: false,
   images: [],
   tags: [],
+  initial_qty: "0",
+  warehouse_id: "",
+  min_qty: "0",
 };
 
 function generateBarcode(): string {
@@ -159,9 +170,17 @@ function NewProductPageInner() {
     draftSaved: isAr ? "تم حفظ المسودة." : "Draft saved.",
     ok: isAr ? "تم إنشاء المنتج بنجاح!" : "Product created successfully!",
     duplicated: isAr ? "تم تكرار المنتج. الـ SKU والصور اتمسحوا." : "Product duplicated. SKU and images cleared.",
+    stock: isAr ? "المخزون" : "Stock",
+    stockNote: isAr ? "سيب الكمية 0 لو مش عايز تسجل مخزون دلوقتي." : "Leave quantity at 0 if you don't want to record stock yet.",
+    initialQty: isAr ? "الكمية الابتدائية" : "Initial Quantity",
+    warehouse: isAr ? "المستودع" : "Warehouse",
+    minQty: isAr ? "الحد الأدنى للتنبيه" : "Low-Stock Threshold",
+    noWarehouses: isAr ? "ضيف مستودع أولاً من الإعدادات" : "Create a warehouse first in settings",
+    stockFailed: isAr ? "تم حفظ المنتج بس فشل تسجيل المخزون" : "Product saved but stock failed",
   };
 
   const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [warehouses, setWarehouses] = useState<WarehouseOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [form, setForm] = useState<ProductForm>(INITIAL_FORM);
@@ -178,7 +197,20 @@ function NewProductPageInner() {
         setCategories(data);
       }
     }
+    async function loadWarehouses() {
+      const { data } = await supabase
+        .from("warehouses")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      const rows = (data as WarehouseOption[] | null) ?? [];
+      setWarehouses(rows);
+      if (rows.length > 0) {
+        setForm((f) => ({ ...f, warehouse_id: f.warehouse_id || rows[0].id }));
+      }
+    }
     loadCategories();
+    loadWarehouses();
   }, [supabase]);
 
   useEffect(() => {
@@ -223,6 +255,9 @@ function NewProductPageInner() {
         is_featured: false,
         images: [],
         tags: p.tags ?? [],
+        initial_qty: "0",
+        warehouse_id: warehouses[0]?.id ?? "",
+        min_qty: "0",
       });
       toast.info(L.duplicated);
     }
@@ -334,13 +369,46 @@ function NewProductPageInner() {
         is_active: asDraft ? false : form.is_active,
       } as never);
 
-    setBusy(false);
-
     if (variantError) {
+      setBusy(false);
       toast.error(`${L.variantFailed}: ${variantError.message}`);
       return;
     }
 
+    // Insert initial stock row if a quantity + warehouse were chosen.
+    const initialQty = parseFloat(form.initial_qty);
+    const minQty = parseFloat(form.min_qty);
+    if (!isNaN(initialQty) && initialQty > 0 && form.warehouse_id) {
+      const { error: stockErr } = await supabase.from("stock").insert({
+        product_id: productId,
+        variant_id: null,
+        warehouse_id: form.warehouse_id,
+        quantity: initialQty,
+        min_quantity: isNaN(minQty) ? 0 : minQty,
+      } as never);
+      if (stockErr) {
+        // Non-fatal: product + variant are saved, warn but don't roll back.
+        toast.error(`${L.stockFailed}: ${stockErr.message}`);
+      } else {
+        // Audit as a stock movement so the inventory history shows the initial load.
+        const { data: auth } = await supabase.auth.getUser();
+        if (auth?.user) {
+          await supabase.from("stock_movements").insert({
+            type: "adjustment",
+            product_id: productId,
+            variant_id: null,
+            quantity: initialQty,
+            to_warehouse_id: form.warehouse_id,
+            reference_type: "product_creation",
+            reference_id: productId,
+            notes: "Initial stock on product creation",
+            created_by: auth.user.id,
+          } as never);
+        }
+      }
+    }
+
+    setBusy(false);
     toast.success(asDraft ? L.draftSaved : L.ok);
     router.push(`/${locale}/products`);
   }
@@ -620,6 +688,63 @@ function NewProductPageInner() {
               </p>
             </div>
           )}
+        </div>
+
+        {/* Stock */}
+        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold text-paws-brown-dark text-lg">{L.stock}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{L.stockNote}</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="initial_qty">{L.initialQty}</Label>
+              <Input
+                id="initial_qty"
+                name="initial_qty"
+                type="number"
+                min="0"
+                step="0.001"
+                value={form.initial_qty}
+                onChange={handleChange}
+                className="bg-white border-paws-sand"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="min_qty">{L.minQty}</Label>
+              <Input
+                id="min_qty"
+                name="min_qty"
+                type="number"
+                min="0"
+                step="0.001"
+                value={form.min_qty}
+                onChange={handleChange}
+                className="bg-white border-paws-sand"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="warehouse_id">{L.warehouse}</Label>
+              {warehouses.length === 0 ? (
+                <p className="text-xs text-red-600 pt-2">{L.noWarehouses}</p>
+              ) : (
+                <select
+                  id="warehouse_id"
+                  name="warehouse_id"
+                  value={form.warehouse_id}
+                  onChange={handleChange}
+                  className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Status */}

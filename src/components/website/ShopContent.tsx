@@ -19,7 +19,13 @@ export type ProductRow = {
   images: string[];
   categories: { name_en: string; name_ar: string } | null;
   product_variants: { price: number }[];
+  stock?: { quantity: number }[];
 };
+
+function totalStock(p: ProductRow): number {
+  if (!p.stock || p.stock.length === 0) return Infinity; // unknown = treat as in stock
+  return p.stock.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0);
+}
 
 export const FALLBACK_PRODUCTS = [
   { id: "1", name_en: "Royal Canin Maxi Adult 15kg", name_ar: "رويال كانين ماكسي بالغ 15 كيلو", price: 5000, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/3352/image_1920", badge: "Best Seller", category: "Dog Dry Food" },
@@ -199,6 +205,8 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
             (filteredProducts ?? []).map((product, i) => {
               const price = product.product_variants?.[0]?.price ?? 0;
               const imageUrl = product.images?.[0] ?? null;
+              const stock = totalStock(product);
+              const outOfStock = stock <= 0;
 
               return (
                 <ScrollReveal key={product.id} delay={i * 50}>
@@ -213,16 +221,21 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
                           alt={locale === "ar" ? product.name_ar : product.name_en}
                           width={400}
                           height={400}
-                          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                          className={`w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ${outOfStock ? "opacity-50 grayscale" : ""}`}
                         />
                       ) : (
                         <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center">
                           <span className="text-2xl text-neutral-300">P</span>
                         </div>
                       )}
-                      {product.is_featured && (
+                      {product.is_featured && !outOfStock && (
                         <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold">
                           Featured
+                        </span>
+                      )}
+                      {outOfStock && (
+                        <span className="absolute top-3 left-3 bg-neutral-900 text-white text-xs px-3 py-1 rounded-full font-bold">
+                          {locale === "ar" ? "نفد المخزون" : "Out of Stock"}
                         </span>
                       )}
                     </div>

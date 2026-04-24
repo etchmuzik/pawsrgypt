@@ -4,6 +4,8 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, Star, Truck, Shield, Heart, Package } from "lucide-react";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { AddToCartButton } from "@/components/website/AddToCartButton";
+import { NotifyWhenAvailable } from "@/components/website/NotifyWhenAvailable";
+import { ProductImageZoom } from "@/components/website/ProductImageZoom";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeProductHtml, stripHtml } from "@/lib/html";
 
@@ -18,6 +20,7 @@ type ProductDetail = {
   is_featured: boolean;
   categories: { name_en: string; name_ar: string } | null;
   product_variants: { id: string; price: number; size: string | null; weight: number | null }[];
+  stock: { quantity: number }[];
 };
 
 const FALLBACK_PRODUCTS = [
@@ -49,7 +52,9 @@ export default async function ProductDetailPage({
   const supabase = await createClient();
   const { data: dbProduct } = await supabase
     .from("products")
-    .select("id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight)")
+    .select(
+      "id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight), stock(quantity)",
+    )
     .eq("id", slug)
     .eq("is_active", true)
     .single();
@@ -110,6 +115,14 @@ export default async function ProductDetailPage({
   const nameEn = product?.name_en ?? fallback!.name_en;
   const nameAr = product?.name_ar ?? fallback!.name_ar;
 
+  // Stock: sum across all warehouses; treat "no stock row at all" as unknown/in-stock
+  // (fallback products from FALLBACK_PRODUCTS always show in stock).
+  const stockRows = product?.stock ?? [];
+  const totalStock = stockRows.length === 0
+    ? Infinity
+    : stockRows.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0);
+  const outOfStock = totalStock <= 0;
+
   // Related products from fallback
   const relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.id !== slug).slice(0, 4);
 
@@ -135,24 +148,17 @@ export default async function ProductDetailPage({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
           {/* Product Image */}
           <ScrollReveal>
-            <div className="bg-neutral-50 rounded-3xl overflow-hidden border border-neutral-100">
-              <div className="aspect-square flex items-center justify-center p-8">
-                {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt={name}
-                    width={600}
-                    height={600}
-                    className="w-full h-full object-contain"
-                    priority
-                  />
-                ) : (
+            {imageUrl ? (
+              <ProductImageZoom src={imageUrl} alt={name} />
+            ) : (
+              <div className="bg-neutral-50 rounded-3xl overflow-hidden border border-neutral-100">
+                <div className="aspect-square flex items-center justify-center p-8">
                   <div className="w-24 h-24 rounded-2xl bg-neutral-100 flex items-center justify-center">
                     <Package className="w-10 h-10 text-neutral-300" />
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </ScrollReveal>
 
           {/* Product Info */}
@@ -199,10 +205,17 @@ export default async function ProductDetailPage({
               </div>
 
               {/* Stock Status */}
-              <div className="flex items-center gap-2 text-emerald-600">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                <span className="text-sm font-medium">{t("in_stock")}</span>
-              </div>
+              {outOfStock ? (
+                <div className="flex items-center gap-2 text-red-600">
+                  <div className="w-2 h-2 bg-red-500 rounded-full" />
+                  <span className="text-sm font-medium">{t("out_of_stock")}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-emerald-600">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                  <span className="text-sm font-medium">{t("in_stock")}</span>
+                </div>
+              )}
 
               {/* Description */}
               {description && stripHtml(description) && (
@@ -237,17 +250,25 @@ export default async function ProductDetailPage({
                 </div>
               </div>
 
-              {/* Add to Cart */}
+              {/* Add to Cart / Notify */}
               <div className="flex gap-3 pt-4">
-                <AddToCartButton
-                  id={productId}
-                  name={nameEn}
-                  nameAr={nameAr}
-                  price={price}
-                  image={imageUrl ?? ""}
-                  size="lg"
-                  className="flex-1"
-                />
+                {outOfStock ? (
+                  <NotifyWhenAvailable
+                    productId={productId}
+                    size="lg"
+                    className="flex-1"
+                  />
+                ) : (
+                  <AddToCartButton
+                    id={productId}
+                    name={nameEn}
+                    nameAr={nameAr}
+                    price={price}
+                    image={imageUrl ?? ""}
+                    size="lg"
+                    className="flex-1"
+                  />
+                )}
               </div>
             </div>
           </ScrollReveal>

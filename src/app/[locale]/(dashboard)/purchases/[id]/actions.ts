@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { sendEmail } from "@/lib/email";
 
 interface ActionResult {
   success: boolean;
@@ -125,10 +126,80 @@ export async function markPurchaseOrderReceived(orderId: string): Promise<Action
 
   if (statusErr) return { success: false, error: statusErr.message };
 
+  // Fan out stock-alert emails for each product that was received.
+  // Non-blocking on individual failures so the whole receive flow succeeds
+  // even if an email provider hiccups.
+  const productIds = Array.from(new Set(items.map((l) => l.product_id).filter(Boolean)));
+  if (productIds.length > 0) {
+    await notifyStockAlerts(productIds);
+  }
+
   revalidatePath(`/[locale]/(dashboard)/purchases/${orderId}`, "page");
   revalidatePath(`/[locale]/(dashboard)/purchases`, "page");
   revalidatePath(`/[locale]/(dashboard)/inventory`, "page");
   return { success: true };
+}
+
+interface PendingAlert {
+  id: string;
+  email: string;
+  product_id: string;
+  products: { name_en: string } | null;
+}
+
+async function notifyStockAlerts(productIds: string[]): Promise<void> {
+  const supabase = await createClient();
+
+  const { data: alertsData } = await supabase
+    .from("stock_alerts")
+    .select("id, email, product_id, products(name_en)")
+    .in("product_id", productIds)
+    .eq("status", "pending");
+
+  const alerts = (alertsData as unknown as PendingAlert[] | null) ?? [];
+  if (alerts.length === 0) return;
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://pawsegypt.com";
+
+  for (const alert of alerts) {
+    const productName = alert.products?.name_en ?? "your product";
+    const productUrl = `${siteUrl}/en/shop/${alert.product_id}`;
+
+    const html = `
+      <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px;">
+        <h2 style="color:#1f2937; margin:0 0 16px;">Good news — it's back in stock!</h2>
+        <p style="color:#4b5563; line-height:1.6;">
+          <strong>${productName}</strong> is available again at PAWS Egypt. Grab yours before it sells out.
+        </p>
+        <p style="margin: 24px 0;">
+          <a href="${productUrl}"
+             style="display:inline-block; background:#F97316; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600;">
+            Shop now
+          </a>
+        </p>
+        <p style="color:#9ca3af; font-size:13px; margin-top:32px;">
+          You're receiving this because you asked to be notified when this item came back in stock.
+          No further action is needed — this alert closes automatically.
+        </p>
+      </div>
+    `;
+
+    const result = await sendEmail({
+      to: alert.email,
+      subject: `${productName} is back in stock`,
+      html,
+    });
+
+    if (result.ok) {
+      await supabase
+        .from("stock_alerts")
+        .update({
+          status: "notified",
+          notified_at: new Date().toISOString(),
+        } as never)
+        .eq("id", alert.id);
+    }
+  }
 }
 
 export async function cancelPurchaseOrder(orderId: string): Promise<ActionResult> {

@@ -111,7 +111,13 @@ export default function EditProductPage() {
     is_featured: false,
     images: [] as string[],
     tags: "",
+    quantity: "0",
+    min_qty: "0",
+    warehouse_id: "",
   });
+
+  const [warehouses, setWarehouses] = useState<Array<{ id: string; name: string }>>([]);
+  const [stockRowId, setStockRowId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -138,6 +144,14 @@ export default function EditProductPage() {
         setCategories(categoriesRes.data);
       }
 
+      const warehousesRes = await supabase
+        .from("warehouses")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      const whRows = (warehousesRes.data as Array<{ id: string; name: string }> | null) ?? [];
+      setWarehouses(whRows);
+
       if (productError || !productData) {
         toast.error(L.notFound);
         router.push(`/${locale}/products`);
@@ -146,6 +160,18 @@ export default function EditProductPage() {
 
       const product = productData as Product;
       const variant = variantData as ProductVariant | null;
+
+      // Load existing stock (take the first row for this product — one-warehouse model for now).
+      const { data: stockData } = await supabase
+        .from("stock")
+        .select("id, warehouse_id, quantity, min_quantity")
+        .eq("product_id", productId)
+        .is("variant_id", null)
+        .limit(1)
+        .maybeSingle();
+      const stockRow = stockData as
+        | { id: string; warehouse_id: string; quantity: number; min_quantity: number }
+        | null;
 
       setForm({
         sku: product.sku ?? "",
@@ -163,7 +189,11 @@ export default function EditProductPage() {
         is_featured: product.is_featured ?? false,
         images: product.images ?? [],
         tags: Array.isArray(product.tags) ? product.tags.join(", ") : "",
+        quantity: stockRow ? String(stockRow.quantity) : "0",
+        min_qty: stockRow ? String(stockRow.min_quantity) : "0",
+        warehouse_id: stockRow?.warehouse_id ?? whRows[0]?.id ?? "",
       });
+      setStockRowId(stockRow?.id ?? null);
 
       setFetching(false);
     }
@@ -251,15 +281,87 @@ export default function EditProductPage() {
       } as never)
       .eq("product_id", productId);
 
-    setLoading(false);
-
     if (variantError) {
+      setLoading(false);
       toast.error(
         `${isAr ? "تم تحديث المنتج بس فشل تحديث المتغير" : "Product updated but variant failed"}: ${variantError.message}`
       );
       return;
     }
 
+    // Upsert stock row if warehouse + qty are set.
+    const newQty = parseFloat(form.quantity);
+    const newMin = parseFloat(form.min_qty);
+    if (!isNaN(newQty) && newQty >= 0 && form.warehouse_id) {
+      if (stockRowId) {
+        // Capture old quantity for movement logging.
+        const { data: oldData } = await supabase
+          .from("stock")
+          .select("quantity")
+          .eq("id", stockRowId)
+          .maybeSingle();
+        const oldQty = Number((oldData as { quantity: number } | null)?.quantity ?? 0);
+
+        await supabase
+          .from("stock")
+          .update({
+            quantity: newQty,
+            min_quantity: isNaN(newMin) ? 0 : newMin,
+            warehouse_id: form.warehouse_id,
+            updated_at: new Date().toISOString(),
+          } as never)
+          .eq("id", stockRowId);
+
+        const delta = newQty - oldQty;
+        if (delta !== 0) {
+          const { data: auth } = await supabase.auth.getUser();
+          if (auth?.user) {
+            await supabase.from("stock_movements").insert({
+              type: "adjustment",
+              product_id: productId,
+              variant_id: null,
+              quantity: Math.abs(delta),
+              to_warehouse_id: delta > 0 ? form.warehouse_id : null,
+              from_warehouse_id: delta < 0 ? form.warehouse_id : null,
+              reference_type: "product_edit",
+              reference_id: productId,
+              notes: `Manual adjustment from ${oldQty} to ${newQty}`,
+              created_by: auth.user.id,
+            } as never);
+          }
+        }
+      } else if (newQty > 0) {
+        const { data: inserted } = await supabase
+          .from("stock")
+          .insert({
+            product_id: productId,
+            variant_id: null,
+            warehouse_id: form.warehouse_id,
+            quantity: newQty,
+            min_quantity: isNaN(newMin) ? 0 : newMin,
+          } as never)
+          .select("id")
+          .maybeSingle();
+        setStockRowId((inserted as { id: string } | null)?.id ?? null);
+
+        const { data: auth } = await supabase.auth.getUser();
+        if (auth?.user) {
+          await supabase.from("stock_movements").insert({
+            type: "adjustment",
+            product_id: productId,
+            variant_id: null,
+            quantity: newQty,
+            to_warehouse_id: form.warehouse_id,
+            reference_type: "product_edit",
+            reference_id: productId,
+            notes: "Initial stock on product edit",
+            created_by: auth.user.id,
+          } as never);
+        }
+      }
+    }
+
+    setLoading(false);
     toast.success(isAr ? "تم تحديث المنتج بنجاح!" : "Product updated successfully!");
     router.push(`/${locale}/products`);
   }
@@ -466,6 +568,77 @@ export default function EditProductPage() {
                 className="bg-white border-paws-sand"
                 required
               />
+            </div>
+          </div>
+        </div>
+
+        {/* Stock */}
+        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
+          <div>
+            <h2 className="font-semibold text-paws-brown-dark text-lg">
+              {isAr ? "المخزون" : "Stock"}
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {isAr
+                ? "تغيير الكمية هنا يتسجل في سجل حركة المخزون."
+                : "Any change here is logged to stock movements for audit."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="quantity">
+                {isAr ? "الكمية" : "Quantity"}
+              </Label>
+              <Input
+                id="quantity"
+                name="quantity"
+                type="number"
+                min="0"
+                step="0.001"
+                value={form.quantity}
+                onChange={handleChange}
+                className="bg-white border-paws-sand"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="min_qty">
+                {isAr ? "الحد الأدنى للتنبيه" : "Low-Stock Threshold"}
+              </Label>
+              <Input
+                id="min_qty"
+                name="min_qty"
+                type="number"
+                min="0"
+                step="0.001"
+                value={form.min_qty}
+                onChange={handleChange}
+                className="bg-white border-paws-sand"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="warehouse_id">
+                {isAr ? "المستودع" : "Warehouse"}
+              </Label>
+              {warehouses.length === 0 ? (
+                <p className="text-xs text-red-600 pt-2">
+                  {isAr ? "ضيف مستودع أولاً من الإعدادات" : "Create a warehouse first"}
+                </p>
+              ) : (
+                <select
+                  id="warehouse_id"
+                  name="warehouse_id"
+                  value={form.warehouse_id}
+                  onChange={handleChange}
+                  className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>{w.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
         </div>

@@ -5,7 +5,9 @@ export default async function ShopPage() {
   const supabase = await createClient();
   const { data: dbProducts } = await supabase
     .from("products")
-    .select("id, name_en, name_ar, sku, brand, is_featured, images, categories(name_en, name_ar), product_variants(price)")
+    .select(
+      "id, name_en, name_ar, sku, brand, is_featured, images, categories(name_en, name_ar), product_variants(price), stock(quantity)",
+    )
     .eq("is_active", true)
     .order("created_at", { ascending: false })
     .limit(50);
