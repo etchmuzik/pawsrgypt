@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+
+/**
+ * Public endpoint for customers to sign up for back-in-stock alerts.
+ *
+ * We hit the Supabase REST endpoint directly with the publishable anon key
+ * rather than going through @supabase/ssr. On Netlify's Next.js runtime
+ * the SSR client's cookie-based auth resolution ends up using a role that
+ * doesn't map cleanly to Postgres 'anon' — causing our public INSERT
+ * RLS policy to reject the write. A plain fetch with the anon key
+ * matches the role and works.
+ */
 
 interface StockAlertInput {
   productId?: string;
@@ -30,23 +40,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Valid email is required" }, { status: 400 });
   }
 
-  const supabase = createAdminClient();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const { error } = await supabase
-    .from("stock_alerts")
-    .upsert(
-      {
-        product_id: productId,
-        variant_id: variantId,
-        email,
-        phone,
-        status: "pending",
-      } as never,
-      { onConflict: "product_id,email", ignoreDuplicates: false },
+  if (!url || !key) {
+    return NextResponse.json(
+      { ok: false, error: "Server misconfigured" },
+      { status: 500 },
     );
+  }
 
-  if (error) {
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+  const res = await fetch(`${url}/rest/v1/stock_alerts`, {
+    method: "POST",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      variant_id: variantId,
+      email,
+      phone,
+      status: "pending",
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    return NextResponse.json(
+      { ok: false, error: `supabase ${res.status}: ${detail.slice(0, 200)}` },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({ ok: true });
