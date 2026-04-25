@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, SlidersHorizontal, Star, X } from "lucide-react";
 import { ScrollReveal } from "@/components/website/ScrollReveal";
+import { ProductCardZoom } from "@/components/website/ProductCardZoom";
 
 export type ProductRow = {
   id: string;
@@ -210,47 +210,92 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
               const stock = totalStock(product);
               const outOfStock = stock <= 0;
 
+              const productName = locale === "ar" ? product.name_ar : product.name_en;
+              const badge = outOfStock ? (
+                <span className="absolute top-3 left-3 bg-neutral-900 text-white text-xs px-3 py-1 rounded-full font-bold z-10">
+                  {locale === "ar" ? "نفد المخزون" : "Out of Stock"}
+                </span>
+              ) : product.is_featured ? (
+                <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold z-10">
+                  Featured
+                </span>
+              ) : null;
+
+              const cardBody = (
+                <div className="p-4">
+                  {product.brand && (
+                    <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
+                  )}
+                  <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
+                    {productName}
+                  </h3>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-paws-orange font-extrabold text-lg">
+                      {price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                    </span>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+
               return (
                 <ScrollReveal key={product.id} delay={i * 50}>
-                  <Link
-                    href={`/${locale}/shop/${product.id}`}
-                    className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
-                  >
-                    <div className="bg-neutral-50 aspect-square flex items-center justify-center relative overflow-hidden">
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={locale === "ar" ? product.name_ar : product.name_en}
-                          width={400}
-                          height={400}
-                          className={`w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500 ${outOfStock ? "opacity-50 grayscale" : ""}`}
-                        />
-                      ) : (
+                  {imageUrl ? (
+                    <ProductCardZoom
+                      href={`/${locale}/shop/${product.id}`}
+                      src={imageUrl}
+                      alt={productName}
+                      outOfStock={outOfStock}
+                      badge={badge}
+                    >
+                      {cardBody}
+                    </ProductCardZoom>
+                  ) : (
+                    <Link
+                      href={`/${locale}/shop/${product.id}`}
+                      className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
+                    >
+                      <div className="bg-neutral-50 aspect-square flex items-center justify-center relative overflow-hidden">
                         <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center">
                           <span className="text-2xl text-neutral-300">P</span>
                         </div>
-                      )}
-                      {product.is_featured && !outOfStock && (
-                        <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold">
-                          Featured
-                        </span>
-                      )}
-                      {outOfStock && (
-                        <span className="absolute top-3 left-3 bg-neutral-900 text-white text-xs px-3 py-1 rounded-full font-bold">
-                          {locale === "ar" ? "نفد المخزون" : "Out of Stock"}
-                        </span>
-                      )}
-                    </div>
+                        {badge}
+                      </div>
+                      {cardBody}
+                    </Link>
+                  )}
+                </ScrollReveal>
+              );
+            })
+          ) : (
+            FALLBACK_PRODUCTS.map((product, i) => {
+              const productName = locale === "ar" ? product.name_ar : product.name_en;
+              const badge = product.badge ? (
+                <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold z-10">
+                  {product.badge}
+                </span>
+              ) : null;
+
+              return (
+                <ScrollReveal key={product.id} delay={i * 50}>
+                  <ProductCardZoom
+                    href={`/${locale}/shop/${product.id}`}
+                    src={product.image}
+                    alt={productName}
+                    badge={badge}
+                  >
                     <div className="p-4">
-                      {product.brand && (
-                        <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
-                      )}
+                      <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
                       <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
-                        {locale === "ar" ? product.name_ar : product.name_en}
+                        {productName}
                       </h3>
                       <div className="flex items-center justify-between mt-3">
                         <span className="text-paws-orange font-extrabold text-lg">
-                          {price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                          {product.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
                         </span>
                         <div className="flex gap-0.5">
                           {[...Array(5)].map((_, j) => (
@@ -259,50 +304,10 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
                         </div>
                       </div>
                     </div>
-                  </Link>
+                  </ProductCardZoom>
                 </ScrollReveal>
               );
             })
-          ) : (
-            FALLBACK_PRODUCTS.map((product, i) => (
-              <ScrollReveal key={product.id} delay={i * 50}>
-                <Link
-                  href={`/${locale}/shop/${product.id}`}
-                  className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
-                >
-                  <div className="bg-neutral-50 aspect-square flex items-center justify-center relative overflow-hidden">
-                    <Image
-                      src={product.image}
-                      alt={locale === "ar" ? product.name_ar : product.name_en}
-                      width={400}
-                      height={400}
-                      className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {product.badge && (
-                      <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold">
-                        {product.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
-                    <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
-                      {locale === "ar" ? product.name_ar : product.name_en}
-                    </h3>
-                    <div className="flex items-center justify-between mt-3">
-                      <span className="text-paws-orange font-extrabold text-lg">
-                        {product.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
-                      </span>
-                      <div className="flex gap-0.5">
-                        {[...Array(5)].map((_, j) => (
-                          <Star key={j} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </ScrollReveal>
-            ))
           )}
         </div>
       </div>
