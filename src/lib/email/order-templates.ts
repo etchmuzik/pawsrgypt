@@ -1,4 +1,5 @@
 import type { EmailMessage } from "./index";
+import { escapeHtml } from "../html";
 
 interface OrderItem {
   productId: string;
@@ -32,9 +33,9 @@ function itemsTable(items: OrderItem[]): string {
       (it) => `
     <tr style="border-top:1px solid #f0f0f0;">
       <td style="padding:12px 8px;font-size:14px;color:#171717;">
-        ${it.name}
+        ${escapeHtml(it.name)}
         <br/>
-        <span style="font-size:12px;color:#999;">Qty: ${it.quantity}</span>
+        <span style="font-size:12px;color:#999;">Qty: ${escapeHtml(it.quantity)}</span>
       </td>
       <td style="padding:12px 8px;font-size:14px;text-align:right;color:#171717;">
         ${money(it.price * it.quantity)}
@@ -55,24 +56,25 @@ function itemsTable(items: OrderItem[]): string {
 export function customerOrderConfirmation(ctx: OrderEmailContext): EmailMessage | null {
   if (!ctx.customerEmail) return null;
 
-  const url = `${ctx.siteOrigin}/en/orders/${ctx.accessToken}`;
+  const url = `${ctx.siteOrigin}/en/orders/${encodeURIComponent(ctx.accessToken)}`;
+  const firstName = ctx.customerName.split(" ")[0] ?? "";
 
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Order ${ctx.orderNumber}</title>
+  <title>Order ${escapeHtml(ctx.orderNumber)}</title>
 </head>
 <body style="margin:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,sans-serif;">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px;">
-    <h1 style="font-size:24px;color:#171717;margin:0 0 8px 0;">Thank you, ${ctx.customerName.split(" ")[0]}!</h1>
+    <h1 style="font-size:24px;color:#171717;margin:0 0 8px 0;">Thank you, ${escapeHtml(firstName)}!</h1>
     <p style="color:#666;font-size:15px;line-height:1.5;margin:0 0 24px 0;">
       Your order has been received. We'll contact you shortly to confirm delivery.
     </p>
 
     <div style="background:white;border:1px solid #eee;border-radius:16px;padding:24px;margin-bottom:16px;">
       <p style="margin:0 0 4px 0;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#999;">Order number</p>
-      <p style="margin:0;font-size:20px;font-weight:700;color:#171717;">${ctx.orderNumber}</p>
+      <p style="margin:0;font-size:20px;font-weight:700;color:#171717;">${escapeHtml(ctx.orderNumber)}</p>
     </div>
 
     <div style="background:white;border:1px solid #eee;border-radius:16px;padding:24px;margin-bottom:16px;">
@@ -94,16 +96,16 @@ export function customerOrderConfirmation(ctx: OrderEmailContext): EmailMessage 
     <div style="background:white;border:1px solid #eee;border-radius:16px;padding:24px;margin-bottom:24px;">
       <h2 style="font-size:14px;color:#171717;margin:0 0 8px 0;">Shipping to</h2>
       <p style="margin:0;font-size:14px;color:#666;line-height:1.5;">
-        ${ctx.customerName}<br/>
-        ${ctx.address.street}<br/>
-        ${ctx.address.area ? ctx.address.area + "<br/>" : ""}
-        ${ctx.address.city}<br/>
-        <span style="color:#999;">Phone: ${ctx.customerPhone}</span>
+        ${escapeHtml(ctx.customerName)}<br/>
+        ${escapeHtml(ctx.address.street)}<br/>
+        ${ctx.address.area ? escapeHtml(ctx.address.area) + "<br/>" : ""}
+        ${escapeHtml(ctx.address.city)}<br/>
+        <span style="color:#999;">Phone: ${escapeHtml(ctx.customerPhone)}</span>
       </p>
     </div>
 
     <div style="text-align:center;margin-bottom:24px;">
-      <a href="${url}" style="display:inline-block;background:#F47C2C;color:white;padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;">View order status</a>
+      <a href="${escapeHtml(url)}" style="display:inline-block;background:#F47C2C;color:white;padding:14px 32px;border-radius:999px;text-decoration:none;font-weight:700;font-size:15px;">View order status</a>
     </div>
 
     <p style="color:#999;font-size:12px;text-align:center;line-height:1.5;">
@@ -128,23 +130,32 @@ export function internalOrderAlert(
   ctx: OrderEmailContext,
   internalTo: string
 ): EmailMessage {
-  const url = `${ctx.siteOrigin}/en/orders/${ctx.accessToken}`;
+  const url = `${ctx.siteOrigin}/en/orders/${encodeURIComponent(ctx.accessToken)}`;
 
   const itemsText = ctx.items
-    .map((it) => `• ${it.name} × ${it.quantity} — ${money(it.price * it.quantity)}`)
+    .map(
+      (it) =>
+        `• ${escapeHtml(it.name)} × ${escapeHtml(it.quantity)} — ${money(it.price * it.quantity)}`
+    )
     .join("<br/>");
+
+  // tel:/mailto: hrefs need URL-encoded user input; the visible text is HTML-escaped.
+  const phoneHref = `tel:${encodeURIComponent(ctx.customerPhone)}`;
+  const emailHref = ctx.customerEmail
+    ? `mailto:${encodeURIComponent(ctx.customerEmail)}`
+    : "";
 
   const html = `<!DOCTYPE html>
 <html>
 <body style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;padding:24px;max-width:560px;margin:0 auto;">
-  <h2 style="color:#171717;">🛒 New order: ${ctx.orderNumber}</h2>
-  <p><strong>Customer:</strong> ${ctx.customerName}</p>
-  <p><strong>Phone:</strong> <a href="tel:${ctx.customerPhone}">${ctx.customerPhone}</a></p>
-  ${ctx.customerEmail ? `<p><strong>Email:</strong> <a href="mailto:${ctx.customerEmail}">${ctx.customerEmail}</a></p>` : ""}
-  <p><strong>Address:</strong><br/>${ctx.address.street}<br/>${ctx.address.area ? ctx.address.area + "<br/>" : ""}${ctx.address.city}</p>
+  <h2 style="color:#171717;">🛒 New order: ${escapeHtml(ctx.orderNumber)}</h2>
+  <p><strong>Customer:</strong> ${escapeHtml(ctx.customerName)}</p>
+  <p><strong>Phone:</strong> <a href="${escapeHtml(phoneHref)}">${escapeHtml(ctx.customerPhone)}</a></p>
+  ${ctx.customerEmail ? `<p><strong>Email:</strong> <a href="${escapeHtml(emailHref)}">${escapeHtml(ctx.customerEmail)}</a></p>` : ""}
+  <p><strong>Address:</strong><br/>${escapeHtml(ctx.address.street)}<br/>${ctx.address.area ? escapeHtml(ctx.address.area) + "<br/>" : ""}${escapeHtml(ctx.address.city)}</p>
   <p><strong>Items:</strong><br/>${itemsText}</p>
   <p><strong>Total:</strong> ${money(ctx.total)}</p>
-  <p><a href="${url}">Open order</a></p>
+  <p><a href="${escapeHtml(url)}">Open order</a></p>
 </body>
 </html>`;
 
