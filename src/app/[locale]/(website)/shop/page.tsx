@@ -2,8 +2,21 @@ import { createClient } from "@/lib/supabase/server";
 import { ShopContent, type ProductRow } from "@/components/website/ShopContent";
 
 export default async function ShopPage() {
+  // Surface misconfiguration loud and early — Hostinger Node logs will capture
+  // this and reveal missing/invalid Supabase env vars.
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    // eslint-disable-next-line no-console
+    console.error(
+      "[shop] Missing Supabase env vars — set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in Hostinger hPanel.",
+      {
+        hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      }
+    );
+  }
+
   const supabase = await createClient();
-  const { data: dbProducts } = await supabase
+  const { data: dbProducts, error } = await supabase
     .from("products")
     .select(
       "id, name_en, name_ar, sku, brand, is_featured, images, categories(name_en, name_ar), product_variants(price), stock(quantity)",
@@ -12,8 +25,14 @@ export default async function ShopPage() {
     .order("created_at", { ascending: false })
     .limit(50);
 
-  const products = dbProducts as ProductRow[] | null;
-  const hasDbProducts = products && products.length > 0;
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error("[shop] Supabase products query failed:", error.message, error);
+  }
 
-  return <ShopContent products={hasDbProducts ? products : null} />;
+  const products = (dbProducts as ProductRow[] | null) ?? [];
+  // eslint-disable-next-line no-console
+  console.log(`[shop] Loaded ${products.length} active products from Supabase`);
+
+  return <ShopContent products={products} />;
 }
