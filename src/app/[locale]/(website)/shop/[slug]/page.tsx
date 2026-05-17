@@ -17,6 +17,7 @@ type ProductDetail = {
   description_en: string | null;
   description_ar: string | null;
   brand: string | null;
+  category_id: string | null;
   images: string[];
   is_featured: boolean;
   categories: { name_en: string; name_ar: string } | null;
@@ -31,20 +32,14 @@ type ProductDetail = {
   stock: { quantity: number; variant_id: string | null }[];
 };
 
-const FALLBACK_PRODUCTS = [
-  { id: "1", name_en: "Royal Canin Maxi Adult 15kg", name_ar: "رويال كانين ماكسي بالغ 15 كيلو", price: 5000, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/3352/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Complete and balanced nutrition for large breed adult dogs. Supports joint health and optimal weight with high-quality proteins.", description_ar: "تغذية كاملة ومتوازنة للكلاب البالغة من السلالات الكبيرة. يدعم صحة المفاصل والوزن المثالي ببروتينات عالية الجودة." },
-  { id: "2", name_en: "Bewi Cat Delicaties Rich in Chicken", name_ar: "بيوي كات ديليكاتيز غني بالدجاج", price: 5200, brand: "Bewi Cat", image: "https://petsegypt.com/web/image/product.product/10058/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Premium cat food rich in chicken. Irresistible taste with premium quality ingredients for discerning cats.", description_ar: "طعام قطط متميز غني بالدجاج. طعم لا يقاوم بمكونات عالية الجودة للقطط المميزة." },
-  { id: "3", name_en: "OZZO Premium Dog Food with Chicken 15kg", name_ar: "أوزو طعام كلاب بالدجاج 15 كيلو", price: 1800, brand: "OZZO", image: "https://petsegypt.com/web/image/product.product/9201/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Made with fresh chicken for superior taste. High premium formula with essential vitamins and minerals for adult dogs.", description_ar: "مصنوع من الدجاج الطازج لمذاق فائق. تركيبة عالية الجودة مع فيتامينات ومعادن أساسية للكلاب البالغة." },
-  { id: "4", name_en: "Royal Canin Indoor 27 Cat Food 400g", name_ar: "رويال كانين إندور 27 طعام قطط 400 جرام", price: 450, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/11178/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Specially formulated for indoor cats. Helps reduce stool odour and maintains ideal weight with controlled calories.", description_ar: "مصمم خصيصاً للقطط المنزلية. يساعد في تقليل رائحة البراز والحفاظ على الوزن المثالي مع سعرات حرارية محسوبة." },
-  { id: "5", name_en: "Bravecto Chewable For Large Dogs 20-40kg", name_ar: "برافيكتو أقراص للكلاب الكبيرة 20-40 كيلو", price: 2335, brand: "Bravecto", image: "https://petsegypt.com/web/image/product.product/9135/image_1920", category_en: "Dog Pharmacy", category_ar: "صيدلية كلاب", description_en: "Long-lasting flea and tick protection. One chewable tablet provides up to 12 weeks of protection for large dogs.", description_ar: "حماية طويلة المدى من البراغيث والقراد. قرص واحد يوفر حماية تصل إلى 12 أسبوعاً للكلاب الكبيرة." },
-  { id: "6", name_en: "Sanicat Clumping White Duo 10L", name_ar: "سانيكات كلامبينغ وايت 10 لتر", price: 425, brand: "Sanicat", image: "https://petsegypt.com/web/image/product.product/9862/image_1920", category_en: "Cat Litter", category_ar: "رمل قطط", description_en: "Premium clumping cat litter with vanilla and mandarin scent. Superior odour control and easy cleanup.", description_ar: "رمل قطط متكتل ممتاز برائحة الفانيلا والماندرين. تحكم فائق في الرائحة وتنظيف سهل." },
-  { id: "7", name_en: "Vita Day Active Dog Food 20kg", name_ar: "فيتا داي طعام كلاب نشطة 20 كيلو", price: 2900, brand: "Vita Day", image: "https://petsegypt.com/web/image/product.product/6377/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "High energy formula for active dogs. Balanced nutrition to fuel daily activities and maintain muscle mass.", description_ar: "تركيبة عالية الطاقة للكلاب النشطة. تغذية متوازنة لتعزيز الأنشطة اليومية والحفاظ على كتلة العضلات." },
-  { id: "8", name_en: "2-in-1 Auto Feeder with Water Fountain 1.5L", name_ar: "وعاء طعام آلي 2 في 1 مع نافورة مياه", price: 1250, brand: "Generic", image: "https://petsegypt.com/web/image/product.product/11893/image_1920", category_en: "Cat Accessories", category_ar: "إكسسوارات قطط", description_en: "Automatic food and water dispenser. Keeps food fresh and water flowing 24/7 for your pet.", description_ar: "موزع طعام ومياه آلي. يحافظ على الطعام طازجاً والمياه متدفقة على مدار الساعة لحيوانك الأليف." },
-  { id: "9", name_en: "ALPHA Adult Dogs Dry Food 20kg", name_ar: "ألفا طعام كلاب بالغة 20 كيلو", price: 1485, brand: "ALPHA", image: "https://petsegypt.com/web/image/product.product/7272/image_1920", category_en: "Dog Dry Food", category_ar: "طعام كلاب جاف", description_en: "Premium quality dry food for adult dogs of all breeds. Rich in protein and essential nutrients.", description_ar: "طعام جاف عالي الجودة للكلاب البالغة من جميع السلالات. غني بالبروتين والعناصر الغذائية الأساسية." },
-  { id: "10", name_en: "Purina Cat Chow Adult Salmon 1.5kg", name_ar: "بيورينا كات تشاو سلمون 1.5 كيلو", price: 575, brand: "Purina", image: "https://petsegypt.com/web/image/product.product/9156/image_1920", category_en: "Cat Dry Food", category_ar: "طعام قطط جاف", description_en: "Balanced nutrition with real salmon. Supports healthy digestion and strong immunity for adult cats.", description_ar: "تغذية متوازنة مع السلمون الحقيقي. يدعم الهضم الصحي والمناعة القوية للقطط البالغة." },
-  { id: "11", name_en: "Cat's Way Clumping Baby Powder 10L", name_ar: "كاتس واي رمل بودرة أطفال 10 لتر", price: 260, brand: "Cat's Way", image: "https://petsegypt.com/web/image/product.product/11374/image_1920", category_en: "Cat Litter", category_ar: "رمل قطط", description_en: "Baby powder scented clumping litter. Excellent absorption and easy cleanup for everyday use.", description_ar: "رمل متكتل برائحة بودرة الأطفال. امتصاص ممتاز وتنظيف سهل للاستخدام اليومي." },
-  { id: "12", name_en: "Cat House Multi-Level Cat Tree Tower", name_ar: "برج قطط متعدد المستويات", price: 2950, brand: "Cat House", image: "https://petsegypt.com/web/image/product.product/11790/image_1920", category_en: "Cat Accessories", category_ar: "إكسسوارات قطط", description_en: "Multi-level cat tree with scratching posts, platforms, and cozy hideaway. Perfect for active cats.", description_ar: "برج قطط متعدد المستويات مع أعمدة خدش ومنصات ومخبأ مريح. مثالي للقطط النشطة." },
-];
+type RelatedRow = {
+  id: string;
+  name_en: string;
+  name_ar: string;
+  brand: string | null;
+  images: string[];
+  product_variants: { price: number }[];
+};
 
 export default async function ProductDetailPage({
   params,
@@ -61,7 +56,7 @@ export default async function ProductDetailPage({
   const { data: dbProduct } = await supabase
     .from("products")
     .select(
-      "id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)",
+      "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)",
     )
     .eq("id", slug)
     .eq("is_active", true)
@@ -69,10 +64,7 @@ export default async function ProductDetailPage({
 
   const product = dbProduct as ProductDetail | null;
 
-  // Fallback to static data
-  const fallback = !product ? FALLBACK_PRODUCTS.find((p) => p.id === slug) : null;
-
-  if (!product && !fallback) {
+  if (!product) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center px-4">
@@ -107,20 +99,14 @@ export default async function ProductDetailPage({
   }
 
   // Normalize data
-  const name = product
-    ? (locale === "ar" ? product.name_ar : product.name_en)
-    : (locale === "ar" ? fallback!.name_ar : fallback!.name_en);
-  const description = product
-    ? (locale === "ar" ? product.description_ar : product.description_en)
-    : (locale === "ar" ? fallback!.description_ar : fallback!.description_en);
-  const brand = product?.brand ?? fallback?.brand ?? null;
-  const imageUrl = product?.images?.[0] ?? fallback?.image ?? null;
-  const categoryName = product
-    ? (locale === "ar" ? product.categories?.name_ar : product.categories?.name_en)
-    : (locale === "ar" ? fallback?.category_ar : fallback?.category_en);
-  const productId = product?.id ?? fallback!.id;
-  const nameEn = product?.name_en ?? fallback!.name_en;
-  const nameAr = product?.name_ar ?? fallback!.name_ar;
+  const name = locale === "ar" ? product.name_ar : product.name_en;
+  const description = locale === "ar" ? product.description_ar : product.description_en;
+  const brand = product.brand;
+  const imageUrl = product.images?.[0] ?? null;
+  const categoryName = locale === "ar" ? product.categories?.name_ar : product.categories?.name_en;
+  const productId = product.id;
+  const nameEn = product.name_en;
+  const nameAr = product.name_ar;
 
   // Build per-variant stock + options for the picker.
   // Stock: sum quantities per variant_id; rows with variant_id=null fall back
@@ -146,16 +132,44 @@ export default async function ProductDetailPage({
   }));
 
   // For the simple single-variant render path:
-  const price = variantOptions[0]?.price ?? fallback?.price ?? 0;
-  // Fallback static products have no stock rows — treat as in stock.
-  const totalStock = product
-    ? variantOptions.reduce((sum, v) => sum + (v.quantity === Infinity ? 1 : v.quantity), 0)
-    : Infinity;
-  const outOfStock = product ? totalStock <= 0 : false;
+  const price = variantOptions[0]?.price ?? 0;
+  const totalStock = variantOptions.reduce(
+    (sum, v) => sum + (v.quantity === Infinity ? 1 : v.quantity),
+    0
+  );
+  const outOfStock = totalStock <= 0;
   const showPicker = variantOptions.length > 1;
 
-  // Related products from fallback
-  const relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.id !== slug).slice(0, 4);
+  // Related products: same brand first (most relevant), then top up from the
+  // same category if we have fewer than 4. Empty array if neither yields hits.
+  const relatedProducts: RelatedRow[] = [];
+  if (product.brand) {
+    const { data: brandRelated } = await supabase
+      .from("products")
+      .select("id, name_en, name_ar, brand, images, product_variants(price)")
+      .eq("is_active", true)
+      .eq("brand", product.brand)
+      .neq("id", product.id)
+      .limit(4);
+    relatedProducts.push(...((brandRelated as RelatedRow[] | null) ?? []));
+  }
+  if (relatedProducts.length < 4 && product.category_id) {
+    const need = 4 - relatedProducts.length;
+    const seen = new Set([product.id, ...relatedProducts.map((r) => r.id)]);
+    const { data: categoryRelated } = await supabase
+      .from("products")
+      .select("id, name_en, name_ar, brand, images, product_variants(price)")
+      .eq("is_active", true)
+      .eq("category_id", product.category_id)
+      .neq("id", product.id)
+      .limit(need + relatedProducts.length); // overfetch to filter dupes
+    for (const r of (categoryRelated as RelatedRow[] | null) ?? []) {
+      if (relatedProducts.length >= 4) break;
+      if (seen.has(r.id)) continue;
+      relatedProducts.push(r);
+      seen.add(r.id);
+    }
+  }
 
   const BackArrow = locale === "ar" ? ArrowRight : ArrowLeft;
 
@@ -331,35 +345,48 @@ export default async function ProductDetailPage({
               </h2>
             </ScrollReveal>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {relatedProducts.map((related, index) => (
-                <ScrollReveal key={related.id} delay={index * 80}>
-                  <Link
-                    href={`/${locale}/shop/${related.id}`}
-                    className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
-                  >
-                    <div className="bg-neutral-50 aspect-square flex items-center justify-center overflow-hidden">
-                      <Image
-                        src={related.image}
-                        alt={locale === "ar" ? related.name_ar : related.name_en}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <p className="text-xs text-neutral-400 font-medium mb-0.5">{related.brand}</p>
-                      <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
-                        {locale === "ar" ? related.name_ar : related.name_en}
-                      </h3>
-                      <div className="mt-2">
-                        <span className="text-paws-orange font-extrabold">
-                          {related.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
-                        </span>
+              {relatedProducts.map((related, index) => {
+                const relatedName = locale === "ar" ? related.name_ar : related.name_en;
+                const relatedImage = related.images?.[0] ?? null;
+                const relatedPrice = related.product_variants?.[0]?.price ?? 0;
+                return (
+                  <ScrollReveal key={related.id} delay={index * 80}>
+                    <Link
+                      href={`/${locale}/shop/${related.id}`}
+                      className="bg-white rounded-2xl overflow-hidden border border-neutral-100 hover:shadow-[0_12px_40px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 group block"
+                    >
+                      <div className="bg-neutral-50 aspect-square flex items-center justify-center overflow-hidden">
+                        {relatedImage ? (
+                          <Image
+                            src={relatedImage}
+                            alt={relatedName}
+                            width={300}
+                            height={300}
+                            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-16 h-16 rounded-2xl bg-neutral-100 flex items-center justify-center">
+                            <Package className="w-8 h-8 text-neutral-300" />
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </Link>
-                </ScrollReveal>
-              ))}
+                      <div className="p-3">
+                        {related.brand && (
+                          <p className="text-xs text-neutral-400 font-medium mb-0.5">{related.brand}</p>
+                        )}
+                        <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
+                          {relatedName}
+                        </h3>
+                        <div className="mt-2">
+                          <span className="text-paws-orange font-extrabold">
+                            {relatedPrice.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </ScrollReveal>
+                );
+              })}
             </div>
           </div>
         </div>
