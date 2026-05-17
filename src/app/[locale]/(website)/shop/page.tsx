@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { ShopContent, type ProductRow } from "@/components/website/ShopContent";
 
+// Re-render at most once per minute. Dashboard edits become visible on the
+// storefront within 60s; the merge action revalidates explicitly for instant
+// reflection of bigger changes.
+export const revalidate = 60;
+
 export default async function ShopPage() {
   // Surface misconfiguration loud and early — Hostinger Node logs will capture
   // this and reveal missing/invalid Supabase env vars.

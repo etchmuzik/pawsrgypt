@@ -4,6 +4,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
+// Each blog post is re-rendered at most once per minute.
+export const revalidate = 60;
+
 interface BlogPost {
   id: string;
   slug: string;

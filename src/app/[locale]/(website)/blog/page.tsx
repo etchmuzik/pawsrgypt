@@ -4,6 +4,9 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 import type { Metadata } from "next";
 
+// Re-render at most once per minute. New posts show up within 60s.
+export const revalidate = 60;
+
 interface BlogPost {
   id: string;
   slug: string;
