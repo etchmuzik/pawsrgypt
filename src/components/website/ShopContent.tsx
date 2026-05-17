@@ -53,7 +53,7 @@ const CATEGORIES = [
   { id: "pharmacy", label: "Pharmacy", labelAr: "صيدلية" },
 ];
 
-export function ShopContent({ products }: { products: ProductRow[] | null }) {
+export function ShopContent({ products }: { products: ProductRow[] }) {
   const t = useTranslations("shop");
   const locale = useLocale();
 
@@ -63,8 +63,6 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
   const normalizedQuery = query.trim().toLowerCase();
 
   const filteredProducts = useMemo(() => {
-    if (!products) return null;
-
     const categoryToken = activeCategory === "all" ? null : activeCategory;
 
     return products.filter((p) => {
@@ -165,7 +163,7 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
         </div>
 
         {/* Result count + clear filter */}
-        {(query || activeCategory !== "all") && filteredProducts && (
+        {(query || activeCategory !== "all") && (
           <div className="flex items-center justify-between mb-4 text-sm text-neutral-500">
             <span>
               {locale === "ar"
@@ -184,8 +182,25 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
           </div>
         )}
 
-        {/* Empty state */}
-        {products && filteredProducts && filteredProducts.length === 0 && (
+        {/* Catalog-empty state — no products at all, not a filter miss */}
+        {products.length === 0 && (
+          <div className="text-center py-16 sm:py-24">
+            <div className="w-16 h-16 rounded-full bg-neutral-50 flex items-center justify-center mx-auto mb-4">
+              <Search className="w-6 h-6 text-neutral-300" />
+            </div>
+            <h3 className="text-lg font-semibold text-neutral-900 mb-1">
+              {locale === "ar" ? "الكتالوج بيتحدث" : "Catalog updating"}
+            </h3>
+            <p className="text-sm text-neutral-500">
+              {locale === "ar"
+                ? "ارجع تاني خلال شوية. أو كلمنا على واتساب."
+                : "We'll be back shortly. Reach us on WhatsApp in the meantime."}
+            </p>
+          </div>
+        )}
+
+        {/* Filter-miss empty state */}
+        {products.length > 0 && filteredProducts.length === 0 && (
           <div className="text-center py-16 sm:py-24">
             <div className="w-16 h-16 rounded-full bg-neutral-50 flex items-center justify-center mx-auto mb-4">
               <Search className="w-6 h-6 text-neutral-300" />
@@ -203,9 +218,12 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
 
         {/* Products Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
-          {products ? (
-            (filteredProducts ?? []).map((product, i) => {
-              const price = product.product_variants?.[0]?.price ?? 0;
+          {filteredProducts.map((product, i) => {
+              const prices = (product.product_variants ?? [])
+                .map((v) => v.price)
+                .filter((p): p is number => typeof p === "number" && p > 0);
+              const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+              const hasMultiplePrices = prices.length > 1 && Math.min(...prices) !== Math.max(...prices);
               const imageUrl = product.images?.[0] ?? null;
               const stock = totalStock(product);
               const outOfStock = stock <= 0;
@@ -231,7 +249,12 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
                   </h3>
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-paws-orange font-extrabold text-lg">
-                      {price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
+                      {hasMultiplePrices && (
+                        <span className="text-xs font-medium text-neutral-400 me-1">
+                          {locale === "ar" ? "من" : "from"}
+                        </span>
+                      )}
+                      {minPrice.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
                     </span>
                     <div className="flex gap-0.5">
                       {[...Array(5)].map((_, j) => (
@@ -270,45 +293,7 @@ export function ShopContent({ products }: { products: ProductRow[] | null }) {
                   )}
                 </ScrollReveal>
               );
-            })
-          ) : (
-            FALLBACK_PRODUCTS.map((product, i) => {
-              const productName = locale === "ar" ? product.name_ar : product.name_en;
-              const badge = product.badge ? (
-                <span className="absolute top-3 left-3 bg-paws-orange text-white text-xs px-3 py-1 rounded-full font-bold z-10">
-                  {product.badge}
-                </span>
-              ) : null;
-
-              return (
-                <ScrollReveal key={product.id} delay={i * 50}>
-                  <ProductCardZoom
-                    href={`/${locale}/shop/${product.id}`}
-                    src={product.image}
-                    alt={productName}
-                    badge={badge}
-                  >
-                    <div className="p-4">
-                      <p className="text-xs text-neutral-400 font-medium mb-1">{product.brand}</p>
-                      <h3 className="text-sm font-bold text-neutral-800 leading-tight group-hover:text-paws-orange transition-colors line-clamp-2">
-                        {productName}
-                      </h3>
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-paws-orange font-extrabold text-lg">
-                          {product.price.toLocaleString()} <span className="text-xs font-normal text-neutral-400">EGP</span>
-                        </span>
-                        <div className="flex gap-0.5">
-                          {[...Array(5)].map((_, j) => (
-                            <Star key={j} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </ProductCardZoom>
-                </ScrollReveal>
-              );
-            })
-          )}
+            })}
         </div>
       </div>
     </div>

@@ -15,11 +15,15 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity"> & { quantity?: number }) => void;
+  addItem: (item: Omit<CartItem, "id" | "quantity"> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   total: () => number;
+}
+
+function lineKey(productId: string, variantId: string | null): string {
+  return `${productId}::${variantId ?? "default"}`;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -28,19 +32,22 @@ export const useCartStore = create<CartStore>()(
       items: [],
 
       addItem: (item) => {
+        const id = lineKey(item.productId, item.variantId);
         set((state) => {
-          const existing = state.items.find((i) => i.id === item.id);
+          const existing = state.items.find(
+            (i) => i.productId === item.productId && i.variantId === item.variantId
+          );
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.id === item.id
+                i.id === existing.id
                   ? { ...i, quantity: i.quantity + (item.quantity ?? 1) }
                   : i
               ),
             };
           }
           return {
-            items: [...state.items, { ...item, quantity: item.quantity ?? 1 }],
+            items: [...state.items, { ...item, id, quantity: item.quantity ?? 1 }],
           };
         });
       },
@@ -61,6 +68,20 @@ export const useCartStore = create<CartStore>()(
       total: () =>
         get().items.reduce((sum, item) => sum + item.price * item.quantity, 0),
     }),
-    { name: "paws-cart" }
+    {
+      name: "paws-cart",
+      version: 2,
+      migrate: (persisted, fromVersion) => {
+        const state = persisted as { items?: CartItem[] } | undefined;
+        if (!state?.items || fromVersion >= 2) return state ?? { items: [] };
+        return {
+          ...state,
+          items: state.items.map((i) => ({
+            ...i,
+            id: lineKey(i.productId, i.variantId ?? null),
+          })),
+        };
+      },
+    }
   )
 );

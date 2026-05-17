@@ -12,6 +12,8 @@ interface AddToCartButtonProps {
   nameAr: string;
   price: number;
   image: string;
+  variantId?: string | null;
+  variantLabel?: string;
   size?: "default" | "sm" | "lg" | "icon";
   variant?: "default" | "outline";
   className?: string;
@@ -23,6 +25,8 @@ export function AddToCartButton({
   nameAr,
   price,
   image,
+  variantId = null,
+  variantLabel,
   size = "lg",
   variant = "default",
   className = "",
@@ -33,17 +37,18 @@ export function AddToCartButton({
 
   function handleAdd() {
     addItem({
-      id,
       productId: id,
-      variantId: null,
+      variantId,
       name: locale === "ar" ? nameAr : name,
       image,
       price,
+      size: variantLabel,
     });
 
     const displayName = locale === "ar" ? nameAr : name;
+    const description = variantLabel ? `${displayName} · ${variantLabel}` : displayName;
     toast.success(t("added_to_cart"), {
-      description: displayName,
+      description,
     });
   }
 
