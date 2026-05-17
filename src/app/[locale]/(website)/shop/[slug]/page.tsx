@@ -140,35 +140,44 @@ export default async function ProductDetailPage({
   const outOfStock = totalStock <= 0;
   const showPicker = variantOptions.length > 1;
 
-  // Related products: same brand first (most relevant), then top up from the
-  // same category if we have fewer than 4. Empty array if neither yields hits.
+  // Related products: brand and category fired in parallel. Merge brand-first
+  // (most relevant), then top up from category, deduped, capped at 4.
+  const relatedSelect =
+    "id, name_en, name_ar, brand, images, product_variants(price)";
+  const [brandRes, categoryRes] = await Promise.all([
+    product.brand
+      ? supabase
+          .from("products")
+          .select(relatedSelect)
+          .eq("is_active", true)
+          .eq("brand", product.brand)
+          .neq("id", product.id)
+          .limit(4)
+      : Promise.resolve({ data: null }),
+    product.category_id
+      ? supabase
+          .from("products")
+          .select(relatedSelect)
+          .eq("is_active", true)
+          .eq("category_id", product.category_id)
+          .neq("id", product.id)
+          .limit(8) // overfetch so we can still hit 4 after deduping with brand list
+      : Promise.resolve({ data: null }),
+  ]);
+
   const relatedProducts: RelatedRow[] = [];
-  if (product.brand) {
-    const { data: brandRelated } = await supabase
-      .from("products")
-      .select("id, name_en, name_ar, brand, images, product_variants(price)")
-      .eq("is_active", true)
-      .eq("brand", product.brand)
-      .neq("id", product.id)
-      .limit(4);
-    relatedProducts.push(...((brandRelated as RelatedRow[] | null) ?? []));
+  const seen = new Set<string>([product.id]);
+  for (const r of (brandRes.data as RelatedRow[] | null) ?? []) {
+    if (relatedProducts.length >= 4) break;
+    if (seen.has(r.id)) continue;
+    relatedProducts.push(r);
+    seen.add(r.id);
   }
-  if (relatedProducts.length < 4 && product.category_id) {
-    const need = 4 - relatedProducts.length;
-    const seen = new Set([product.id, ...relatedProducts.map((r) => r.id)]);
-    const { data: categoryRelated } = await supabase
-      .from("products")
-      .select("id, name_en, name_ar, brand, images, product_variants(price)")
-      .eq("is_active", true)
-      .eq("category_id", product.category_id)
-      .neq("id", product.id)
-      .limit(need + relatedProducts.length); // overfetch to filter dupes
-    for (const r of (categoryRelated as RelatedRow[] | null) ?? []) {
-      if (relatedProducts.length >= 4) break;
-      if (seen.has(r.id)) continue;
-      relatedProducts.push(r);
-      seen.add(r.id);
-    }
+  for (const r of (categoryRes.data as RelatedRow[] | null) ?? []) {
+    if (relatedProducts.length >= 4) break;
+    if (seen.has(r.id)) continue;
+    relatedProducts.push(r);
+    seen.add(r.id);
   }
 
   const BackArrow = locale === "ar" ? ArrowRight : ArrowLeft;
