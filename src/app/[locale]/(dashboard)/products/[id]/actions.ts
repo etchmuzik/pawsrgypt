@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -191,6 +191,10 @@ export async function mergeProducts(
   revalidatePath("/[locale]/(dashboard)/products", "page");
   revalidatePath(`/[locale]/(dashboard)/products/${targetProductId}/edit`, "page");
   revalidatePath("/[locale]/(website)/shop", "page");
+  // Invalidate the unstable_cache entries on the storefront so the merge is
+  // visible immediately instead of waiting up to 60s.
+  revalidateTag("shop");
+  revalidateTag("products");
 
   return { ok: true, targetId: targetProductId, moved };
 }

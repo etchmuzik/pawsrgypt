@@ -7,7 +7,8 @@ import { AddToCartButton } from "@/components/website/AddToCartButton";
 import { NotifyWhenAvailable } from "@/components/website/NotifyWhenAvailable";
 import { ProductImageZoom } from "@/components/website/ProductImageZoom";
 import { VariantPickerAndCart, type VariantOption } from "@/components/website/VariantPickerAndCart";
-import { createClient } from "@/lib/supabase/server";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import { sanitizeProductHtml, stripHtml } from "@/lib/html";
 
 type ProductDetail = {
@@ -41,6 +42,84 @@ type RelatedRow = {
   product_variants: { price: number }[];
 };
 
+type PdpData = {
+  product: ProductDetail | null;
+  relatedProducts: RelatedRow[];
+};
+
+// Per-slug cached PDP fetch: main product + same-brand related + same-category
+// related, all in one cache entry. Anon client (no per-request cookies) so the
+// closure stays pure. RLS-guarded by the public read policies. In-memory only.
+const getPdpData = unstable_cache(
+  async (slug: string): Promise<PdpData> => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (!url || !key) {
+      // eslint-disable-next-line no-console
+      console.error("[pdp] Missing Supabase env vars", { hasUrl: !!url, hasAnonKey: !!key });
+      return { product: null, relatedProducts: [] };
+    }
+
+    const supabase = createAnonClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    const { data: dbProduct } = await supabase
+      .from("products")
+      .select(
+        "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)"
+      )
+      .eq("id", slug)
+      .eq("is_active", true)
+      .single();
+
+    const product = dbProduct as ProductDetail | null;
+    if (!product) return { product: null, relatedProducts: [] };
+
+    // Brand + category related in parallel.
+    const relatedSelect = "id, name_en, name_ar, brand, images, product_variants(price)";
+    const [brandRes, categoryRes] = await Promise.all([
+      product.brand
+        ? supabase
+            .from("products")
+            .select(relatedSelect)
+            .eq("is_active", true)
+            .eq("brand", product.brand)
+            .neq("id", product.id)
+            .limit(4)
+        : Promise.resolve({ data: null }),
+      product.category_id
+        ? supabase
+            .from("products")
+            .select(relatedSelect)
+            .eq("is_active", true)
+            .eq("category_id", product.category_id)
+            .neq("id", product.id)
+            .limit(8)
+        : Promise.resolve({ data: null }),
+    ]);
+
+    const relatedProducts: RelatedRow[] = [];
+    const seen = new Set<string>([product.id]);
+    for (const r of (brandRes.data as RelatedRow[] | null) ?? []) {
+      if (relatedProducts.length >= 4) break;
+      if (seen.has(r.id)) continue;
+      relatedProducts.push(r);
+      seen.add(r.id);
+    }
+    for (const r of (categoryRes.data as RelatedRow[] | null) ?? []) {
+      if (relatedProducts.length >= 4) break;
+      if (seen.has(r.id)) continue;
+      relatedProducts.push(r);
+      seen.add(r.id);
+    }
+
+    return { product, relatedProducts };
+  },
+  ["pdp-data-v1"],
+  { revalidate: 60, tags: ["products"] }
+);
+
 export default async function ProductDetailPage({
   params,
 }: {
@@ -51,18 +130,7 @@ export default async function ProductDetailPage({
   const tc = await getTranslations("common");
   const locale = await getLocale();
 
-  // Try Supabase first
-  const supabase = await createClient();
-  const { data: dbProduct } = await supabase
-    .from("products")
-    .select(
-      "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)",
-    )
-    .eq("id", slug)
-    .eq("is_active", true)
-    .single();
-
-  const product = dbProduct as ProductDetail | null;
+  const { product, relatedProducts } = await getPdpData(slug);
 
   if (!product) {
     return (
@@ -140,45 +208,7 @@ export default async function ProductDetailPage({
   const outOfStock = totalStock <= 0;
   const showPicker = variantOptions.length > 1;
 
-  // Related products: brand and category fired in parallel. Merge brand-first
-  // (most relevant), then top up from category, deduped, capped at 4.
-  const relatedSelect =
-    "id, name_en, name_ar, brand, images, product_variants(price)";
-  const [brandRes, categoryRes] = await Promise.all([
-    product.brand
-      ? supabase
-          .from("products")
-          .select(relatedSelect)
-          .eq("is_active", true)
-          .eq("brand", product.brand)
-          .neq("id", product.id)
-          .limit(4)
-      : Promise.resolve({ data: null }),
-    product.category_id
-      ? supabase
-          .from("products")
-          .select(relatedSelect)
-          .eq("is_active", true)
-          .eq("category_id", product.category_id)
-          .neq("id", product.id)
-          .limit(8) // overfetch so we can still hit 4 after deduping with brand list
-      : Promise.resolve({ data: null }),
-  ]);
-
-  const relatedProducts: RelatedRow[] = [];
-  const seen = new Set<string>([product.id]);
-  for (const r of (brandRes.data as RelatedRow[] | null) ?? []) {
-    if (relatedProducts.length >= 4) break;
-    if (seen.has(r.id)) continue;
-    relatedProducts.push(r);
-    seen.add(r.id);
-  }
-  for (const r of (categoryRes.data as RelatedRow[] | null) ?? []) {
-    if (relatedProducts.length >= 4) break;
-    if (seen.has(r.id)) continue;
-    relatedProducts.push(r);
-    seen.add(r.id);
-  }
+  // relatedProducts already came from getPdpData() above.
 
   const BackArrow = locale === "ar" ? ArrowRight : ArrowLeft;
 
