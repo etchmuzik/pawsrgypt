@@ -104,9 +104,16 @@ export default function CartPage() {
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-neutral-900 text-sm md:text-base line-clamp-2">
-                          {item.name}
-                        </h3>
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-neutral-900 text-sm md:text-base line-clamp-2">
+                            {item.name}
+                          </h3>
+                          {(item.size || item.color) && (
+                            <p className="text-xs text-neutral-500 mt-0.5">
+                              {[item.size, item.color].filter(Boolean).join(" · ")}
+                            </p>
+                          )}
+                        </div>
                         <button
                           onClick={() => removeItem(item.id)}
                           className="text-neutral-400 hover:text-red-500 active:text-red-600 transition-colors shrink-0 p-2 -m-2 min-w-11 min-h-11 flex items-center justify-center"

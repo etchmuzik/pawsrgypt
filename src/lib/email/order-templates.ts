@@ -7,6 +7,8 @@ interface OrderItem {
   name: string;
   price: number;
   quantity: number;
+  size?: string | null;
+  color?: string | null;
 }
 
 interface OrderEmailContext {
@@ -34,6 +36,7 @@ function itemsTable(items: OrderItem[]): string {
     <tr style="border-top:1px solid #f0f0f0;">
       <td style="padding:12px 8px;font-size:14px;color:#171717;">
         ${escapeHtml(it.name)}
+        ${it.size || it.color ? `<br/><span style="font-size:12px;color:#666;">${escapeHtml([it.size, it.color].filter(Boolean).join(" · "))}</span>` : ""}
         <br/>
         <span style="font-size:12px;color:#999;">Qty: ${escapeHtml(it.quantity)}</span>
       </td>
@@ -133,10 +136,13 @@ export function internalOrderAlert(
   const url = `${ctx.siteOrigin}/en/orders/${encodeURIComponent(ctx.accessToken)}`;
 
   const itemsText = ctx.items
-    .map(
-      (it) =>
-        `• ${escapeHtml(it.name)} × ${escapeHtml(it.quantity)} — ${money(it.price * it.quantity)}`
-    )
+    .map((it) => {
+      const variantSuffix =
+        it.size || it.color
+          ? ` (${escapeHtml([it.size, it.color].filter(Boolean).join(" · "))})`
+          : "";
+      return `• ${escapeHtml(it.name)}${variantSuffix} × ${escapeHtml(it.quantity)} — ${money(it.price * it.quantity)}`;
+    })
     .join("<br/>");
 
   // tel:/mailto: hrefs need URL-encoded user input; the visible text is HTML-escaped.

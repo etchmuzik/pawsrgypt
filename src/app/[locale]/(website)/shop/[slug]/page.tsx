@@ -6,6 +6,7 @@ import { ScrollReveal } from "@/components/website/ScrollReveal";
 import { AddToCartButton } from "@/components/website/AddToCartButton";
 import { NotifyWhenAvailable } from "@/components/website/NotifyWhenAvailable";
 import { ProductImageZoom } from "@/components/website/ProductImageZoom";
+import { VariantPickerAndCart, type VariantOption } from "@/components/website/VariantPickerAndCart";
 import { createClient } from "@/lib/supabase/server";
 import { sanitizeProductHtml, stripHtml } from "@/lib/html";
 
@@ -19,8 +20,15 @@ type ProductDetail = {
   images: string[];
   is_featured: boolean;
   categories: { name_en: string; name_ar: string } | null;
-  product_variants: { id: string; price: number; size: string | null; weight: number | null }[];
-  stock: { quantity: number }[];
+  product_variants: {
+    id: string;
+    price: number;
+    size: string | null;
+    weight: number | null;
+    color: string | null;
+    is_active: boolean;
+  }[];
+  stock: { quantity: number; variant_id: string | null }[];
 };
 
 const FALLBACK_PRODUCTS = [
@@ -53,7 +61,7 @@ export default async function ProductDetailPage({
   const { data: dbProduct } = await supabase
     .from("products")
     .select(
-      "id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight), stock(quantity)",
+      "id, name_en, name_ar, description_en, description_ar, brand, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)",
     )
     .eq("id", slug)
     .eq("is_active", true)
@@ -106,7 +114,6 @@ export default async function ProductDetailPage({
     ? (locale === "ar" ? product.description_ar : product.description_en)
     : (locale === "ar" ? fallback!.description_ar : fallback!.description_en);
   const brand = product?.brand ?? fallback?.brand ?? null;
-  const price = product?.product_variants?.[0]?.price ?? fallback?.price ?? 0;
   const imageUrl = product?.images?.[0] ?? fallback?.image ?? null;
   const categoryName = product
     ? (locale === "ar" ? product.categories?.name_ar : product.categories?.name_en)
@@ -115,13 +122,37 @@ export default async function ProductDetailPage({
   const nameEn = product?.name_en ?? fallback!.name_en;
   const nameAr = product?.name_ar ?? fallback!.name_ar;
 
-  // Stock: sum across all warehouses; treat "no stock row at all" as unknown/in-stock
-  // (fallback products from FALLBACK_PRODUCTS always show in stock).
-  const stockRows = product?.stock ?? [];
-  const totalStock = stockRows.length === 0
-    ? Infinity
-    : stockRows.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0);
-  const outOfStock = totalStock <= 0;
+  // Build per-variant stock + options for the picker.
+  // Stock: sum quantities per variant_id; rows with variant_id=null fall back
+  // to the product-level total (legacy single-variant model).
+  const activeVariants = (product?.product_variants ?? []).filter((v) => v.is_active);
+  const stockByVariant = new Map<string | null, number>();
+  for (const s of product?.stock ?? []) {
+    const key = s.variant_id ?? null;
+    stockByVariant.set(key, (stockByVariant.get(key) ?? 0) + (Number(s.quantity) || 0));
+  }
+  const legacyStock = stockByVariant.get(null) ?? 0;
+
+  const variantOptions: VariantOption[] = activeVariants.map((v) => ({
+    id: v.id,
+    size: v.size,
+    weight: v.weight,
+    color: v.color,
+    price: v.price,
+    // If we have per-variant stock rows, use them. Otherwise distribute the
+    // legacy product-level stock across variants (treat as in stock if >0).
+    quantity:
+      stockByVariant.get(v.id) ?? (activeVariants.length === 1 ? legacyStock : Infinity),
+  }));
+
+  // For the simple single-variant render path:
+  const price = variantOptions[0]?.price ?? fallback?.price ?? 0;
+  // Fallback static products have no stock rows — treat as in stock.
+  const totalStock = product
+    ? variantOptions.reduce((sum, v) => sum + (v.quantity === Infinity ? 1 : v.quantity), 0)
+    : Infinity;
+  const outOfStock = product ? totalStock <= 0 : false;
+  const showPicker = variantOptions.length > 1;
 
   // Related products from fallback
   const relatedProducts = FALLBACK_PRODUCTS.filter((p) => p.id !== slug).slice(0, 4);
@@ -194,27 +225,30 @@ export default async function ProductDetailPage({
                 <span className="text-sm text-neutral-400">(4.8)</span>
               </div>
 
-              {/* Price */}
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-extrabold text-neutral-900">
-                  {price.toLocaleString()}
-                </span>
-                <span className="text-lg text-neutral-400 font-medium">
-                  {tc("egp")}
-                </span>
-              </div>
+              {/* Price + stock (only when no variant picker; picker owns these) */}
+              {!showPicker && (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold text-neutral-900">
+                      {price.toLocaleString()}
+                    </span>
+                    <span className="text-lg text-neutral-400 font-medium">
+                      {tc("egp")}
+                    </span>
+                  </div>
 
-              {/* Stock Status */}
-              {outOfStock ? (
-                <div className="flex items-center gap-2 text-red-600">
-                  <div className="w-2 h-2 bg-red-500 rounded-full" />
-                  <span className="text-sm font-medium">{t("out_of_stock")}</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 text-emerald-600">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                  <span className="text-sm font-medium">{t("in_stock")}</span>
-                </div>
+                  {outOfStock ? (
+                    <div className="flex items-center gap-2 text-red-600">
+                      <div className="w-2 h-2 bg-red-500 rounded-full" />
+                      <span className="text-sm font-medium">{t("out_of_stock")}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-emerald-600">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      <span className="text-sm font-medium">{t("in_stock")}</span>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Description */}
@@ -251,25 +285,37 @@ export default async function ProductDetailPage({
               </div>
 
               {/* Add to Cart / Notify */}
-              <div className="flex gap-3 pt-4">
-                {outOfStock ? (
-                  <NotifyWhenAvailable
-                    productId={productId}
-                    size="lg"
-                    className="flex-1"
-                  />
-                ) : (
-                  <AddToCartButton
-                    id={productId}
-                    name={nameEn}
-                    nameAr={nameAr}
-                    price={price}
-                    image={imageUrl ?? ""}
-                    size="lg"
-                    className="flex-1"
-                  />
-                )}
-              </div>
+              {showPicker ? (
+                <VariantPickerAndCart
+                  productId={productId}
+                  nameEn={nameEn}
+                  nameAr={nameAr}
+                  imageUrl={imageUrl ?? ""}
+                  variants={variantOptions}
+                />
+              ) : (
+                <div className="flex gap-3 pt-4">
+                  {outOfStock ? (
+                    <NotifyWhenAvailable
+                      productId={productId}
+                      variantId={variantOptions[0]?.id ?? null}
+                      size="lg"
+                      className="flex-1"
+                    />
+                  ) : (
+                    <AddToCartButton
+                      id={productId}
+                      name={nameEn}
+                      nameAr={nameAr}
+                      price={price}
+                      image={imageUrl ?? ""}
+                      variantId={variantOptions[0]?.id ?? null}
+                      size="lg"
+                      className="flex-1"
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </ScrollReveal>
         </div>
