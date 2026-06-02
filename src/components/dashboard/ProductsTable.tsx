@@ -367,7 +367,7 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
         </div>
       </div>
 
-      <Dialog open={!!confirmTarget} onOpenChange={(o) => !o && setConfirmTarget(null)}>
+      <Dialog open={!!confirmTarget} onOpenChange={(o) => { if (!o) { setConfirmTarget(null); setWorking(false); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>

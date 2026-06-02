@@ -43,7 +43,7 @@ async function requireManager(): Promise<{ ok: true } | { ok: false; error: stri
     .single();
   const role = (profile as { role: string } | null)?.role;
   if (role !== "admin" && role !== "manager") {
-    return { ok: false, error: "Only admins or managers can merge products." };
+    return { ok: false, error: "Only admins or managers can perform this action." };
   }
   return { ok: true };
 }
