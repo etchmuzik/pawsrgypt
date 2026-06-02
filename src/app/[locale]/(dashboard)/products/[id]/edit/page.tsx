@@ -116,18 +116,17 @@ export default function EditProductPage() {
 
   // VariantEditor is fully controlled; it doesn't know about removedVariantIds.
   // Diff previous vs next so any saved variant (non-null id) that disappears
-  // is recorded for deletion on save.
+  // is recorded for deletion on save. Read `variants` from the closure and update
+  // both states at the top level (no nested setState side-effect).
   function handleVariantsChange(next: VariantRow[]) {
-    setVariants((prev) => {
-      const nextIds = new Set(next.map((v) => v.id).filter(Boolean) as string[]);
-      const removed = prev
-        .map((v) => v.id)
-        .filter((id): id is string => id !== null && !nextIds.has(id));
-      if (removed.length > 0) {
-        setRemovedVariantIds((ids) => [...ids, ...removed]);
-      }
-      return next;
-    });
+    const nextIds = new Set(next.map((v) => v.id).filter(Boolean) as string[]);
+    const removed = variants
+      .map((v) => v.id)
+      .filter((id): id is string => id !== null && !nextIds.has(id));
+    if (removed.length > 0) {
+      setRemovedVariantIds((ids) => [...ids, ...removed]);
+    }
+    setVariants(next);
   }
 
   const [warehouses, setWarehouses] = useState<Array<{ id: string; name: string }>>([]);
