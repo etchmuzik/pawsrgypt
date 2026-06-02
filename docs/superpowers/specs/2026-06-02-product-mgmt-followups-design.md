@@ -149,3 +149,33 @@ no importer weight parsing (no source data for it).
   `moveProductChildren` helper from `mergeProducts`. C edits `pos/page.tsx` only (plus a tiny shared
   variant-label helper if useful).
 - **i18n:** all new user-facing strings bilingual (en/ar), matching existing inline `L` patterns.
+
+---
+
+## Build notes (what actually shipped)
+
+All three follow-ups were implemented on branch `feat/multi-weight-product-creation`, each
+two-stage reviewed (spec + code quality) and verified end-to-end against the live Supabase DB
+(test data cleaned up afterward; counts returned to the 391/395 baseline).
+
+- **A — Archive/Restore:** `setProductActive` server action + per-row Archive/Restore confirm
+  dialog in `ProductsTable.tsx`. Verified: archived product → `is_active=false`, 0 active
+  variants, hidden from shop, history preserved.
+- **B — Consolidate weights:** extracted shared `moveProductChildren` from `mergeProducts`;
+  added `mergeWithWeights` action + `ConsolidateWeightsDialog` + `ConsolidateWeightsButton`.
+  Verified: two split products (1kg target + separate 5kg) folded into one product with 2 active
+  weight variants; source deactivated. Partial-progress count surfaced on mid-failure.
+- **C — Variant-aware POS + stock:** one tile per active weight variant, variant-keyed cart,
+  `invoice_items.variant_id`, and stock decrement + `out` movement moved to a server route
+  `/api/pos-sale` (admin client) — needed because `stock_movements` RLS excludes `cashier`. The
+  route falls back to legacy null-variant stock rows and verifies the invoice exists first.
+
+### Unplanned fix discovered during verification (important)
+Verifying C against the LIVE DB exposed that the `invoices` table had drifted from the repo
+migrations: `tax` is a GENERATED column (must write `tax_amount`), and `branch_id` + `created_by`
+are NOT NULL with no default. The pre-existing POS `handleCheckout` inserted `tax` and omitted
+`branch_id`/`created_by`, so **every POS sale was failing at the invoice insert** before any of
+this work. Fixed in `pos/page.tsx`: load the cashier's `userId` + `branch_id` (profile →
+first-branch fallback) on mount; insert `tax_amount`/`branch_id`/`created_by` on the invoice and
+`created_by` on the payment; guard against missing branch/user. The repo migrations remain stale
+vs. the live schema — see the `db-schema-drift-invoices` project memory.
