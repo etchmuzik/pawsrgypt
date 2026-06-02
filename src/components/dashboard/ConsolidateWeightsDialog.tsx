@@ -179,7 +179,16 @@ export function ConsolidateWeightsDialog({ open, onOpenChange }: ConsolidateWeig
     setWorking(false);
 
     if (!res.ok) {
-      toast.error(res.error ?? (isAr ? "فشل الدمج" : "Consolidation failed"));
+      const partial = res.consolidated ?? 0;
+      const partialNote =
+        partial > 0
+          ? isAr
+            ? ` (تم دمج ${partial} قبل التوقف)`
+            : ` (${partial} consolidated before it stopped)`
+          : "";
+      toast.error(`${res.error ?? (isAr ? "فشل الدمج" : "Consolidation failed")}${partialNote}`);
+      // Some sources may already have moved — refresh so the list reflects reality.
+      if (partial > 0) router.refresh();
       return;
     }
     toast.success(

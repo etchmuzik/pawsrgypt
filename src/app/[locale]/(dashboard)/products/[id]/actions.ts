@@ -325,7 +325,7 @@ export async function mergeWithWeights(
         .update(labelPatch as never)
         .eq("product_id", sourceProductId);
       if (labelRes.error) {
-        return { ok: false, error: `Labelling ${sourceProductId}: ${labelRes.error.message}` };
+        return { ok: false, error: `Labelling ${sourceProductId}: ${labelRes.error.message}`, consolidated };
       }
     }
 
@@ -333,14 +333,14 @@ export async function mergeWithWeights(
     if (sourceProductId === targetProductId) continue;
 
     const moveRes = await moveProductChildren(admin, sourceProductId, targetProductId);
-    if (!moveRes.ok) return { ok: false, error: moveRes.error };
+    if (!moveRes.ok) return { ok: false, error: moveRes.error, consolidated };
 
     const deactivateRes = await admin
       .from("products")
       .update({ is_active: false } as never)
       .eq("id", sourceProductId);
     if (deactivateRes.error) {
-      return { ok: false, error: `Deactivate ${sourceProductId}: ${deactivateRes.error.message}` };
+      return { ok: false, error: `Deactivate ${sourceProductId}: ${deactivateRes.error.message}`, consolidated };
     }
     consolidated += 1;
   }
