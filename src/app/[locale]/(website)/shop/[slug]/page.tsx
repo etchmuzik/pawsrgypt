@@ -7,6 +7,7 @@ import { AddToCartButton } from "@/components/website/AddToCartButton";
 import { NotifyWhenAvailable } from "@/components/website/NotifyWhenAvailable";
 import { ProductImageZoom } from "@/components/website/ProductImageZoom";
 import { VariantPickerAndCart, type VariantOption } from "@/components/website/VariantPickerAndCart";
+import { ProductGalleryAndPicker } from "@/components/website/ProductGalleryAndPicker";
 import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { sanitizeProductHtml, stripHtml } from "@/lib/html";
@@ -29,6 +30,7 @@ type ProductDetail = {
     weight: number | null;
     color: string | null;
     is_active: boolean;
+    image_url: string | null;
   }[];
   stock: { quantity: number; variant_id: string | null }[];
 };
@@ -67,7 +69,7 @@ const getPdpData = unstable_cache(
     const { data: dbProduct } = await supabase
       .from("products")
       .select(
-        "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active), stock(quantity, variant_id)"
+        "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active, image_url), stock(quantity, variant_id)"
       )
       .eq("id", slug)
       .eq("is_active", true)
@@ -197,7 +199,7 @@ export default async function ProductDetailPage({
     // legacy product-level stock across variants (treat as in stock if >0).
     quantity:
       stockByVariant.get(v.id) ?? (activeVariants.length === 1 ? legacyStock : Infinity),
-    image_url: null,
+    image_url: v.image_url ?? null,
   }));
 
   // For the simple single-variant render path:
@@ -230,7 +232,68 @@ export default async function ProductDetailPage({
 
       {/* Product Detail */}
       <div className="max-w-[1400px] mx-auto px-6 lg:px-12 py-8 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
+        {showPicker ? (
+          <ProductGalleryAndPicker
+            productId={productId}
+            nameEn={nameEn}
+            nameAr={nameAr}
+            productImageUrl={imageUrl ?? ""}
+            variants={variantOptions}
+          >
+            {brand && (
+              <p className="text-sm font-semibold uppercase tracking-[0.15em] text-paws-orange">
+                {brand}
+              </p>
+            )}
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-neutral-900 leading-tight">
+              {name}
+            </h1>
+            {categoryName && (
+              <div className="flex items-center gap-2 text-sm text-neutral-400">
+                <Package className="w-4 h-4" />
+                <span>{categoryName}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, j) => (
+                  <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <span className="text-sm text-neutral-400">(4.8)</span>
+            </div>
+            {description && stripHtml(description) && (
+              <div className="pt-2">
+                <div
+                  className="prose prose-neutral max-w-none text-neutral-500 leading-relaxed prose-headings:text-neutral-800 prose-a:text-paws-orange prose-strong:text-neutral-700"
+                  dir={locale === "ar" ? "rtl" : "ltr"}
+                  dangerouslySetInnerHTML={{ __html: sanitizeProductHtml(description) }}
+                />
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                <Truck className="w-5 h-5 text-paws-orange" />
+                <span className="text-xs font-medium text-neutral-600">
+                  {locale === "ar" ? "توصيل سريع" : "Fast Delivery"}
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                <Shield className="w-5 h-5 text-paws-orange" />
+                <span className="text-xs font-medium text-neutral-600">
+                  {locale === "ar" ? "أصلي 100%" : "100% Genuine"}
+                </span>
+              </div>
+              <div className="flex flex-col items-center gap-2 bg-neutral-50 rounded-xl p-4 text-center">
+                <Heart className="w-5 h-5 text-paws-orange" />
+                <span className="text-xs font-medium text-neutral-600">
+                  {locale === "ar" ? "جودة مضمونة" : "Quality First"}
+                </span>
+              </div>
+            </div>
+          </ProductGalleryAndPicker>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16">
           {/* Product Image */}
           <ScrollReveal>
             {imageUrl ? (
@@ -372,7 +435,8 @@ export default async function ProductDetailPage({
               )}
             </div>
           </ScrollReveal>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Related Products */}
