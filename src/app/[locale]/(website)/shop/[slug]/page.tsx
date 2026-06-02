@@ -197,6 +197,7 @@ export default async function ProductDetailPage({
     // legacy product-level stock across variants (treat as in stock if >0).
     quantity:
       stockByVariant.get(v.id) ?? (activeVariants.length === 1 ? legacyStock : Infinity),
+    image_url: null,
   }));
 
   // For the simple single-variant render path:

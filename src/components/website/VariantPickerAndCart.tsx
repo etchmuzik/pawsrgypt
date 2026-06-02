@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AddToCartButton } from "./AddToCartButton";
 import { NotifyWhenAvailable } from "./NotifyWhenAvailable";
@@ -12,6 +12,7 @@ export interface VariantOption {
   color: string | null;
   price: number;
   quantity: number;
+  image_url: string | null;
 }
 
 interface VariantPickerAndCartProps {
@@ -20,6 +21,7 @@ interface VariantPickerAndCartProps {
   nameAr: string;
   imageUrl: string;
   variants: VariantOption[];
+  onVariantChange?: (variant: VariantOption) => void;
 }
 
 function variantLabel(v: VariantOption, isAr: boolean): string {
@@ -36,6 +38,7 @@ export function VariantPickerAndCart({
   nameAr,
   imageUrl,
   variants,
+  onVariantChange,
 }: VariantPickerAndCartProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
@@ -88,6 +91,10 @@ export function VariantPickerAndCart({
   }
 
   const [selected, setSelected] = useState<VariantOption>(pickInitial);
+
+  useEffect(() => {
+    onVariantChange?.(selected);
+  }, [selected, onVariantChange]);
 
   const selectedSizeKey = variantSizeKey(selected);
   const selectedColor = selected.color;
