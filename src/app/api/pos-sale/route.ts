@@ -41,6 +41,18 @@ export async function POST(req: Request) {
   }
 
   const admin = createAdminClient();
+
+  // Defense in depth: only decrement stock for an invoice that actually exists.
+  // This stops a fabricated invoiceId from being used to grind stock to zero.
+  const { data: invoice } = await admin
+    .from("invoices")
+    .select("id")
+    .eq("id", invoiceId)
+    .maybeSingle();
+  if (!invoice) {
+    return NextResponse.json({ ok: false, error: "Invoice not found" }, { status: 404 });
+  }
+
   const warnings: string[] = [];
   let decremented = 0;
   let movements = 0;
