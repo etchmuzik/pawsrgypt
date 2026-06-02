@@ -262,7 +262,11 @@ function NewProductPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [duplicateId, supabase, warehouses]);
+    // Depend on the default warehouse id (a primitive), not the whole `warehouses`
+    // array: this still re-seeds warehouse_id once warehouses load, but avoids
+    // re-running (and re-toasting) on every array-identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplicateId, supabase, warehouses[0]?.id]);
 
   function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
