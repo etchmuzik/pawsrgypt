@@ -202,7 +202,7 @@ function NewProductPageInner() {
       const { data: product } = await supabase
         .from("products")
         .select(
-          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(size, weight, color, price, cost_price, barcode)",
+          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(size, weight, color, price, cost_price, barcode, image_url)",
         )
         .eq("id", duplicateId as string)
         .single();
@@ -225,6 +225,7 @@ function NewProductPageInner() {
           price: number;
           cost_price: number;
           barcode: string | null;
+          image_url: string | null;
         }[];
       };
       const sourceVariants = p.product_variants ?? [];
@@ -252,6 +253,7 @@ function NewProductPageInner() {
                 color: sv.color ?? "",
                 price: sv.price != null ? String(sv.price) : "",
                 cost_price: sv.cost_price != null ? String(sv.cost_price) : "",
+                image_url: sv.image_url ?? "",
                 // barcode intentionally not copied — barcodes must be unique per variant.
               }))
             : [newVariantRow()],
@@ -383,6 +385,7 @@ function NewProductPageInner() {
           cost_price: isNaN(costPrice) ? 0 : costPrice,
           barcode: v.barcode.trim() || null,
           is_active: asDraft ? false : v.is_active,
+          image_url: v.image_url.trim() || null,
         } as never)
         .select("id")
         .single();
