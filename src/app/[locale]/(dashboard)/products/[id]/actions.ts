@@ -198,3 +198,46 @@ export async function mergeProducts(
 
   return { ok: true, targetId: targetProductId, moved };
 }
+
+export interface SetActiveResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Archive (is_active=false) or restore (is_active=true) a product.
+ * Soft only — never deletes, so invoice_items/purchase_items history is preserved.
+ * Also flips the product's variants to match, so an archived product exposes no
+ * active variants on the storefront (and restoring brings them back).
+ */
+export async function setProductActive(
+  productId: string,
+  active: boolean
+): Promise<SetActiveResult> {
+  if (!productId) return { ok: false, error: "Missing product id." };
+
+  const guard = await requireManager();
+  if (!guard.ok) return { ok: false, error: guard.error };
+
+  const admin = createAdminClient();
+
+  const productRes = await admin
+    .from("products")
+    .update({ is_active: active } as never)
+    .eq("id", productId);
+  if (productRes.error) return { ok: false, error: productRes.error.message };
+
+  // Keep variants in sync so the storefront picker / shop visibility is consistent.
+  const variantsRes = await admin
+    .from("product_variants")
+    .update({ is_active: active } as never)
+    .eq("product_id", productId);
+  if (variantsRes.error) return { ok: false, error: variantsRes.error.message };
+
+  revalidatePath("/[locale]/(dashboard)/products", "page");
+  revalidatePath("/[locale]/(website)/shop", "page");
+  revalidateTag("shop");
+  revalidateTag("products");
+
+  return { ok: true };
+}
