@@ -212,42 +212,28 @@ export default function POSPage() {
 
       if (payError) throw payError;
 
-      // Decrement stock + record an 'out' movement per line. Non-fatal: the sale
-      // is already recorded; stock sync failures must not void a completed sale.
+      // Stock decrement + audit movement run server-side (admin client) so they
+      // work for cashier role too (stock_movements RLS excludes cashier) and can
+      // fall back to legacy null-variant stock rows. Non-fatal: the sale is recorded.
       const { data: auth } = await supabase.auth.getUser();
       const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-      if (warehouseId) {
-        for (const item of cart) {
-          if (!isUuid(item.variantId) || !isUuid(item.productId)) continue; // skip demo rows
-          // Find this variant's stock row at the sale warehouse.
-          const { data: stockRow } = await supabase
-            .from("stock")
-            .select("id, quantity")
-            .eq("product_id", item.productId)
-            .eq("variant_id", item.variantId)
-            .eq("warehouse_id", warehouseId)
-            .maybeSingle();
-          const row = stockRow as { id: string; quantity: number } | null;
-          if (row) {
-            const newQty = Math.max(0, Number(row.quantity) - item.quantity);
-            await supabase
-              .from("stock")
-              .update({ quantity: newQty, updated_at: new Date().toISOString() } as never)
-              .eq("id", row.id);
-          }
-          if (auth?.user) {
-            await supabase.from("stock_movements").insert({
-              type: "out",
-              product_id: item.productId,
-              variant_id: item.variantId,
-              quantity: item.quantity,
-              from_warehouse_id: warehouseId,
-              reference_type: "pos_sale",
-              reference_id: invoice.id,
-              notes: "POS sale",
-              created_by: auth.user.id,
-            } as never);
-          }
+      const saleLines = cart
+        .filter((i) => isUuid(i.productId) && isUuid(i.variantId))
+        .map((i) => ({ productId: i.productId, variantId: i.variantId, quantity: i.quantity }));
+      if (auth?.user && warehouseId && saleLines.length > 0) {
+        try {
+          await fetch("/api/pos-sale", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              invoiceId: invoice.id,
+              warehouseId,
+              userId: auth.user.id,
+              lines: saleLines,
+            }),
+          });
+        } catch {
+          // Non-fatal: sale already recorded; stock sync is best-effort.
         }
       }
 
