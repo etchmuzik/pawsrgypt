@@ -233,6 +233,7 @@ export default function EditProductPage() {
               stock_row_id: matched?.id ?? null,
               quantity: matched ? String(matched.quantity) : "0",
               min_qty: matched ? String(matched.min_quantity) : "0",
+              image_url: v.image_url ?? "",
             };
           })
         : [newVariantRow()];
