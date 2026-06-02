@@ -202,7 +202,7 @@ function NewProductPageInner() {
       const { data: product } = await supabase
         .from("products")
         .select(
-          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(price, cost_price)",
+          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(size, weight, color, price, cost_price, barcode)",
         )
         .eq("id", duplicateId as string)
         .single();
@@ -218,9 +218,16 @@ function NewProductPageInner() {
         tags: string[] | null;
         is_active: boolean;
         is_featured: boolean;
-        product_variants: { price: number; cost_price: number }[];
+        product_variants: {
+          size: string | null;
+          weight: number | null;
+          color: string | null;
+          price: number;
+          cost_price: number;
+          barcode: string | null;
+        }[];
       };
-      const variant = p.product_variants?.[0];
+      const sourceVariants = p.product_variants ?? [];
       setForm({
         sku: "",
         name_en: `${p.name_en} (copy)`,
@@ -237,14 +244,16 @@ function NewProductPageInner() {
         tags: p.tags ?? [],
         warehouse_id: warehouses[0]?.id ?? "",
         variants:
-          variant != null
-            ? [
-                {
-                  ...newVariantRow(),
-                  price: variant.price != null ? String(variant.price) : "",
-                  cost_price: variant.cost_price != null ? String(variant.cost_price) : "",
-                },
-              ]
+          sourceVariants.length > 0
+            ? sourceVariants.map((sv) => ({
+                ...newVariantRow(),
+                size: sv.size ?? "",
+                weight: sv.weight != null ? String(sv.weight) : "",
+                color: sv.color ?? "",
+                price: sv.price != null ? String(sv.price) : "",
+                cost_price: sv.cost_price != null ? String(sv.cost_price) : "",
+                // barcode intentionally not copied — barcodes must be unique per variant.
+              }))
             : [newVariantRow()],
       });
       toast.info(L.duplicated);
