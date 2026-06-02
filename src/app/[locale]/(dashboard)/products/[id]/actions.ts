@@ -48,6 +48,70 @@ async function requireManager(): Promise<{ ok: true } | { ok: false; error: stri
   return { ok: true };
 }
 
+type MovedCounts = {
+  variants: number;
+  stockRows: number;
+  invoiceItems: number;
+  purchaseItems: number;
+  stockMovements: number;
+};
+
+/**
+ * Reassign all child rows (variants, stock, invoice_items, purchase_items,
+ * stock_movements) of `sourceProductId` to `targetProductId`. Caller must have
+ * already passed requireManager() and constructed `admin`.
+ * Returns moved counts or an error string.
+ */
+async function moveProductChildren(
+  admin: ReturnType<typeof createAdminClient>,
+  sourceProductId: string,
+  targetProductId: string
+): Promise<{ ok: true; moved: MovedCounts } | { ok: false; error: string }> {
+  const moved: MovedCounts = { variants: 0, stockRows: 0, invoiceItems: 0, purchaseItems: 0, stockMovements: 0 };
+
+  const variantsRes = await admin
+    .from("product_variants")
+    .update({ product_id: targetProductId } as never)
+    .eq("product_id", sourceProductId)
+    .select("id");
+  if (variantsRes.error) return { ok: false, error: `Variants: ${variantsRes.error.message}` };
+  moved.variants = variantsRes.data?.length ?? 0;
+
+  const stockRes = await admin
+    .from("stock")
+    .update({ product_id: targetProductId } as never)
+    .eq("product_id", sourceProductId)
+    .select("id");
+  if (stockRes.error) return { ok: false, error: `Stock: ${stockRes.error.message}` };
+  moved.stockRows = stockRes.data?.length ?? 0;
+
+  const invRes = await admin
+    .from("invoice_items")
+    .update({ product_id: targetProductId } as never)
+    .eq("product_id", sourceProductId)
+    .select("id");
+  if (invRes.error) return { ok: false, error: `Invoice items: ${invRes.error.message}` };
+  moved.invoiceItems = invRes.data?.length ?? 0;
+
+  const poRes = await admin
+    .from("purchase_items")
+    .update({ product_id: targetProductId } as never)
+    .eq("product_id", sourceProductId)
+    .select("id");
+  if (poRes.error) return { ok: false, error: `Purchase items: ${poRes.error.message}` };
+  moved.purchaseItems = poRes.data?.length ?? 0;
+
+  const movRes = await admin
+    .from("stock_movements")
+    .update({ product_id: targetProductId } as never)
+    .eq("product_id", sourceProductId)
+    .select("id");
+  if (movRes.error) return { ok: false, error: `Stock movements: ${movRes.error.message}` };
+  moved.stockMovements = movRes.data?.length ?? 0;
+
+  return { ok: true, moved };
+}
+
 export async function previewMerge(
   targetProductId: string,
   sourceProductId: string
@@ -132,52 +196,11 @@ export async function mergeProducts(
   if (!source) return { ok: false, error: "Source product not found." };
   if (!target) return { ok: false, error: "Target product not found." };
 
-  const moved = { variants: 0, stockRows: 0, invoiceItems: 0, purchaseItems: 0, stockMovements: 0 };
-
-  // 1. Move product_variants.
-  const variantsRes = await admin
-    .from("product_variants")
-    .update({ product_id: targetProductId } as never)
-    .eq("product_id", sourceProductId)
-    .select("id");
-  if (variantsRes.error) return { ok: false, error: `Variants: ${variantsRes.error.message}` };
-  moved.variants = variantsRes.data?.length ?? 0;
-
-  // 2. Move stock rows.
-  const stockRes = await admin
-    .from("stock")
-    .update({ product_id: targetProductId } as never)
-    .eq("product_id", sourceProductId)
-    .select("id");
-  if (stockRes.error) return { ok: false, error: `Stock: ${stockRes.error.message}` };
-  moved.stockRows = stockRes.data?.length ?? 0;
-
-  // 3. Move historical invoice_items.
-  const invRes = await admin
-    .from("invoice_items")
-    .update({ product_id: targetProductId } as never)
-    .eq("product_id", sourceProductId)
-    .select("id");
-  if (invRes.error) return { ok: false, error: `Invoice items: ${invRes.error.message}` };
-  moved.invoiceItems = invRes.data?.length ?? 0;
-
-  // 4. Move historical purchase_items.
-  const poRes = await admin
-    .from("purchase_items")
-    .update({ product_id: targetProductId } as never)
-    .eq("product_id", sourceProductId)
-    .select("id");
-  if (poRes.error) return { ok: false, error: `Purchase items: ${poRes.error.message}` };
-  moved.purchaseItems = poRes.data?.length ?? 0;
-
-  // 5. Move stock_movements references.
-  const movRes = await admin
-    .from("stock_movements")
-    .update({ product_id: targetProductId } as never)
-    .eq("product_id", sourceProductId)
-    .select("id");
-  if (movRes.error) return { ok: false, error: `Stock movements: ${movRes.error.message}` };
-  moved.stockMovements = movRes.data?.length ?? 0;
+  // 1-5. Move all child rows (variants, stock, invoice_items, purchase_items,
+  // stock_movements) from source → target via the shared helper.
+  const moveRes = await moveProductChildren(admin, sourceProductId, targetProductId);
+  if (!moveRes.ok) return { ok: false, error: moveRes.error };
+  const moved = moveRes.moved;
 
   // 6. Deactivate source product (preserve audit trail, don't delete).
   const deactivateRes = await admin
@@ -240,4 +263,93 @@ export async function setProductActive(
   revalidateTag("products");
 
   return { ok: true };
+}
+
+export interface ConsolidateItem {
+  sourceProductId: string;
+  weightKg: number | null;
+  sizeLabel: string | null;
+}
+
+export interface ConsolidateResult {
+  ok: boolean;
+  error?: string;
+  targetId?: string;
+  consolidated?: number; // number of source products folded in
+}
+
+/**
+ * Consolidate one or more split-weight source products into a single target
+ * product, labelling each merged product's variants with the given weight/size
+ * so the target ends up with distinct weight variants.
+ *
+ * For the target itself, optionally pass a matching item (sourceProductId ===
+ * targetProductId) to label the target's own existing variants too.
+ *
+ * Sources are deactivated (not deleted) — history preserved, reversible.
+ */
+export async function mergeWithWeights(
+  targetProductId: string,
+  items: ConsolidateItem[]
+): Promise<ConsolidateResult> {
+  if (!targetProductId) return { ok: false, error: "Missing target product id." };
+  if (!items || items.length === 0) return { ok: false, error: "No source products selected." };
+
+  const guard = await requireManager();
+  if (!guard.ok) return { ok: false, error: guard.error };
+
+  const admin = createAdminClient();
+
+  // Target must exist.
+  const { data: target } = await admin
+    .from("products")
+    .select("id")
+    .eq("id", targetProductId)
+    .single();
+  if (!target) return { ok: false, error: "Target product not found." };
+
+  let consolidated = 0;
+
+  for (const item of items) {
+    const { sourceProductId, weightKg, sizeLabel } = item;
+    if (!sourceProductId) continue;
+
+    // Stamp this product's CURRENT variants with the weight/size label so they
+    // carry the right label when they land on the target.
+    const labelPatch: Record<string, unknown> = {};
+    if (weightKg != null && !Number.isNaN(weightKg)) labelPatch.weight = weightKg;
+    if (sizeLabel && sizeLabel.trim()) labelPatch.size = sizeLabel.trim();
+    if (Object.keys(labelPatch).length > 0) {
+      const labelRes = await admin
+        .from("product_variants")
+        .update(labelPatch as never)
+        .eq("product_id", sourceProductId);
+      if (labelRes.error) {
+        return { ok: false, error: `Labelling ${sourceProductId}: ${labelRes.error.message}` };
+      }
+    }
+
+    // If this item refers to the target itself, we only relabel — no move/deactivate.
+    if (sourceProductId === targetProductId) continue;
+
+    const moveRes = await moveProductChildren(admin, sourceProductId, targetProductId);
+    if (!moveRes.ok) return { ok: false, error: moveRes.error };
+
+    const deactivateRes = await admin
+      .from("products")
+      .update({ is_active: false } as never)
+      .eq("id", sourceProductId);
+    if (deactivateRes.error) {
+      return { ok: false, error: `Deactivate ${sourceProductId}: ${deactivateRes.error.message}` };
+    }
+    consolidated += 1;
+  }
+
+  revalidatePath("/[locale]/(dashboard)/products", "page");
+  revalidatePath(`/[locale]/(dashboard)/products/${targetProductId}/edit`, "page");
+  revalidatePath("/[locale]/(website)/shop", "page");
+  revalidateTag("shop");
+  revalidateTag("products");
+
+  return { ok: true, targetId: targetProductId, consolidated };
 }

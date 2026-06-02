@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Upload } from "lucide-react";
 import Link from "next/link";
 import { ProductsTable, type ProductRow } from "@/components/dashboard/ProductsTable";
+import { ConsolidateWeightsButton } from "@/components/dashboard/ConsolidateWeightsButton";
 import { getTranslations } from "next-intl/server";
 
 interface ProductsPageProps {
@@ -35,6 +36,7 @@ export default async function ProductsPage({ params }: ProductsPageProps) {
           </p>
         </div>
         <div className="flex gap-2">
+          <ConsolidateWeightsButton />
           <Link href={`/${locale}/products/import`}>
             <Button variant="outline" size="sm" className="gap-1.5 border-paws-sand">
               <Upload className="w-4 h-4" /> {tCommon("import")}
