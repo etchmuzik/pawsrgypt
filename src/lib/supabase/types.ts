@@ -81,6 +81,7 @@ export interface Database {
           price: number;
           cost_price: number;
           barcode: string | null;
+          image_url: string | null;
           is_active: boolean;
           created_at: string;
         };
