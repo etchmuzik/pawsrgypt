@@ -361,6 +361,7 @@ export default function EditProductPage() {
         cost_price: costPrice,
         barcode: v.barcode.trim() || null,
         is_active: v.is_active,
+        image_url: v.image_url.trim() || null,
       };
 
       let variantId = v.id;
@@ -668,6 +669,7 @@ export default function EditProductPage() {
           warehouseId={form.warehouse_id}
           onWarehouseChange={(id) => updateField("warehouse_id", id)}
           isAr={isAr}
+          productId={productId}
         />
 
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
