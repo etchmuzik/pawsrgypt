@@ -9,15 +9,20 @@ import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
 
 interface POSProduct {
-  id: string;
-  name: string;
+  id: string;          // VARIANT id (unique tile key + cart key)
+  productId: string;   // parent product id
+  variantId: string;   // same as id; explicit for checkout clarity
+  name: string;        // product name + variant label (e.g. "ALPHA Dog Food · 4 kg")
   sku: string;
+  barcode: string;
   price: number;
-  stock: number;
+  stock: number;       // stock for THIS variant at the chosen warehouse (sum of its stock rows)
 }
 
 interface CartItem {
-  id: string;
+  id: string;          // variant id
+  productId: string;
+  variantId: string;
   name: string;
   price: number;
   quantity: number;
@@ -29,6 +34,7 @@ export default function POSPage() {
   const [payMethod, setPayMethod] = useState<"cash" | "card">("cash");
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [products, setProducts] = useState<POSProduct[]>([]);
+  const [warehouseId, setWarehouseId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const locale = useLocale();
   const isAr = locale === "ar";
@@ -57,65 +63,88 @@ export default function POSPage() {
 
   useEffect(() => {
     async function loadProducts() {
+      const { data: whData } = await supabase
+        .from("warehouses").select("id").eq("is_active", true).order("name").limit(1);
+      const wh = (whData as { id: string }[] | null)?.[0]?.id ?? "";
+      setWarehouseId(wh);
+
       const { data } = await supabase
         .from("products")
-        .select("id, name_en, sku, product_variants(price), stock(quantity)")
+        .select("id, name_en, sku, product_variants(id, price, size, weight, color, is_active, barcode), stock(quantity, variant_id)")
         .eq("is_active", true)
         .order("name_en")
         .limit(100);
 
+      type VRow = { id: string; price: number; size: string | null; weight: number | null; color: string | null; is_active: boolean; barcode: string | null };
       type Row = {
         id: string;
         name_en: string;
         sku: string;
-        product_variants: { price: number }[];
-        stock: { quantity: number }[];
+        product_variants: VRow[];
+        stock: { quantity: number; variant_id: string | null }[];
       };
 
       const rows = (data as Row[] | null) ?? [];
-      const mapped: POSProduct[] = rows.map((r) => ({
-        id: r.id,
-        name: r.name_en,
-        sku: r.sku ?? "",
-        price: r.product_variants?.[0]?.price ?? 0,
-        stock: r.stock?.reduce((s: number, st: { quantity: number }) => s + (st.quantity ?? 0), 0) ?? 0,
-      }));
+      const mapped: POSProduct[] = [];
+      for (const r of rows) {
+        const activeVariants = (r.product_variants ?? []).filter((v) => v.is_active);
+        const single = activeVariants.length === 1;
+        for (const v of activeVariants) {
+          const labelParts: string[] = [];
+          if (v.size) labelParts.push(v.size);
+          else if (v.weight != null) labelParts.push(`${v.weight} ${isAr ? "كجم" : "kg"}`);
+          if (v.color) labelParts.push(v.color);
+          const label = labelParts.join(" · ");
+          const stockQty = (r.stock ?? [])
+            .filter((s) => s.variant_id === v.id || (single && s.variant_id === null))
+            .reduce((sum, s) => sum + (s.quantity ?? 0), 0);
+          mapped.push({
+            id: v.id,
+            productId: r.id,
+            variantId: v.id,
+            name: label ? `${r.name_en} · ${label}` : r.name_en,
+            sku: r.sku ?? "",
+            barcode: v.barcode ?? "",
+            price: v.price ?? 0,
+            stock: stockQty,
+          });
+        }
+      }
 
       if (mapped.length > 0) {
         setProducts(mapped);
       } else {
         // Fallback demo products if DB is empty
         setProducts([
-          { id: "1", name: "Premium Dog Food 3kg", sku: "DOG-001", price: 250, stock: 15 },
-          { id: "2", name: "Cat Grooming Kit", sku: "CAT-002", price: 180, stock: 8 },
-          { id: "3", name: "Leather Pet Collar", sku: "ACC-003", price: 120, stock: 22 },
-          { id: "4", name: "Interactive Ball Toy", sku: "TOY-004", price: 75, stock: 30 },
-          { id: "5", name: "Vitamin Supplements", sku: "HLT-005", price: 95, stock: 12 },
-          { id: "6", name: "Steel Bowl Set", sku: "ACC-006", price: 85, stock: 18 },
-          { id: "7", name: "Pet Bed Large", sku: "BED-007", price: 450, stock: 5 },
-          { id: "8", name: "Shampoo 500ml", sku: "GRM-008", price: 65, stock: 25 },
+          { id: "1", productId: "1", variantId: "1", name: "Premium Dog Food 3kg", sku: "DOG-001", barcode: "", price: 250, stock: 15 },
+          { id: "2", productId: "2", variantId: "2", name: "Cat Grooming Kit", sku: "CAT-002", barcode: "", price: 180, stock: 8 },
+          { id: "3", productId: "3", variantId: "3", name: "Leather Pet Collar", sku: "ACC-003", barcode: "", price: 120, stock: 22 },
+          { id: "4", productId: "4", variantId: "4", name: "Interactive Ball Toy", sku: "TOY-004", barcode: "", price: 75, stock: 30 },
+          { id: "5", productId: "5", variantId: "5", name: "Vitamin Supplements", sku: "HLT-005", barcode: "", price: 95, stock: 12 },
+          { id: "6", productId: "6", variantId: "6", name: "Steel Bowl Set", sku: "ACC-006", barcode: "", price: 85, stock: 18 },
+          { id: "7", productId: "7", variantId: "7", name: "Pet Bed Large", sku: "BED-007", barcode: "", price: 450, stock: 5 },
+          { id: "8", productId: "8", variantId: "8", name: "Shampoo 500ml", sku: "GRM-008", barcode: "", price: 65, stock: 25 },
         ]);
       }
       setLoading(false);
     }
     loadProducts();
-  }, [supabase]);
+  }, [supabase, isAr]);
 
   const filtered = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase())
+      p.sku.toLowerCase().includes(search.toLowerCase()) ||
+      p.barcode.toLowerCase().includes(search.toLowerCase())
   );
 
   function addToCart(product: POSProduct) {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === product.id);
       if (existing) {
-        return prev.map((i) =>
-          i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
+        return prev.map((i) => (i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
       }
-      return [...prev, { id: product.id, name: product.name, price: product.price, quantity: 1 }];
+      return [...prev, { id: product.id, productId: product.productId, variantId: product.variantId, name: product.name, price: product.price, quantity: 1 }];
     });
   }
 
@@ -159,7 +188,8 @@ export default function POSPage() {
       // Create invoice items
       const items = cart.map((item) => ({
         invoice_id: invoice.id,
-        product_id: item.id,
+        product_id: item.productId,
+        variant_id: item.variantId,
         quantity: item.quantity,
         unit_price: item.price,
         total: item.price * item.quantity,
@@ -181,6 +211,45 @@ export default function POSPage() {
         } as never);
 
       if (payError) throw payError;
+
+      // Decrement stock + record an 'out' movement per line. Non-fatal: the sale
+      // is already recorded; stock sync failures must not void a completed sale.
+      const { data: auth } = await supabase.auth.getUser();
+      const isUuid = (s: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+      if (warehouseId) {
+        for (const item of cart) {
+          if (!isUuid(item.variantId) || !isUuid(item.productId)) continue; // skip demo rows
+          // Find this variant's stock row at the sale warehouse.
+          const { data: stockRow } = await supabase
+            .from("stock")
+            .select("id, quantity")
+            .eq("product_id", item.productId)
+            .eq("variant_id", item.variantId)
+            .eq("warehouse_id", warehouseId)
+            .maybeSingle();
+          const row = stockRow as { id: string; quantity: number } | null;
+          if (row) {
+            const newQty = Math.max(0, Number(row.quantity) - item.quantity);
+            await supabase
+              .from("stock")
+              .update({ quantity: newQty, updated_at: new Date().toISOString() } as never)
+              .eq("id", row.id);
+          }
+          if (auth?.user) {
+            await supabase.from("stock_movements").insert({
+              type: "out",
+              product_id: item.productId,
+              variant_id: item.variantId,
+              quantity: item.quantity,
+              from_warehouse_id: warehouseId,
+              reference_type: "pos_sale",
+              reference_id: invoice.id,
+              notes: "POS sale",
+              created_by: auth.user.id,
+            } as never);
+          }
+        }
+      }
 
       setCheckoutMessage(`${L.invoiceCreated}: ${total.toFixed(2)} ${L.egp}`);
       setCart([]);
