@@ -3,11 +3,22 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Download, Pencil, Copy, Image as ImageIcon, Plus } from "lucide-react";
+import { Search, Download, Pencil, Copy, Image as ImageIcon, Plus, Archive, ArchiveRestore, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { setProductActive } from "@/app/[locale]/(dashboard)/products/[id]/actions";
 
 export interface ProductRow {
   id: string;
@@ -87,6 +98,9 @@ function downloadCsv(csv: string, filename: string) {
 
 export function ProductsTable({ products, locale }: ProductsTableProps) {
   const [query, setQuery] = useState("");
+  const router = useRouter();
+  const [confirmTarget, setConfirmTarget] = useState<ProductRow | null>(null);
+  const [working, setWorking] = useState(false);
   const uiLocale = useLocale();
   const t = useTranslations("products");
   const tCommon = useTranslations("common");
@@ -107,7 +121,38 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
     duplicateTitle: uiLocale === "ar" ? "تكرار المنتج" : "Duplicate product",
     featured: uiLocale === "ar" ? "مميز" : "Featured",
     ofTotal: uiLocale === "ar" ? "من" : "of",
+    archive: uiLocale === "ar" ? "أرشفة" : "Archive",
+    restore: uiLocale === "ar" ? "استرجاع" : "Restore",
+    archiveTitle: uiLocale === "ar" ? "أرشفة المنتج؟" : "Archive product?",
+    restoreTitle: uiLocale === "ar" ? "استرجاع المنتج؟" : "Restore product?",
+    archiveDesc: uiLocale === "ar"
+      ? "هيتخفي من المتجر بس هيتسجل في تاريخ المبيعات. تقدر ترجعه في أي وقت."
+      : "It will be hidden from the shop. Sales history is preserved. You can restore it anytime.",
+    restoreDesc: uiLocale === "ar"
+      ? "هيظهر في المتجر تاني (لو مفعّل)."
+      : "It will be visible in the shop again.",
+    confirm: uiLocale === "ar" ? "تأكيد" : "Confirm",
+    cancel: uiLocale === "ar" ? "إلغاء" : "Cancel",
   };
+
+  async function handleToggleActive() {
+    if (!confirmTarget) return;
+    setWorking(true);
+    const next = !confirmTarget.is_active;
+    const res = await setProductActive(confirmTarget.id, next);
+    setWorking(false);
+    if (res.ok) {
+      toast.success(
+        next
+          ? (uiLocale === "ar" ? "تم استرجاع المنتج." : "Product restored.")
+          : (uiLocale === "ar" ? "تم أرشفة المنتج." : "Product archived.")
+      );
+      setConfirmTarget(null);
+      router.refresh();
+    } else {
+      toast.error(res.error ?? (uiLocale === "ar" ? "فشلت العملية" : "Operation failed"));
+    }
+  }
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLowerCase();
@@ -297,6 +342,20 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
                               {L.duplicate}
                             </Button>
                           </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setConfirmTarget(product)}
+                            className="h-8 gap-1.5 text-muted-foreground hover:text-destructive hover:bg-red-50"
+                            title={product.is_active ? L.archive : L.restore}
+                          >
+                            {product.is_active ? (
+                              <Archive className="w-3.5 h-3.5" />
+                            ) : (
+                              <ArchiveRestore className="w-3.5 h-3.5" />
+                            )}
+                            {product.is_active ? L.archive : L.restore}
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -307,6 +366,34 @@ export function ProductsTable({ products, locale }: ProductsTableProps) {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!confirmTarget} onOpenChange={(o) => { if (!o) { setConfirmTarget(null); setWorking(false); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmTarget?.is_active ? L.archiveTitle : L.restoreTitle}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmTarget
+                ? `${confirmTarget.name_en} — ${confirmTarget.is_active ? L.archiveDesc : L.restoreDesc}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmTarget(null)} disabled={working}>
+              {L.cancel}
+            </Button>
+            <Button
+              onClick={handleToggleActive}
+              disabled={working}
+              className={confirmTarget?.is_active ? "bg-red-600 hover:bg-red-700 text-white gap-1.5" : "bg-paws-orange hover:bg-paws-orange/90 text-white gap-1.5"}
+            >
+              {working && <Loader2 className="w-4 h-4 animate-spin" />}
+              {L.confirm}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { ImageUploader } from "@/components/dashboard/ImageUploader";
 import { RichTextEditor } from "@/components/dashboard/RichTextEditor";
+import { VariantEditor, newVariantRow, type VariantRow } from "@/components/dashboard/VariantEditor";
 
 interface CategoryOption {
   id: string;
@@ -30,15 +31,12 @@ interface ProductForm {
   brand: string;
   unit_type: string;
   barcode: string;
-  price: string;
-  cost_price: string;
   is_active: boolean;
   is_featured: boolean;
   images: string[];
   tags: string[];
-  initial_qty: string;
   warehouse_id: string;
-  min_qty: string;
+  variants: VariantRow[];
 }
 
 interface WarehouseOption {
@@ -56,15 +54,12 @@ const INITIAL_FORM: ProductForm = {
   brand: "",
   unit_type: "piece",
   barcode: "",
-  price: "",
-  cost_price: "",
   is_active: true,
   is_featured: false,
   images: [],
   tags: [],
-  initial_qty: "0",
   warehouse_id: "",
-  min_qty: "0",
+  variants: [newVariantRow()],
 };
 
 function generateBarcode(): string {
@@ -147,11 +142,6 @@ function NewProductPageInner() {
     tags: isAr ? "الوسوم" : "Tags",
     tagsPh: isAr ? "اكتب وسم واضغط Enter..." : "Type a tag and press Enter...",
     tagsNote: isAr ? "اضغط Enter أو فاصلة لإضافة وسم" : "Press Enter or comma to add a tag",
-    pricing: isAr ? "التسعير" : "Pricing",
-    sellingPrice: isAr ? "سعر البيع" : "Selling Price",
-    costPrice: isAr ? "سعر التكلفة" : "Cost Price",
-    egp: isAr ? "ج.م" : "EGP",
-    profitMargin: isAr ? "هامش الربح" : "Profit margin",
     statusVis: isAr ? "الحالة والظهور" : "Status & Visibility",
     activeStatus: isAr ? "حالة التفعيل" : "Active Status",
     activeNote: isAr ? "المنتج يظهر لما يكون مفعل" : "Product will be visible when active",
@@ -163,19 +153,11 @@ function NewProductPageInner() {
     create: isAr ? "إنشاء المنتج" : "Create Product",
     creating: isAr ? "بيتحفظ..." : "Creating...",
     skuNameRequired: isAr ? "الـ SKU والاسم الإنجليزي مطلوبين." : "SKU and English name are required.",
-    priceInvalid: isAr ? "ادخل سعر بيع صحيح." : "Please enter a valid selling price.",
-    costInvalid: isAr ? "ادخل سعر تكلفة صحيح." : "Please enter a valid cost price.",
     productFailed: isAr ? "فشل إنشاء المنتج" : "Failed to create product",
     variantFailed: isAr ? "تم إنشاء المنتج بس فشل إنشاء المتغير" : "Product created but variant failed",
     draftSaved: isAr ? "تم حفظ المسودة." : "Draft saved.",
     ok: isAr ? "تم إنشاء المنتج بنجاح!" : "Product created successfully!",
     duplicated: isAr ? "تم تكرار المنتج. الـ SKU والصور اتمسحوا." : "Product duplicated. SKU and images cleared.",
-    stock: isAr ? "المخزون" : "Stock",
-    stockNote: isAr ? "سيب الكمية 0 لو مش عايز تسجل مخزون دلوقتي." : "Leave quantity at 0 if you don't want to record stock yet.",
-    initialQty: isAr ? "الكمية الابتدائية" : "Initial Quantity",
-    warehouse: isAr ? "المستودع" : "Warehouse",
-    minQty: isAr ? "الحد الأدنى للتنبيه" : "Low-Stock Threshold",
-    noWarehouses: isAr ? "ضيف مستودع أولاً من الإعدادات" : "Create a warehouse first in settings",
     stockFailed: isAr ? "تم حفظ المنتج بس فشل تسجيل المخزون" : "Product saved but stock failed",
   };
 
@@ -220,7 +202,7 @@ function NewProductPageInner() {
       const { data: product } = await supabase
         .from("products")
         .select(
-          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(price, cost_price)",
+          "name_en, name_ar, description_en, description_ar, category_id, brand, unit_type, tags, is_active, is_featured, product_variants(size, weight, color, price, cost_price, barcode)",
         )
         .eq("id", duplicateId as string)
         .single();
@@ -236,9 +218,16 @@ function NewProductPageInner() {
         tags: string[] | null;
         is_active: boolean;
         is_featured: boolean;
-        product_variants: { price: number; cost_price: number }[];
+        product_variants: {
+          size: string | null;
+          weight: number | null;
+          color: string | null;
+          price: number;
+          cost_price: number;
+          barcode: string | null;
+        }[];
       };
-      const variant = p.product_variants?.[0];
+      const sourceVariants = p.product_variants ?? [];
       setForm({
         sku: "",
         name_en: `${p.name_en} (copy)`,
@@ -249,15 +238,23 @@ function NewProductPageInner() {
         brand: p.brand ?? "",
         unit_type: p.unit_type ?? "piece",
         barcode: "",
-        price: variant?.price != null ? String(variant.price) : "",
-        cost_price: variant?.cost_price != null ? String(variant.cost_price) : "",
         is_active: p.is_active,
         is_featured: false,
         images: [],
         tags: p.tags ?? [],
-        initial_qty: "0",
         warehouse_id: warehouses[0]?.id ?? "",
-        min_qty: "0",
+        variants:
+          sourceVariants.length > 0
+            ? sourceVariants.map((sv) => ({
+                ...newVariantRow(),
+                size: sv.size ?? "",
+                weight: sv.weight != null ? String(sv.weight) : "",
+                color: sv.color ?? "",
+                price: sv.price != null ? String(sv.price) : "",
+                cost_price: sv.cost_price != null ? String(sv.cost_price) : "",
+                // barcode intentionally not copied — barcodes must be unique per variant.
+              }))
+            : [newVariantRow()],
       });
       toast.info(L.duplicated);
     }
@@ -265,7 +262,11 @@ function NewProductPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [duplicateId, supabase]);
+    // Depend on the default warehouse id (a primitive), not the whole `warehouses`
+    // array: this still re-seeds warehouse_id once warehouses load, but avoids
+    // re-running (and re-toasting) on every array-identity change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplicateId, supabase, warehouses[0]?.id]);
 
   function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -309,19 +310,28 @@ function NewProductPageInner() {
       return;
     }
 
-    const priceRaw = form.price.trim();
-    const costRaw = form.cost_price.trim();
-    const price = priceRaw === "" ? NaN : parseFloat(priceRaw);
-    const costPrice = costRaw === "" ? NaN : parseFloat(costRaw);
+    if (form.variants.length === 0) {
+      toast.error(isAr ? "ضيف متغير واحد على الأقل." : "Add at least one variant.");
+      return;
+    }
 
+    // On a real (non-draft) save, every variant needs a valid price + cost.
     if (!asDraft) {
-      if (isNaN(price) || price < 0) {
-        toast.error(L.priceInvalid);
-        return;
-      }
-      if (isNaN(costPrice) || costPrice < 0) {
-        toast.error(L.costInvalid);
-        return;
+      for (const [idx, v] of form.variants.entries()) {
+        const price = parseFloat(v.price);
+        const costPrice = parseFloat(v.cost_price);
+        if (isNaN(price) || price < 0) {
+          toast.error(
+            isAr ? `سعر المتغير رقم ${idx + 1} غير صحيح.` : `Variant ${idx + 1}: invalid price.`
+          );
+          return;
+        }
+        if (isNaN(costPrice) || costPrice < 0) {
+          toast.error(
+            isAr ? `سعر تكلفة المتغير رقم ${idx + 1} غير صحيح.` : `Variant ${idx + 1}: invalid cost price.`
+          );
+          return;
+        }
       }
     }
 
@@ -355,49 +365,58 @@ function NewProductPageInner() {
     }
 
     const productId = (product as { id: string }).id;
+    const { data: auth } = await supabase.auth.getUser();
 
-    const { error: variantError } = await supabase
-      .from("product_variants")
-      .insert({
-        product_id: productId,
-        size: null,
-        color: null,
-        weight: null,
-        price: isNaN(price) ? 0 : price,
-        cost_price: isNaN(costPrice) ? 0 : costPrice,
-        barcode: form.barcode.trim() || null,
-        is_active: asDraft ? false : form.is_active,
-      } as never);
+    for (const [idx, v] of form.variants.entries()) {
+      const price = parseFloat(v.price);
+      const costPrice = parseFloat(v.cost_price);
+      const weight = v.weight.trim() === "" ? null : parseFloat(v.weight);
 
-    if (variantError) {
-      setBusy(false);
-      toast.error(`${L.variantFailed}: ${variantError.message}`);
-      return;
-    }
+      const { data: insertedVariant, error: variantError } = await supabase
+        .from("product_variants")
+        .insert({
+          product_id: productId,
+          size: v.size.trim() || null,
+          color: v.color.trim() || null,
+          weight: weight != null && !isNaN(weight) ? weight : null,
+          price: isNaN(price) ? 0 : price,
+          cost_price: isNaN(costPrice) ? 0 : costPrice,
+          barcode: v.barcode.trim() || null,
+          is_active: asDraft ? false : v.is_active,
+        } as never)
+        .select("id")
+        .single();
 
-    // Insert initial stock row if a quantity + warehouse were chosen.
-    const initialQty = parseFloat(form.initial_qty);
-    const minQty = parseFloat(form.min_qty);
-    if (!isNaN(initialQty) && initialQty > 0 && form.warehouse_id) {
-      const { error: stockErr } = await supabase.from("stock").insert({
-        product_id: productId,
-        variant_id: null,
-        warehouse_id: form.warehouse_id,
-        quantity: initialQty,
-        min_quantity: isNaN(minQty) ? 0 : minQty,
-      } as never);
-      if (stockErr) {
-        // Non-fatal: product + variant are saved, warn but don't roll back.
-        toast.error(`${L.stockFailed}: ${stockErr.message}`);
-      } else {
-        // Audit as a stock movement so the inventory history shows the initial load.
-        const { data: auth } = await supabase.auth.getUser();
-        if (auth?.user) {
+      if (variantError || !insertedVariant) {
+        setBusy(false);
+        toast.error(
+          `${L.variantFailed} (${idx + 1}): ${variantError?.message ?? ""}`
+        );
+        return;
+      }
+
+      const variantId = (insertedVariant as { id: string }).id;
+
+      // Insert opening stock for this variant if a quantity + warehouse were chosen.
+      const qty = parseFloat(v.quantity);
+      const minQty = parseFloat(v.min_qty);
+      if (!isNaN(qty) && qty > 0 && form.warehouse_id) {
+        const { error: stockErr } = await supabase.from("stock").insert({
+          product_id: productId,
+          variant_id: variantId,
+          warehouse_id: form.warehouse_id,
+          quantity: qty,
+          min_quantity: isNaN(minQty) ? 0 : minQty,
+        } as never);
+        if (stockErr) {
+          // Non-fatal: product + variant are saved; warn but don't roll back.
+          toast.error(`${L.stockFailed}: ${stockErr.message}`);
+        } else if (auth?.user) {
           await supabase.from("stock_movements").insert({
             type: "adjustment",
             product_id: productId,
-            variant_id: null,
-            quantity: initialQty,
+            variant_id: variantId,
+            quantity: qty,
             to_warehouse_id: form.warehouse_id,
             reference_type: "product_creation",
             reference_id: productId,
@@ -634,118 +653,14 @@ function NewProductPageInner() {
           </div>
         </div>
 
-        {/* Pricing */}
-        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <h2 className="font-semibold text-paws-brown-dark text-lg">{L.pricing}</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="price">{L.sellingPrice} ({L.egp}) *</Label>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="0.00"
-                className="bg-white border-paws-sand"
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="cost_price">{L.costPrice} ({L.egp}) *</Label>
-              <Input
-                id="cost_price"
-                name="cost_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.cost_price}
-                onChange={handleChange}
-                placeholder="0.00"
-                className="bg-white border-paws-sand"
-                required
-              />
-            </div>
-          </div>
-
-          {form.price && form.cost_price && (
-            <div className="bg-paws-cream/50 rounded-xl p-3">
-              <p className="text-sm text-paws-brown">
-                {L.profitMargin}:{" "}
-                <span className="font-semibold text-paws-brown-dark">
-                  {(
-                    ((parseFloat(form.price) - parseFloat(form.cost_price)) /
-                      parseFloat(form.price)) *
-                    100
-                  ).toFixed(1)}
-                  %
-                </span>{" "}
-                ({(parseFloat(form.price) - parseFloat(form.cost_price)).toLocaleString()} {L.egp})
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* Stock */}
-        <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">
-          <div>
-            <h2 className="font-semibold text-paws-brown-dark text-lg">{L.stock}</h2>
-            <p className="text-xs text-muted-foreground mt-1">{L.stockNote}</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="initial_qty">{L.initialQty}</Label>
-              <Input
-                id="initial_qty"
-                name="initial_qty"
-                type="number"
-                min="0"
-                step="0.001"
-                value={form.initial_qty}
-                onChange={handleChange}
-                className="bg-white border-paws-sand"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="min_qty">{L.minQty}</Label>
-              <Input
-                id="min_qty"
-                name="min_qty"
-                type="number"
-                min="0"
-                step="0.001"
-                value={form.min_qty}
-                onChange={handleChange}
-                className="bg-white border-paws-sand"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="warehouse_id">{L.warehouse}</Label>
-              {warehouses.length === 0 ? (
-                <p className="text-xs text-red-600 pt-2">{L.noWarehouses}</p>
-              ) : (
-                <select
-                  id="warehouse_id"
-                  name="warehouse_id"
-                  value={form.warehouse_id}
-                  onChange={handleChange}
-                  className="flex h-9 w-full rounded-lg border border-paws-sand bg-white px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.name}</option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-        </div>
+        <VariantEditor
+          variants={form.variants}
+          onVariantsChange={(next) => updateField("variants", next)}
+          warehouses={warehouses}
+          warehouseId={form.warehouse_id}
+          onWarehouseChange={(id) => updateField("warehouse_id", id)}
+          isAr={isAr}
+        />
 
         {/* Status */}
         <div className="bg-white rounded-2xl border border-paws-sand p-6 space-y-4">

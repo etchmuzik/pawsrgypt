@@ -154,6 +154,11 @@ export interface Database {
           status: "draft" | "ordered" | "received" | "cancelled";
           subtotal: number;
           tax_amount: number;
+          /**
+           * GENERATED ALWAYS column in the live DB (mirrors tax_amount).
+           * Read-only — never include in an insert/update. Write tax_amount instead.
+           */
+          tax: number | null;
           discount: number;
           total: number;
           notes: string | null;
@@ -162,7 +167,7 @@ export interface Database {
           created_by: string;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["purchase_orders"]["Row"], "id" | "created_at">;
+        Insert: Omit<Database["public"]["Tables"]["purchase_orders"]["Row"], "id" | "created_at" | "tax">;
         Update: Partial<Database["public"]["Tables"]["purchase_orders"]["Insert"]>;
       };
       purchase_items: {
@@ -205,6 +210,11 @@ export interface Database {
           status: "draft" | "confirmed" | "paid" | "partial" | "cancelled";
           subtotal: number;
           tax_amount: number;
+          /**
+           * GENERATED ALWAYS column in the live DB (mirrors tax_amount).
+           * Read-only — never include in an insert/update. Write tax_amount instead.
+           */
+          tax: number | null;
           discount: number;
           total: number;
           paid: number;
@@ -214,7 +224,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["invoices"]["Row"], "id" | "invoice_number" | "created_at" | "updated_at">;
+        Insert: Omit<Database["public"]["Tables"]["invoices"]["Row"], "id" | "invoice_number" | "created_at" | "updated_at" | "tax">;
         Update: Partial<Database["public"]["Tables"]["invoices"]["Insert"]>;
       };
       invoice_items: {
