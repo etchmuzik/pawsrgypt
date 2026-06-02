@@ -35,6 +35,8 @@ export default function POSPage() {
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [products, setProducts] = useState<POSProduct[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [branchId, setBranchId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const locale = useLocale();
   const isAr = locale === "ar";
@@ -67,6 +69,23 @@ export default function POSPage() {
         .from("warehouses").select("id").eq("is_active", true).order("name").limit(1);
       const wh = (whData as { id: string }[] | null)?.[0]?.id ?? "";
       setWarehouseId(wh);
+
+      // Load current user + their branch (invoices/payments require created_by & branch_id, NOT NULL).
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id ?? "";
+      setUserId(uid);
+      if (uid) {
+        const { data: profile } = await supabase
+          .from("profiles").select("branch_id").eq("id", uid).maybeSingle();
+        const profileBranch = (profile as { branch_id: string | null } | null)?.branch_id ?? null;
+        if (profileBranch) {
+          setBranchId(profileBranch);
+        } else {
+          const { data: firstBranch } = await supabase
+            .from("branches").select("id").order("created_at").limit(1).maybeSingle();
+          setBranchId((firstBranch as { id: string } | null)?.id ?? "");
+        }
+      }
 
       const { data } = await supabase
         .from("products")
@@ -167,6 +186,12 @@ export default function POSPage() {
   async function handleCheckout() {
     if (cart.length === 0) return;
 
+    if (!userId || !branchId) {
+      setCheckoutMessage(`${L.checkoutFailedPrefix}: ${isAr ? "لا يوجد فرع أو مستخدم. سجّل الدخول من جديد." : "Missing branch or user. Please re-login."}`);
+      setTimeout(() => setCheckoutMessage(""), 6000);
+      return;
+    }
+
     try {
       // Create invoice
       const { data: invoiceData, error: invoiceError } = await supabase
@@ -175,8 +200,10 @@ export default function POSPage() {
           type: "sale",
           status: "paid",
           subtotal,
-          tax,
+          tax_amount: tax,          // 'tax' is a generated column; write the writable 'tax_amount'
           total,
+          branch_id: branchId,      // NOT NULL
+          created_by: userId,       // NOT NULL
           notes: `POS Sale - ${payMethod}`,
         } as never)
         .select("id")
@@ -208,6 +235,7 @@ export default function POSPage() {
           invoice_id: invoice.id,
           amount: total,
           method: payMethod,
+          created_by: userId,
         } as never);
 
       if (payError) throw payError;
