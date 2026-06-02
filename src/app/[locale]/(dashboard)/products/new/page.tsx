@@ -253,7 +253,7 @@ function NewProductPageInner() {
     return () => {
       cancelled = true;
     };
-  }, [duplicateId, supabase]);
+  }, [duplicateId, supabase, warehouses]);
 
   function updateField<K extends keyof ProductForm>(key: K, value: ProductForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
