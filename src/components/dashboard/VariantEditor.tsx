@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2 } from "lucide-react";
+import { ImageUploader } from "@/components/dashboard/ImageUploader";
 
 export interface VariantRow {
   // Existing variant id, or null for a new (unsaved) row.
@@ -19,6 +20,7 @@ export interface VariantRow {
   stock_row_id: string | null;
   quantity: string;
   min_qty: string;
+  image_url: string;
 }
 
 export function newVariantRow(): VariantRow {
@@ -34,6 +36,7 @@ export function newVariantRow(): VariantRow {
     stock_row_id: null,
     quantity: "0",
     min_qty: "0",
+    image_url: "",
   };
 }
 
@@ -44,6 +47,7 @@ interface VariantEditorProps {
   warehouseId: string;
   onWarehouseChange: (id: string) => void;
   isAr: boolean;
+  productId?: string;
 }
 
 export function VariantEditor({
@@ -53,6 +57,7 @@ export function VariantEditor({
   warehouseId,
   onWarehouseChange,
   isAr,
+  productId,
 }: VariantEditorProps) {
   const L = {
     sellingPrice: isAr ? "سعر البيع" : "Selling Price",
@@ -226,6 +231,23 @@ export function VariantEditor({
                 className="bg-white border-paws-sand w-48 h-8 text-sm"
               />
             </div>
+                <div className="space-y-1 pt-1">
+                  <Label className="text-xs text-muted-foreground">
+                    {isAr ? "صورة هذا الوزن (اختياري)" : "Image for this weight (optional)"}
+                  </Label>
+                  <ImageUploader
+                    bucket="product-images"
+                    folder={`variants/${productId ?? "new"}`}
+                    images={v.image_url ? [v.image_url] : []}
+                    onChange={(urls) => updateVariant(idx, { image_url: urls[0] ?? "" })}
+                    maxImages={1}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {isAr
+                      ? "لو فاضي، هتظهر صورة المنتج الرئيسية."
+                      : "If empty, the product's main image is shown."}
+                  </p>
+                </div>
           </div>
         ))}
       </div>

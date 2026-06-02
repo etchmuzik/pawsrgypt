@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { AddToCartButton } from "./AddToCartButton";
 import { NotifyWhenAvailable } from "./NotifyWhenAvailable";
@@ -12,6 +12,7 @@ export interface VariantOption {
   color: string | null;
   price: number;
   quantity: number;
+  image_url: string | null;
 }
 
 interface VariantPickerAndCartProps {
@@ -20,6 +21,7 @@ interface VariantPickerAndCartProps {
   nameAr: string;
   imageUrl: string;
   variants: VariantOption[];
+  onVariantChange?: (variant: VariantOption) => void;
 }
 
 function variantLabel(v: VariantOption, isAr: boolean): string {
@@ -36,6 +38,7 @@ export function VariantPickerAndCart({
   nameAr,
   imageUrl,
   variants,
+  onVariantChange,
 }: VariantPickerAndCartProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
@@ -89,6 +92,21 @@ export function VariantPickerAndCart({
 
   const [selected, setSelected] = useState<VariantOption>(pickInitial);
 
+  function selectVariant(next: VariantOption) {
+    setSelected(next);
+    onVariantChange?.(next);
+  }
+
+  // Notify the parent of the INITIAL selection exactly once on mount.
+  // Subsequent changes are pushed explicitly from the selection handlers below.
+  const notifiedInitial = useRef(false);
+  useEffect(() => {
+    if (notifiedInitial.current) return;
+    notifiedInitial.current = true;
+    onVariantChange?.(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const selectedSizeKey = variantSizeKey(selected);
   const selectedColor = selected.color;
   const outOfStock = selected.quantity <= 0;
@@ -133,7 +151,7 @@ export function VariantPickerAndCart({
                   type="button"
                   onClick={() => {
                     const next = findVariant(opt, selectedColor) ?? findVariant(opt, null);
-                    if (next) setSelected(next);
+                    if (next) selectVariant(next);
                   }}
                   className={[
                     "px-4 py-2 rounded-full border text-sm font-semibold transition-all",
@@ -168,7 +186,7 @@ export function VariantPickerAndCart({
                   type="button"
                   onClick={() => {
                     const next = findVariant(selectedSizeKey, opt) ?? findVariant(null, opt);
-                    if (next) setSelected(next);
+                    if (next) selectVariant(next);
                   }}
                   className={[
                     "px-4 py-2 rounded-full border text-sm font-semibold transition-all",
