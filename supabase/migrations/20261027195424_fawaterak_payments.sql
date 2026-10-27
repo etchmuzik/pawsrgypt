@@ -6,6 +6,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS website_orders_checkout_request_id_key ON publ
 -- Browser inserts would bypass catalog pricing; the order token is checked on the server.
 DROP POLICY IF EXISTS "Public can insert website_orders" ON public.website_orders;
 DROP POLICY IF EXISTS "Public read website_order by token" ON public.website_orders;
+DROP POLICY IF EXISTS "Public read website_orders by access token" ON public.website_orders;
 
 CREATE TABLE public.website_order_payments (
   order_id uuid PRIMARY KEY REFERENCES public.website_orders(id) ON DELETE RESTRICT,

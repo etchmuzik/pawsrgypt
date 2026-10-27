@@ -15,6 +15,7 @@ GRANT ALL ON public.website_orders TO service_role;
 GRANT SELECT, INSERT ON public.website_orders TO anon;
 CREATE POLICY "Public can insert website_orders" ON public.website_orders FOR INSERT WITH CHECK (true);
 CREATE POLICY "Public read website_order by token" ON public.website_orders FOR SELECT USING (true);
+CREATE POLICY "Public read website_orders by access token" ON public.website_orders FOR SELECT USING (access_token IS NOT NULL);
 \ir ../supabase/migrations/20261027195424_fawaterak_payments.sql
 
 SET ROLE service_role;
