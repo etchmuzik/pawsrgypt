@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { ArrowDownUp } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
-import { resolveRange } from "@/lib/report-dates";
+import { cairoTimestampRange, resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
 import { ReportHeader } from "@/components/dashboard/ReportHeader";
 import { getTranslations } from "next-intl/server";
@@ -14,12 +14,13 @@ interface CashFlowPageProps {
 
 async function getCashFlow(from: string, to: string) {
   const supabase = await createClient();
+  const bounds = cairoTimestampRange(from, to);
 
   const { data: payments } = await supabase
     .from("payments")
     .select("amount, method, created_at")
-    .gte("created_at", from)
-    .lte("created_at", `${to}T23:59:59`)
+    .gte("created_at", bounds.start)
+    .lt("created_at", bounds.endExclusive)
     .order("created_at", { ascending: false });
 
   type Payment = { amount: number; method: string; created_at: string };

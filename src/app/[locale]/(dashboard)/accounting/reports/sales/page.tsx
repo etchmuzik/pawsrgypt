@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
-import { resolveRange } from "@/lib/report-dates";
+import { cairoTimestampRange, resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
 import { ReportHeader } from "@/components/dashboard/ReportHeader";
 import { getTranslations } from "next-intl/server";
+import { loadDashboardWebsiteOrders } from "@/lib/orders/server";
+import { WebsiteOrdersSummary } from "@/components/dashboard/WebsiteOrdersSummary";
 
 interface SalesReportPageProps {
   searchParams: Promise<{ range?: string }>;
@@ -25,13 +27,14 @@ interface Invoice {
 
 async function getSalesData(from: string, to: string) {
   const supabase = await createClient();
+  const bounds = cairoTimestampRange(from, to);
 
   const { data: invoices } = await supabase
     .from("invoices")
     .select("id, total, subtotal, tax_amount, paid, status, created_at, customers(name)")
     .eq("type", "sale")
-    .gte("created_at", from)
-    .lte("created_at", `${to}T23:59:59`)
+    .gte("created_at", bounds.start)
+    .lt("created_at", bounds.endExclusive)
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -52,7 +55,7 @@ function fmt(n: number) {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric" });
+  return new Date(d).toLocaleDateString("en-EG", { timeZone: "Africa/Cairo", year: "numeric", month: "short", day: "numeric" });
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -67,7 +70,7 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
   const locale = await getLocale();
   const params = await searchParams;
   const range = resolveRange(params.range);
-  const data = await getSalesData(range.from, range.to);
+  const [data, website] = await Promise.all([getSalesData(range.from, range.to), loadDashboardWebsiteOrders()]);
   const t = await getTranslations("accounting");
 
   return (
@@ -76,6 +79,9 @@ export default async function SalesReportPage({ searchParams }: SalesReportPageP
 
       <ReportDateFilter basePath={`/${locale}/accounting/reports/sales`} current={range.preset} />
 
+      {website.authorized && <WebsiteOrdersSummary orders={website.orders} locale={locale} range={range} />}
+
+      <h2 className="text-lg font-semibold text-neutral-900 mb-4">{locale === "ar" ? "فواتير نقطة البيع" : "POS invoices"}</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card className="p-5 border-neutral-200">
           <span className="text-sm text-muted-foreground">Total Revenue</span>

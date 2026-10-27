@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Receipt } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
-import { resolveRange } from "@/lib/report-dates";
+import { cairoTimestampRange, resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
 import { ReportHeader } from "@/components/dashboard/ReportHeader";
 import { getTranslations } from "next-intl/server";
@@ -21,19 +21,20 @@ interface Row {
 
 async function getVATData(from: string, to: string) {
   const supabase = await createClient();
+  const bounds = cairoTimestampRange(from, to);
 
   const [salesRes, purchasesRes] = await Promise.all([
     supabase
       .from("invoices")
       .select("subtotal, tax_amount, total, status")
       .eq("type", "sale")
-      .gte("created_at", from)
-      .lte("created_at", `${to}T23:59:59`),
+      .gte("created_at", bounds.start)
+      .lt("created_at", bounds.endExclusive),
     supabase
       .from("purchase_orders")
       .select("subtotal, tax_amount, total, status")
-      .gte("created_at", from)
-      .lte("created_at", `${to}T23:59:59`),
+      .gte("created_at", bounds.start)
+      .lt("created_at", bounds.endExclusive),
   ]);
 
   const salesAll = (salesRes.data as Row[] | null) ?? [];
