@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useLocale } from "next-intl";
+import { useEffect, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -15,6 +15,13 @@ import { Loader2, ShoppingBag, Package } from "lucide-react";
 export default function CheckoutPage() {
   const locale = useLocale();
   const router = useRouter();
+  const t = useTranslations("payment");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "fawaterak">("cod");
+  const [online, setOnline] = useState({ available: false, test_mode: false });
+  useEffect(() => {
+    fetch("/api/payments/fawaterak").then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data) setOnline(data); }).catch(() => {});
+  }, []);
 
   const items = useCartStore((s) => s.items);
   const total = useCartStore((s) => s.total);
@@ -64,13 +71,23 @@ export default function CheckoutPage() {
 
     setLoading(true);
 
-    // POST to /api/orders — server route inserts into DB, fires confirmation
-    // emails, and returns the opaque access_token used in the confirmation URL.
     try {
+      const fingerprint = JSON.stringify({ form, paymentMethod, items: items.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint));
+      const signature = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
+      let requestId = crypto.randomUUID();
+      try {
+        const saved = JSON.parse(sessionStorage.getItem("paws-checkout-request") ?? "null");
+        if (saved?.signature === signature && typeof saved.id === "string") requestId = saved.id;
+        sessionStorage.setItem("paws-checkout-request", JSON.stringify({ signature, id: requestId }));
+      } catch { /* Checkout also works when session storage is unavailable. */ }
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          request_id: requestId,
+          locale,
+          payment_method: paymentMethod,
           customer_name: form.name.trim(),
           customer_email: form.email.trim() || null,
           customer_phone: form.phone.trim(),
@@ -101,13 +118,21 @@ export default function CheckoutPage() {
         return;
       }
 
-      const { access_token } = (await res.json()) as {
+      const { access_token, payment_url } = (await res.json()) as {
         access_token: string;
         order_number: string;
+        payment_url: string | null;
       };
 
-      useCartStore.getState().clearCart();
-      toast.success("Order placed successfully!");
+      if (payment_url) {
+        window.location.assign(payment_url);
+        return;
+      }
+      if (paymentMethod === "cod") {
+        useCartStore.getState().clearCart();
+        try { sessionStorage.removeItem("paws-checkout-request"); } catch {}
+        toast.success("Order placed successfully!");
+      }
       router.push(`/${locale}/orders/${access_token}`);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Network error";
@@ -273,6 +298,19 @@ export default function CheckoutPage() {
                 </div>
               </div>
             </div>
+            <fieldset className="bg-white rounded-2xl border border-neutral-100 p-4 sm:p-6 space-y-4">
+              <legend className="px-1 font-semibold text-neutral-900">{t("title")}</legend>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input type="radio" name="payment_method" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} className="mt-1 accent-orange-500" />
+                <span><span className="block font-medium">{t("cod")}</span><span className="text-sm text-neutral-500">{t("codDescription")}</span></span>
+              </label>
+              {online.available && (
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input type="radio" name="payment_method" value="fawaterak" checked={paymentMethod === "fawaterak"} onChange={() => setPaymentMethod("fawaterak")} className="mt-1 accent-orange-500" />
+                  <span><span className="block font-medium">{t("online")}</span><span className="text-sm text-neutral-500">{t("onlineDescription")}</span>{online.test_mode && <span className="block text-xs text-amber-700 mt-1">{t("testMode")}</span>}</span>
+                </label>
+              )}
+            </fieldset>
           </div>
 
           {/* Order Summary */}
@@ -353,7 +391,7 @@ export default function CheckoutPage() {
                 className="w-full mt-6 bg-paws-orange hover:bg-paws-orange/90 text-white gap-2 shadow-[0_8px_30px_rgba(244,124,44,0.25)]"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {loading ? "Placing Order..." : "Place Order"}
+                {loading ? t("preparing") : paymentMethod === "fawaterak" ? t("continue") : "Place Order"}
               </Button>
 
               <Link

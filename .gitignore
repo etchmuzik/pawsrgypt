@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -42,6 +43,9 @@ next-env.d.ts
 
 # Local Netlify folder
 .netlify
+.playwright-cli/
+.playwright-mcp/
+/output/playwright/
 
 # Source media files in project root (not meant to be served)
 /cairo.mp4

@@ -361,5 +361,25 @@
     "mtd": "Month to date",
     "ytd": "Year to date",
     "all": "All time"
+  },
+  "payment": {
+    "title": "Payment method",
+    "cod": "Cash on delivery",
+    "codDescription": "Pay when your order arrives.",
+    "online": "Pay online — Fawaterak by Payten",
+    "onlineDescription": "Choose an available payment method on the secure payment page.",
+    "testMode": "Test mode — this checkout does not collect real payments.",
+    "preparing": "Preparing your order…",
+    "continue": "Continue to payment",
+    "paid": "Payment received",
+    "paidDescription": "Your payment has been verified. We will contact you to confirm delivery.",
+    "pending": "Awaiting payment confirmation",
+    "pendingDescription": "Your order is saved. Payment is confirmed only after verification from the payment provider.",
+    "failed": "Payment could not be started",
+    "failedDescription": "Your order is saved, but payment has not been confirmed. Contact us with your order number before trying again.",
+    "declinedDescription": "Payment was not completed. You can return to the secure payment page or contact us for help.",
+    "resume": "Continue payment",
+    "contact": "Contact PAWS Egypt",
+    "refresh": "Check payment status"
   }
 }
