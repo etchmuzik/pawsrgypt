@@ -19,13 +19,8 @@ export type ProductRow = {
   images: string[];
   categories: { name_en: string; name_ar: string } | null;
   product_variants: { price: number }[];
-  stock?: { quantity: number }[];
+  in_stock: boolean | null;
 };
-
-function totalStock(p: ProductRow): number {
-  if (!p.stock || p.stock.length === 0) return Infinity; // unknown = treat as in stock
-  return p.stock.reduce((sum, s) => sum + (Number(s.quantity) || 0), 0);
-}
 
 export const FALLBACK_PRODUCTS = [
   { id: "1", name_en: "Royal Canin Maxi Adult 15kg", name_ar: "رويال كانين ماكسي بالغ 15 كيلو", price: 5000, brand: "Royal Canin", image: "https://petsegypt.com/web/image/product.product/3352/image_1920", badge: "Best Seller", category: "Dog Dry Food" },
@@ -225,8 +220,7 @@ export function ShopContent({ products }: { products: ProductRow[] }) {
               const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
               const hasMultiplePrices = prices.length > 1 && Math.min(...prices) !== Math.max(...prices);
               const imageUrl = product.images?.[0] ?? null;
-              const stock = totalStock(product);
-              const outOfStock = stock <= 0;
+              const outOfStock = product.in_stock === false;
 
               const productName = locale === "ar" ? product.name_ar : product.name_en;
               const badge = outOfStock ? (
@@ -266,7 +260,7 @@ export function ShopContent({ products }: { products: ProductRow[] }) {
               );
 
               return (
-                <ScrollReveal key={product.id} delay={i * 50}>
+                <ScrollReveal key={product.id} delay={(i % 4) * 50}>
                   {imageUrl ? (
                     <ProductCardZoom
                       href={`/${locale}/shop/${product.id}`}

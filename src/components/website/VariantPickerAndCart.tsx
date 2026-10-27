@@ -11,7 +11,7 @@ export interface VariantOption {
   weight: number | null;
   color: string | null;
   price: number;
-  quantity: number;
+  quantity: number | null;
   image_url: string | null;
 }
 
@@ -85,8 +85,8 @@ export function VariantPickerAndCart({
   }
 
   function pickInitial(): VariantOption {
-    const inStock = variants.filter((v) => v.quantity > 0);
-    const pool = inStock.length > 0 ? inStock : variants;
+    const orderable = variants.filter((v) => v.quantity === null || v.quantity > 0);
+    const pool = orderable.length > 0 ? orderable : variants;
     return pool.reduce((cheapest, v) => (v.price < cheapest.price ? v : cheapest), pool[0]);
   }
 
@@ -109,7 +109,7 @@ export function VariantPickerAndCart({
 
   const selectedSizeKey = variantSizeKey(selected);
   const selectedColor = selected.color;
-  const outOfStock = selected.quantity <= 0;
+  const outOfStock = selected.quantity !== null && selected.quantity <= 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -127,6 +127,11 @@ export function VariantPickerAndCart({
           <div className="w-2 h-2 bg-red-500 rounded-full" />
           <span className="text-sm font-medium">{t("out_of_stock")}</span>
         </div>
+      ) : selected.quantity === null ? (
+        <div className="flex items-center gap-2 text-neutral-600">
+          <div className="w-2 h-2 bg-neutral-400 rounded-full" />
+          <span className="text-sm font-medium">{t("available_to_order")}</span>
+        </div>
       ) : (
         <div className="flex items-center gap-2 text-emerald-600">
           <div className="w-2 h-2 bg-emerald-500 rounded-full" />
@@ -143,7 +148,7 @@ export function VariantPickerAndCart({
           <div className="flex flex-wrap gap-2">
             {sizeOptions.map((opt) => {
               const candidate = findVariant(opt, selectedColor);
-              const disabled = !candidate || candidate.quantity <= 0;
+              const disabled = candidate?.quantity != null && candidate.quantity <= 0;
               const active = selectedSizeKey === opt;
               return (
                 <button
@@ -178,7 +183,7 @@ export function VariantPickerAndCart({
           <div className="flex flex-wrap gap-2">
             {colorOptions.map((opt) => {
               const candidate = findVariant(selectedSizeKey, opt);
-              const disabled = !candidate || candidate.quantity <= 0;
+              const disabled = candidate?.quantity != null && candidate.quantity <= 0;
               const active = selectedColor === opt;
               return (
                 <button

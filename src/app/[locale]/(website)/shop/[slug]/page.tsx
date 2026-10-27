@@ -33,7 +33,7 @@ type ProductDetail = {
     is_active: boolean;
     image_url: string | null;
   }[];
-  stock: { quantity: number; variant_id: string | null }[];
+  stock: { quantity: number | null; variant_id: string | null }[];
 };
 
 type RelatedRow = {
@@ -79,7 +79,7 @@ const getPdpData = unstable_cache(
     if (!product) return { product: null, relatedProducts: [] };
 
     // Public catalog data stays under RLS. Availability is read on the server
-    // from private inventory and reduced to 0/1 for each active variant.
+    // from private inventory and reduced to 0/1/null for each active variant.
     const relatedSelect = "id, name_en, name_ar, brand, images, product_variants(price)";
     const [brandRes, categoryRes, availability] = await Promise.all([
       product.brand
@@ -124,7 +124,7 @@ const getPdpData = unstable_cache(
 
     return { product, relatedProducts };
   },
-  ["pdp-data-v2-availability"],
+  ["pdp-data-v3-untracked-stock"],
   { revalidate: 60, tags: ["products"] }
 );
 
@@ -184,16 +184,10 @@ export default async function ProductDetailPage({
   const nameEn = product.name_en;
   const nameAr = product.name_ar;
 
-  // Build per-variant stock + options for the picker.
-  // Stock: sum quantities per variant_id; rows with variant_id=null fall back
-  // to the product-level total (legacy single-variant model).
+  // Availability was resolved on the server. null means no recorded stock;
+  // those variants are orderable, while an explicit zero stays unavailable.
   const activeVariants = (product?.product_variants ?? []).filter((v) => v.is_active);
-  const stockByVariant = new Map<string | null, number>();
-  for (const s of product?.stock ?? []) {
-    const key = s.variant_id ?? null;
-    stockByVariant.set(key, (stockByVariant.get(key) ?? 0) + (Number(s.quantity) || 0));
-  }
-  const legacyStock = stockByVariant.get(null) ?? 0;
+  const stockByVariant = new Map((product.stock ?? []).map((row) => [row.variant_id, row.quantity]));
 
   const variantOptions: VariantOption[] = activeVariants.map((v) => ({
     id: v.id,
@@ -201,20 +195,14 @@ export default async function ProductDetailPage({
     weight: v.weight,
     color: v.color,
     price: v.price,
-    // If we have per-variant stock rows, use them. Otherwise distribute the
-    // legacy product-level stock across variants (treat as in stock if >0).
-    quantity:
-      stockByVariant.get(v.id) ?? (activeVariants.length === 1 ? legacyStock : Infinity),
+    quantity: stockByVariant.get(v.id) ?? null,
     image_url: v.image_url ?? null,
   }));
 
   // For the simple single-variant render path:
   const price = variantOptions[0]?.price ?? 0;
-  const totalStock = variantOptions.reduce(
-    (sum, v) => sum + (v.quantity === Infinity ? 1 : v.quantity),
-    0
-  );
-  const outOfStock = totalStock <= 0;
+  const outOfStock = variantOptions.length === 0 || variantOptions.every((variant) => variant.quantity !== null && variant.quantity <= 0);
+  const untrackedStock = !outOfStock && variantOptions.every((variant) => variant.quantity === null);
   const showPicker = variantOptions.length > 1;
 
   // relatedProducts already came from getPdpData() above.
@@ -364,6 +352,11 @@ export default async function ProductDetailPage({
                     <div className="flex items-center gap-2 text-red-600">
                       <div className="w-2 h-2 bg-red-500 rounded-full" />
                       <span className="text-sm font-medium">{t("out_of_stock")}</span>
+                    </div>
+                  ) : untrackedStock ? (
+                    <div className="flex items-center gap-2 text-neutral-600">
+                      <div className="w-2 h-2 bg-neutral-400 rounded-full" />
+                      <span className="text-sm font-medium">{t("available_to_order")}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 text-emerald-600">
