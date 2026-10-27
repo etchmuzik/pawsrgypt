@@ -11,6 +11,7 @@ import { ProductGalleryAndPicker } from "@/components/website/ProductGalleryAndP
 import { createClient as createAnonClient } from "@supabase/supabase-js";
 import { unstable_cache } from "next/cache";
 import { sanitizeProductHtml, stripHtml } from "@/lib/html";
+import { loadProductAvailability } from "@/lib/storefront/availability";
 
 type ProductDetail = {
   id: string;
@@ -49,9 +50,8 @@ type PdpData = {
   relatedProducts: RelatedRow[];
 };
 
-// Per-slug cached PDP fetch: main product + same-brand related + same-category
-// related, all in one cache entry. Anon client (no per-request cookies) so the
-// closure stays pure. RLS-guarded by the public read policies. In-memory only.
+// Per-slug cached public catalog and server-derived availability. Neither
+// client uses request cookies; raw inventory balances stay on the server.
 const getPdpData = unstable_cache(
   async (slug: string): Promise<PdpData> => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -69,7 +69,7 @@ const getPdpData = unstable_cache(
     const { data: dbProduct } = await supabase
       .from("products")
       .select(
-        "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active, image_url), stock(quantity, variant_id)"
+        "id, name_en, name_ar, description_en, description_ar, brand, category_id, images, is_featured, categories(name_en, name_ar), product_variants(id, price, size, weight, color, is_active, image_url)"
       )
       .eq("id", slug)
       .eq("is_active", true)
@@ -78,9 +78,10 @@ const getPdpData = unstable_cache(
     const product = dbProduct as ProductDetail | null;
     if (!product) return { product: null, relatedProducts: [] };
 
-    // Brand + category related in parallel.
+    // Public catalog data stays under RLS. Availability is read on the server
+    // from private inventory and reduced to 0/1 for each active variant.
     const relatedSelect = "id, name_en, name_ar, brand, images, product_variants(price)";
-    const [brandRes, categoryRes] = await Promise.all([
+    const [brandRes, categoryRes, availability] = await Promise.all([
       product.brand
         ? supabase
             .from("products")
@@ -99,7 +100,12 @@ const getPdpData = unstable_cache(
             .neq("id", product.id)
             .limit(8)
         : Promise.resolve({ data: null }),
+      loadProductAvailability(
+        product.id,
+        product.product_variants.filter((v) => v.is_active).map((v) => v.id)
+      ),
     ]);
+    product.stock = availability;
 
     const relatedProducts: RelatedRow[] = [];
     const seen = new Set<string>([product.id]);
@@ -118,7 +124,7 @@ const getPdpData = unstable_cache(
 
     return { product, relatedProducts };
   },
-  ["pdp-data-v1"],
+  ["pdp-data-v2-availability"],
   { revalidate: 60, tags: ["products"] }
 );
 
