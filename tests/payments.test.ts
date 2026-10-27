@@ -124,6 +124,8 @@ test("payment verification requires matching invoice, amount, currency and paid 
 });
 
 test("redirects only to HTTPS on the configured Fawaterak host", () => {
+  assert.equal(trustedPaymentUrl("https://app.fawaterk.com/lk/live-test", "production"), true);
+  assert.equal(trustedPaymentUrl("https://app.fawaterk.com/lk/live-test", "staging"), false);
   assert.equal(
     trustedPaymentUrl("https://staging.fawaterk.com/link/test", "staging"),
     true,
