@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getTranslations } from "next-intl/server";
+import { trustedPaymentUrl } from "@/lib/payments/fawaterak";
+import { PaymentRefresh } from "@/components/website/PaymentRefresh";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -34,11 +37,12 @@ interface OrderItem {
 interface Order {
   id: string;
   order_number: string;
+  checkout_request_id: string | null;
   customer_name: string;
   customer_email: string | null;
   customer_phone: string;
-  shipping_address: string; // JSON
-  items: string; // JSON
+  shipping_address: string | ShippingAddress;
+  items: string | OrderItem[];
   subtotal: number;
   shipping: number;
   total: number;
@@ -51,6 +55,7 @@ export const metadata: Metadata = {
   title: "Order Confirmation",
   robots: { index: false, follow: false },
 };
+export const dynamic = "force-dynamic";
 
 const STATUS_META: Record<
   Order["status"],
@@ -90,8 +95,10 @@ const STATUS_META: Record<
 
 export default async function OrderConfirmationPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; token: string }>;
+  searchParams: Promise<{ payment?: string }>;
 }) {
   const { locale, token } = await params;
 
@@ -100,7 +107,7 @@ export default async function OrderConfirmationPage({
     notFound();
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("website_orders" as never)
     .select("*")
@@ -112,12 +119,20 @@ export default async function OrderConfirmationPage({
   if (error || !order) {
     notFound();
   }
+  const t = await getTranslations({ locale, namespace: "payment" });
+  const { payment: returnState } = await searchParams;
+  const { data: paymentData } = await supabase.from("website_order_payments" as never)
+    .select("method, status, checkout_url, environment").eq("order_id", order.id).maybeSingle();
+  const payment = paymentData as { method: string; status: string; checkout_url: string | null; environment: "staging" | "production" } | null;
+  const online = payment?.method === "fawaterak";
+  const paid = payment?.status === "paid";
+  const checkoutUrl = online && payment.status === "pending" && trustedPaymentUrl(payment.checkout_url, payment.environment) ? payment.checkout_url : null;
 
   const isAr = locale === "ar";
   const BackArrow = isAr ? ArrowRight : ArrowLeft;
 
-  const address: ShippingAddress = JSON.parse(order.shipping_address);
-  const items: OrderItem[] = JSON.parse(order.items);
+  const address: ShippingAddress = typeof order.shipping_address === "string" ? JSON.parse(order.shipping_address) : order.shipping_address;
+  const items: OrderItem[] = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
 
   const statusMeta = STATUS_META[order.status];
   const StatusIcon = statusMeta.icon;
@@ -151,6 +166,15 @@ export default async function OrderConfirmationPage({
 
       {/* Body */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+        {online && (
+          <div className={`rounded-2xl border p-4 sm:p-6 ${paid ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+            <h2 className="font-semibold">{paid ? t("paid") : payment.status === "failed" ? t("failed") : t("pending")}</h2>
+            <p className="text-sm mt-2">{paid ? t("paidDescription") : payment.status === "failed" ? t("failedDescription") : returnState === "failed" ? t("declinedDescription") : t("pendingDescription")}</p>
+            {checkoutUrl && <a href={checkoutUrl} className="inline-block mt-4 font-semibold text-paws-orange underline">{t("resume")}</a>}
+            {!paid && <a href="tel:+201005285753" className="block mt-3 text-sm underline">{t("contact")}</a>}
+            <PaymentRefresh pending={!paid && payment.status === "pending"} paid={paid} items={items} requestId={order.checkout_request_id} />
+          </div>
+        )}
         {/* Status card */}
         <div className="rounded-2xl border border-neutral-100 p-4 sm:p-6">
           <div className="flex items-center gap-3">
@@ -211,6 +235,10 @@ export default async function OrderConfirmationPage({
                 {order.subtotal.toLocaleString()}{" "}
                 {isAr ? "ج.م" : "EGP"}
               </span>
+            </div>
+            <div className="flex justify-between text-sm text-neutral-600">
+              <span>{isAr ? "ضريبة القيمة المضافة" : "VAT (14%)"}</span>
+              <span className="tabular-nums">{Math.max(0, order.total - order.subtotal - order.shipping).toLocaleString()} {isAr ? "ج.م" : "EGP"}</span>
             </div>
             <div className="flex justify-between text-sm text-neutral-600">
               <span>{isAr ? "الشحن" : "Shipping"}</span>
