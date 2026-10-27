@@ -34,6 +34,7 @@ const NAV_ITEMS = [
   { icon: Warehouse, label: "Inventory", labelAr: "المخزون", href: "/inventory" },
   { icon: ShoppingBag, label: "Purchases", labelAr: "المشتريات", href: "/purchases" },
   { icon: ShoppingCart, label: "Sales", labelAr: "المبيعات", href: "/sales" },
+  { icon: ShoppingBag, label: "Website orders", labelAr: "طلبات الموقع", href: "/dashboard/orders" },
   { icon: Users, label: "Customers", labelAr: "العملاء", href: "/customers" },
   { icon: Calculator, label: "Accounting", labelAr: "المحاسبة", href: "/accounting" },
   { icon: UserCheck, label: "HR", labelAr: "الموارد البشرية", href: "/hr" },

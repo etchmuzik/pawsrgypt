@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { loadDashboardWebsiteOrders } from "@/lib/orders/server";
+import { WebsiteOrdersSummary } from "@/components/dashboard/WebsiteOrdersSummary";
 
 interface InvoiceWithCustomer {
   id: string;
@@ -40,7 +42,7 @@ interface PageProps {
 
 export default async function SalesPage({ params }: PageProps) {
   const { locale } = await params;
-  const invoices = await getInvoices();
+  const [invoices, website] = await Promise.all([getInvoices(), loadDashboardWebsiteOrders()]);
   const t = await getTranslations("sales");
   const tCommon = await getTranslations("common");
 
@@ -59,6 +61,8 @@ export default async function SalesPage({ params }: PageProps) {
           </Button>
         </Link>
       </div>
+
+      {website.authorized && <WebsiteOrdersSummary orders={website.orders} locale={locale} />}
 
       <div className="bg-white rounded-2xl border border-paws-sand overflow-hidden">
         <div className="overflow-x-auto">

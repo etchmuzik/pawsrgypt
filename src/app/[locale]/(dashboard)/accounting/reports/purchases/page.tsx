@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Package } from "lucide-react";
 import Link from "next/link";
 import { getLocale } from "next-intl/server";
-import { resolveRange } from "@/lib/report-dates";
+import { cairoTimestampRange, resolveRange } from "@/lib/report-dates";
 import { ReportDateFilter } from "@/components/dashboard/ReportDateFilter";
 import { ReportHeader } from "@/components/dashboard/ReportHeader";
 import { getTranslations } from "next-intl/server";
@@ -24,12 +24,13 @@ interface PO {
 
 async function getPurchaseData(from: string, to: string) {
   const supabase = await createClient();
+  const bounds = cairoTimestampRange(from, to);
 
   const { data: orders } = await supabase
     .from("purchase_orders")
     .select("id, total, subtotal, tax_amount, status, created_at, suppliers(name)")
-    .gte("created_at", from)
-    .lte("created_at", `${to}T23:59:59`)
+    .gte("created_at", bounds.start)
+    .lt("created_at", bounds.endExclusive)
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -49,7 +50,7 @@ function fmt(n: number) {
 }
 
 function formatDate(d: string) {
-  return new Date(d).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric" });
+  return new Date(d).toLocaleDateString("en-EG", { timeZone: "Africa/Cairo", year: "numeric", month: "short", day: "numeric" });
 }
 
 const STATUS_STYLES: Record<string, string> = {

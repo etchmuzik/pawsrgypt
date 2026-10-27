@@ -3,6 +3,9 @@ import { TrendingUp, ShoppingCart, Package, Users, FileText, PlusCircle, Monitor
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
+import { loadDashboardWebsiteOrders } from "@/lib/orders/server";
+import { WebsiteOrdersSummary } from "@/components/dashboard/WebsiteOrdersSummary";
+import { cairoTimestampRange, resolveRange } from "@/lib/report-dates";
 
 async function getStats() {
   const supabase = await createClient();
@@ -15,8 +18,14 @@ async function getStats() {
 
   type OrderRow = { total: number; created_at: string };
   const orders = (ordersResult.data as OrderRow[] | null) ?? [];
-  const today = new Date().toISOString().split("T")[0];
-  const todayOrders = orders.filter((o) => o.created_at.startsWith(today));
+  const today = resolveRange("all").to;
+  const bounds = cairoTimestampRange(today, today);
+  const start = Date.parse(bounds.start);
+  const end = Date.parse(bounds.endExclusive);
+  const todayOrders = orders.filter((order) => {
+    const placed = Date.parse(order.created_at);
+    return placed >= start && placed < end;
+  });
   const totalSales = orders.reduce((sum, o) => sum + (o.total || 0), 0);
 
   return {
@@ -28,14 +37,14 @@ async function getStats() {
 }
 
 export default async function DashboardPage() {
-  const stats = await getStats();
+  const [stats, website] = await Promise.all([getStats(), loadDashboardWebsiteOrders()]);
   const locale = await getLocale();
   const t = await getTranslations("dashboard");
   const tCommon = await getTranslations("common");
 
   const cards = [
-    { label: t("total_sales"), value: `${stats.totalSales.toLocaleString()} ${tCommon("egp")}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
-    { label: t("orders_today"), value: stats.ordersToday, icon: ShoppingCart, color: "text-paws-orange", bg: "bg-orange-50" },
+    { label: locale === "ar" ? "مبيعات نقطة البيع" : "POS sales", value: `${stats.totalSales.toLocaleString()} ${tCommon("egp")}`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50" },
+    { label: locale === "ar" ? "فواتير نقطة البيع اليوم" : "POS invoices today", value: stats.ordersToday, icon: ShoppingCart, color: "text-paws-orange", bg: "bg-orange-50" },
     { label: t("products_count"), value: stats.totalProducts, icon: Package, color: "text-blue-600", bg: "bg-blue-50" },
     { label: t("customers_count"), value: stats.totalCustomers, icon: Users, color: "text-purple-600", bg: "bg-purple-50" },
   ];
@@ -58,6 +67,8 @@ export default async function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {website.authorized && <WebsiteOrdersSummary orders={website.orders} locale={locale} />}
 
       {/* Quick Actions */}
       <h2 className="text-lg font-semibold text-neutral-900 mb-4">{t("quick_actions")}</h2>
