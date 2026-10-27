@@ -31,7 +31,7 @@ export function trustedPaymentUrl(
       !url.username &&
       !url.password &&
       !url.port &&
-      url.pathname.startsWith("/link/")
+      (url.pathname.startsWith("/link/") || url.pathname.startsWith("/lk/"))
     );
   } catch {
     return false;
