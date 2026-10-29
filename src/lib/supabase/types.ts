@@ -53,6 +53,7 @@ export interface Database {
         Row: {
           id: string;
           sku: string;
+          delivery_cost: number;
           name_en: string;
           name_ar: string;
           description_en: string | null;

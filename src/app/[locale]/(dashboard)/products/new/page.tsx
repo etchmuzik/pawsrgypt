@@ -29,6 +29,7 @@ interface ProductForm {
   description_ar: string;
   category_id: string;
   brand: string;
+  delivery_cost: string;
   unit_type: string;
   barcode: string;
   is_active: boolean;
@@ -52,6 +53,7 @@ const INITIAL_FORM: ProductForm = {
   description_ar: "",
   category_id: "",
   brand: "",
+  delivery_cost: "0",
   unit_type: "piece",
   barcode: "",
   is_active: true,
@@ -237,6 +239,7 @@ function NewProductPageInner() {
         description_ar: p.description_ar ?? "",
         category_id: p.category_id ?? "",
         brand: p.brand ?? "",
+        delivery_cost: "0",
         unit_type: p.unit_type ?? "piece",
         barcode: "",
         is_active: p.is_active,
@@ -350,6 +353,7 @@ function NewProductPageInner() {
         description_ar: form.description_ar.trim() || null,
         category_id: form.category_id || null,
         brand: form.brand.trim() || null,
+        delivery_cost: Number(form.delivery_cost),
         unit_type: form.unit_type,
         barcode: form.barcode.trim() || null,
         images: form.images,
@@ -483,6 +487,12 @@ function NewProductPageInner() {
                   <Sparkles className="w-4 h-4" /> {L.auto}
                 </Button>
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="delivery_cost">{isAr ? "تكلفة التوصيل (ج.م)" : "Delivery cost (EGP)"}</Label>
+              <Input id="delivery_cost" name="delivery_cost" type="number" min="0" max="999999.99" step="0.01" required value={form.delivery_cost} onChange={(e) => setForm((previous) => ({ ...previous, delivery_cost: e.target.value }))} className="bg-white border-paws-sand" />
+              <p className="text-xs text-muted-foreground">{isAr ? "احفظ تكلفة توصيل المنتج هنا. لا تُضاف تلقائيًا إلى الدفع حاليًا." : "Save this product’s delivery cost here. It is not automatically charged at checkout yet."}</p>
             </div>
 
             <div className="space-y-1.5">
