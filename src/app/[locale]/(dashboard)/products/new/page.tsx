@@ -492,7 +492,7 @@ function NewProductPageInner() {
             <div className="space-y-1.5">
               <Label htmlFor="delivery_cost">{isAr ? "تكلفة التوصيل (ج.م)" : "Delivery cost (EGP)"}</Label>
               <Input id="delivery_cost" name="delivery_cost" type="number" min="0" max="999999.99" step="0.01" required value={form.delivery_cost} onChange={(e) => setForm((previous) => ({ ...previous, delivery_cost: e.target.value }))} className="bg-white border-paws-sand" />
-              <p className="text-xs text-muted-foreground">{isAr ? "احفظ تكلفة توصيل المنتج هنا. لا تُضاف تلقائيًا إلى الدفع حاليًا." : "Save this product’s delivery cost here. It is not automatically charged at checkout yet."}</p>
+              <p className="text-xs text-muted-foreground">{isAr ? "تُضاف تكلفة التوصيل مرة واحدة لكل منتج مختلف في الطلب." : "Added automatically at checkout, once per distinct product in the order."}</p>
             </div>
 
             <div className="space-y-1.5">

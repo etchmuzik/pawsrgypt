@@ -36,6 +36,7 @@ type CartItem = {
 export type CatalogProduct = {
   id: string;
   name_en: string;
+  delivery_cost?: number;
   is_active: boolean | null;
 };
 export type CatalogVariant = {
@@ -89,11 +90,16 @@ export function priceCart(
     ) / 100;
   // Preserve the storefront's existing whole-EGP VAT calculation.
   const tax = Math.round(subtotal * 0.14);
+  const shipping = [...new Set(items.map(item => item.productId))].reduce((sum, id) => {
+    const fee = Number(products.find(product => product.id === id)?.delivery_cost ?? 0);
+    if (!Number.isFinite(fee) || fee < 0) throw new Error("Invalid delivery cost");
+    return sum + Math.round(fee * 100);
+  }, 0) / 100;
   return {
     items,
     subtotal,
     tax,
-    shipping: 0,
-    total: Math.round((subtotal + tax) * 100) / 100,
+    shipping,
+    total: Math.round((subtotal + tax + shipping) * 100) / 100,
   };
 }
