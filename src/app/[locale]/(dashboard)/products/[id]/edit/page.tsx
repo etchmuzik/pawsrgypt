@@ -101,6 +101,7 @@ export default function EditProductPage() {
     description_ar: "",
     category_id: "",
     brand: "",
+    delivery_cost: "0",
     unit_type: "piece",
     barcode: "",
     is_active: true,
@@ -198,6 +199,7 @@ export default function EditProductPage() {
         description_ar: product.description_ar ?? "",
         category_id: product.category_id ?? "",
         brand: product.brand ?? "",
+        delivery_cost: String(product.delivery_cost ?? 0),
         unit_type: product.unit_type ?? "piece",
         barcode: product.barcode ?? "",
         is_active: product.is_active ?? true,
@@ -312,6 +314,7 @@ export default function EditProductPage() {
         description_ar: form.description_ar.trim() || null,
         category_id: form.category_id || null,
         brand: form.brand.trim() || null,
+        delivery_cost: Number(form.delivery_cost),
         unit_type: form.unit_type,
         barcode: form.barcode.trim() || null,
         images: form.images,
@@ -534,6 +537,12 @@ export default function EditProductPage() {
                 className="bg-white border-paws-sand"
                 required
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="delivery_cost">{isAr ? "تكلفة التوصيل (ج.م)" : "Delivery cost (EGP)"}</Label>
+              <Input id="delivery_cost" name="delivery_cost" type="number" min="0" max="999999.99" step="0.01" required value={form.delivery_cost} onChange={(e) => setForm((previous) => ({ ...previous, delivery_cost: e.target.value }))} className="bg-white border-paws-sand" />
+              <p className="text-xs text-muted-foreground">{isAr ? "احفظ تكلفة توصيل المنتج هنا. لا تُضاف تلقائيًا إلى الدفع حاليًا." : "Save this product’s delivery cost here. It is not automatically charged at checkout yet."}</p>
             </div>
 
             <div className="space-y-1.5">
