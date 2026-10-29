@@ -186,3 +186,15 @@ test("gateway errors and untrusted payment links never reach the browser", async
     );
   }
 });
+
+ test("delivery is charged once per distinct product and included in payable total", () => {
+  const other = { ...product, id: "other", delivery_cost: 12.25 };
+  const result = priceCart([
+    {productId,variantId,quantity:2},
+    {productId,variantId,quantity:1},
+    {productId:"other",variantId:"other-variant",quantity:3},
+  ],[{...product,delivery_cost:30},other],[variant,{...variant,id:"other-variant",product_id:"other"}]);
+  assert.equal(result.shipping,42.25);
+  assert.equal(result.total,result.subtotal+result.tax+42.25);
+  assert.throws(() => priceCart([{productId,variantId,quantity:1}],[{...product,delivery_cost:-1}],[variant]));
+ });

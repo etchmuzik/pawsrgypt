@@ -92,7 +92,7 @@ export async function POST(req: Request) {
 
     const ids = [...new Set(body.items.map((item) => item.productId))];
     const [productsResult, variantsResult] = await Promise.all([
-      supabase.from("products").select("id, name_en, is_active").in("id", ids),
+      supabase.from("products").select("id, name_en, is_active, delivery_cost").in("id", ids),
       supabase
         .from("product_variants")
         .select("id, product_id, price, is_active, size, color")
@@ -180,6 +180,7 @@ export async function POST(req: Request) {
           },
           // VAT is already part of checkout's total: line items must sum exactly.
           cartItems: [
+            ...(priced.shipping ? [{ name: "Delivery", price: priced.shipping.toFixed(2), quantity: 1 }] : []),
             ...priced.items.map((item) => ({
               name: item.name,
               price: item.price.toFixed(2),

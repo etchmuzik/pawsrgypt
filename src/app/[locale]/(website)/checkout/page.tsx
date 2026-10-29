@@ -26,9 +26,22 @@ export default function CheckoutPage() {
   const items = useCartStore((s) => s.items);
   const total = useCartStore((s) => s.total);
 
-  const subtotal = total();
-  const vat = Math.round(subtotal * 0.14);
-  const grandTotal = subtotal + vat;
+  const cartSubtotal = total();
+  const [quote, setQuote] = useState<{subtotal:number;tax:number;shipping:number;total:number;key:string}|null>(null);
+  const cartKey = JSON.stringify(items.map(({productId,variantId,quantity}) => ({productId,variantId,quantity})));
+  const currentQuote = quote?.key === cartKey ? quote : null;
+  const subtotal = currentQuote?.subtotal ?? cartSubtotal;
+  const vat = currentQuote?.tax ?? Math.round(subtotal * 0.14);
+  useEffect(() => {
+    const controller = new AbortController();
+    setQuote(null);
+    if (items.length) fetch("/api/orders/quote", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({items:JSON.parse(cartKey)}),signal:controller.signal})
+      .then(async response => { if (!response.ok) throw new Error(); return response.json(); })
+      .then(data => setQuote({...data,key:cartKey})).catch(() => {});
+    return () => controller.abort();
+  }, [cartKey]);
+  const shipping = currentQuote?.shipping ?? 0;
+  const grandTotal = currentQuote?.total ?? subtotal + vat;
 
   const [loading, setLoading] = useState(false);
 
@@ -69,10 +82,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!currentQuote) { toast.error("Delivery cost is still loading. Please refresh if it does not load."); return; }
     setLoading(true);
 
     try {
-      const fingerprint = JSON.stringify({ form, paymentMethod, items: items.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
+      const fingerprint = JSON.stringify({ form, paymentMethod, total: grandTotal, items: items.map(({ productId, variantId, quantity }) => ({ productId, variantId, quantity })) });
       const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint));
       const signature = Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, "0")).join("");
       let requestId = crypto.randomUUID();
@@ -106,7 +120,7 @@ export default function CheckoutPage() {
             color: item.color ?? null,
           })),
           subtotal,
-          shipping: 0,
+          shipping,
           total: grandTotal,
         }),
       });
@@ -370,7 +384,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="flex items-center justify-between text-neutral-600">
                   <span>Shipping</span>
-                  <span className="font-medium">Free</span>
+                  <span className="font-medium">{currentQuote ? (shipping ? `${shipping.toLocaleString()} EGP` : "Free") : "Calculating…"}</span>
                 </div>
                 <div className="border-t border-neutral-200 pt-3">
                   <div className="flex items-center justify-between">
