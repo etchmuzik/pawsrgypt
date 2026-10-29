@@ -1,3 +1,4 @@
+import {OrderNotifications} from "@/components/dashboard/OrderNotifications";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -22,6 +23,7 @@ export default async function DashboardLayout({
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <main className="flex-1 overflow-y-auto p-4 pt-14 lg:p-6 lg:pt-6">
+          <OrderNotifications locale={locale} />
           {children}
         </main>
       </div>
