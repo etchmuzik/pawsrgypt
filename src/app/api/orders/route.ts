@@ -242,9 +242,10 @@ export async function POST(req: Request) {
       siteOrigin: origin,
     };
     const customer = customerOrderConfirmation(context);
-    const internal = process.env.STORE_ORDER_EMAIL
-      ? internalOrderAlert(context, process.env.STORE_ORDER_EMAIL)
-      : null;
+    const {data: notificationRow} = await supabase.from("website_order_notification_settings" as never).select("recipient,enabled").eq("id",true).maybeSingle();
+    const notification = notificationRow as {recipient:string;enabled:boolean}|null;
+    const recipient = notification ? (notification.enabled ? notification.recipient : null) : process.env.STORE_ORDER_EMAIL;
+    const internal = recipient ? internalOrderAlert(context,recipient) : null;
     await Promise.allSettled([
       ...(customer ? [sendEmail(customer)] : []),
       ...(internal ? [sendEmail(internal)] : []),

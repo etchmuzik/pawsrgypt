@@ -1,3 +1,4 @@
+import {OrderEmailSettings} from "@/components/dashboard/OrderEmailSettings";
 import { Button } from "@/components/ui/button";
 import { Bell, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -54,6 +55,9 @@ async function loadSettings(): Promise<NotificationSettings> {
 export default async function NotificationsPage() {
   const locale = await getLocale();
   const settings = await loadSettings();
+  const client = await createClient();
+  const {data: emailRow} = await client.from("website_order_notification_settings" as never).select("recipient,enabled").eq("id",true).maybeSingle();
+  const emailSettings = emailRow as {recipient:string;enabled:boolean}|null;
 
   return (
     <div>
@@ -69,6 +73,7 @@ export default async function NotificationsPage() {
         </div>
       </div>
 
+      {emailSettings && <OrderEmailSettings recipient={emailSettings.recipient} enabled={emailSettings.enabled} configured={!!process.env.RESEND_API_KEY} locale={locale} />}
       <NotificationSettingsEditor initial={settings} />
 
       <div className="mt-4 p-4 bg-neutral-50 rounded-xl">
@@ -77,8 +82,7 @@ export default async function NotificationsPage() {
           <span className="text-sm font-medium text-neutral-900">Notification Channels</span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Preferences are saved per-user in <code className="font-mono">system_settings</code>.
-          Email notifications use the address on your account. SMS requires a valid Egyptian mobile number in your profile.
+          Website new-order emails use the recipient configured above. Dashboard alerts work while this dashboard is open. Other email and SMS preferences require their channels to be configured before sending.
         </p>
       </div>
     </div>
